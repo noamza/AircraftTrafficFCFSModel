@@ -25,6 +25,7 @@ public class AirportTree {
 	PrintStream io = System.out;
 	TreeSet<Integer> airportArrivalTraffic = new TreeSet<Integer>();
 	TreeSet<Integer> airportDepartureTraffic = new TreeSet<Integer>();
+	
 	TreeSet<Flight> arrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());	
 	private boolean departureContract = true;
 	
@@ -319,7 +320,7 @@ public class AirportTree {
 	
 	//works the same as departures
 	public int getSoonestArrivalSlot(int arrivalTime){
-		Integer before, previousSpace, currentSpace, after;
+		Integer before, previousSpace, currentSpace, after; 
 		while(true){
 			before = airportArrivalTraffic.floor(arrivalTime);
 			before = before != null? before : Integer.MIN_VALUE;
@@ -332,13 +333,40 @@ public class AirportTree {
 				return arrivalTime;
 			}
 			if(before + previousSpace > arrivalTime){
-				arrivalTime = before + previousSpace;
-			} else {
-				arrivalTime = after + getArrivalSpacing(after);
+				arrivalTime = before + previousSpace; 
+			} 
+			
+			else {
+				arrivalTime = after + getArrivalSpacing(after); 
 			}
 		}
 	}
 	
+	public int getSoonestArrivalSlot(int arrivalTime, int minArrivalTime, int maxArrivalTime){
+		Integer before, previousSpace, currentSpace, after; 
+		while(true){
+			before = airportArrivalTraffic.floor(arrivalTime);
+			before = before != null? before : Integer.MIN_VALUE;
+			after = airportArrivalTraffic.ceiling(arrivalTime);
+			after = after!=null? after : Integer.MAX_VALUE;
+			currentSpace = getArrivalSpacing(arrivalTime);
+			previousSpace = getArrivalSpacing(before);
+			if( before + previousSpace <= arrivalTime && arrivalTime + currentSpace <= after){
+				//System.out.printf(" before: %d after: %d ",before, after);
+				return arrivalTime;
+			}
+			if(before + previousSpace > arrivalTime){
+				arrivalTime = before + previousSpace; 
+				
+				//System.out.println("arrivalTime " + arrivalTime);
+			} 
+			
+			else {
+				
+				arrivalTime = after + getArrivalSpacing(after); 
+			}
+		}
+	}
 	
 	
 	//schedules flight at soonest time on or later than input parameter, returns time

@@ -85,6 +85,10 @@ public class Airports {
 					String[] subss = subs[4].split("_");
 					int adr = Integer.parseInt(subss[2]);
 					int aar = Integer.parseInt(subss[4]);
+					
+					//adr = 9999; //testing unconstrained
+					//aar = 9999; //testing unconstrained
+					
 					//Main.p(name);
 					/*
 					if(name.equals("KATL")){
@@ -208,6 +212,15 @@ public class Airports {
 			airportList.put(airportName, a);
 		}
 		return a.getSoonestArrivalSlot(arrivalTime);
+	}
+	
+	public int getSoonestArrival(String airportName, int arrivalTime, int minArrivalTime, int maxArrivalTime) {
+		AirportTree a = airportList.get(airportName);
+		if(a == null){
+			a = new AirportTree(airportName);
+			airportList.put(airportName, a);
+		}
+		return a.getSoonestArrivalSlot(arrivalTime, minArrivalTime, maxArrivalTime);
 	}
 	
 	public boolean removeFlightFromArrivalQueue(String airportName, int arrivalTime){

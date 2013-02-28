@@ -39,7 +39,8 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//SchedularFCFS s = new SchedularFCFS();s.init();
+		SchedularFCFS s = new SchedularFCFS();
+		s.init();
 		
 		//FCFSFlexibleSpeed f = new FCFSFlexibleSpeed();
 		//f.schedule(Action.scheduleAtPDT);
@@ -55,10 +56,12 @@ public class Main {
 		//TEST uncertainty
 		
 		//new AirportTree("test").testGaps();
+	
+		/*
 		java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDDHHmmss");
 		FCFSArrival f = new FCFSArrival();
 		f.schedule(dateFormat.format(new Date()));
-		
+		*/
 	}
 	
 	static void learning(){

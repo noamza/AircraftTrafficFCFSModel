@@ -13,18 +13,26 @@ public class SchedularFCFS {
 		java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("HH:mm:ss:SSSS");
 		Date date = new Date();
 		System.out.println("init() " + dateFormat.format(date));
+		double speedUp = 0.025;
+		double slowDown = 0.05;
 
 		flights = new Flights();
 		sectors = new Sectors();
 		airports = new Airports();
 		//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
-		String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
+		//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
+		String workingDirectory = "/Users/hhuynh/Desktop/scheduler/inputs/";
 		flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
+		//flights.loadFlightsFromAces(workingDirectory+"job_7.csv", true );
+		
+		//flights.loadFlightsFromAces(workingDirectory + "job_KSFO_arrs.csv", true);
 		//flights.loadFlightsFromAces(workingDirectory+"TEST_fcfsj.csv");
 		//flights.loadFromAces(workingDirectory+"recapture_chunki_from_clean.csv");
 		//flights.loadFromAces(workingDirectory+"fcfsj2.csv");
 		//flights.printFlights();
-		sectors.loadFromAces(workingDirectory+"SectorList_AllUconstrained_b71_WxRerFds_Vor18High.csv");
+		
+		//sectors.loadFromAces(workingDirectory+"SectorList_AllUconstrained_b71_WxRerFds_Vor18High.csv");
+		
 		//sectors.printSectors();
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		//airports.printAirports();
@@ -48,17 +56,30 @@ public class SchedularFCFS {
 		Collections.sort(flightList, new flightDepTimeComparator());
 		for (Flight f: flightList){
 			boolean validFlight = false;
+			
+			int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
+			int fastestDuration =  (int)(nominalDuration/(1+speedUp));
+			int longestDuration = (int)(nominalDuration/(1-slowDown));
+			
 			ArrayList<SectorAirport> path = f.path;
 			int delay = 0;
 			while(!validFlight){
 				//Main.p("delay:: " + delay);
 				int maxDelay = 0;
 				maxDelay = java.lang.Math.max(airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed+delay)-(f.departureTimeProposed+delay),maxDelay);
-				for(SectorAirport s: path){	
+				/*for(SectorAirport s: path){	
 					//Main.p("delay " + delay);
 					maxDelay = java.lang.Math.max(sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay),maxDelay);
+				}*/
+				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
+
+				//slow down
+				if(arrivalDelay <= (longestDuration - nominalDuration)) {
+					arrivalDelay = 0;
 				}
-				maxDelay = java.lang.Math.max(airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay),maxDelay);
+			
+				maxDelay = java.lang.Math.max(arrivalDelay, maxDelay);
+				//int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
 				if(maxDelay == 0){
 					validFlight = true;
 					//System.out.println("found a flight at: " + delay);
@@ -66,17 +87,18 @@ public class SchedularFCFS {
 					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay) - (f.departureTimeProposed+delay);
 					//Main.p("zero 0")
 					Main.Assert(zero==0, "errror in scheduling, should be 0");
-					for(SectorAirport s: path){	
+					/*for(SectorAirport s: path){	
 						zero = sectors.schedule(s.name, s.entryTime + delay, s.entryTime + s.transitTime + delay) - (s.entryTime + delay);
 						Main.Assert(zero==0, "errror in scheduling, should be 0");
-					}
+					}*/
 					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
 					//f.print();
-					Main.Assert(zero==0, "errror in scheduling, should be 0");
+					//Main.Assert(zero==0, "errror in scheduling, should be 0");
 
 					f.atcGroundDelay = delay;
 
-					td+=delay; if(delay!=0)c++;
+					td+=delay; 
+					if(delay!=0) c++;
 
 				} else delay+= maxDelay;
 			}
@@ -99,7 +121,7 @@ public class SchedularFCFS {
 
 		try{
 			// Create file 
-			FileWriter fstream = new FileWriter(workingDirectory+"TEST_fcfsj.csv");
+			FileWriter fstream = new FileWriter(workingDirectory+"fcfs_out.csv");
 			BufferedWriter out = new BufferedWriter(fstream);
 			out.write("**flightid,entryTime(milliseconds),exitTime(milliseconds),transitTime(milliseconds),upperStreamSector,currentSector,downStreamSector\n");
 			for (Flight f: flightList){

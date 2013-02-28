@@ -52,11 +52,11 @@ public class FCFSArrival {
 	Hashtable<String, Double> dispensedAirportDelayHrs;
 	Hashtable<String, Double> absorbedAirportDelayHrs;
 	static java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS");
-	String ofolder = "output2/";
+	String ofolder = "output/";
 	//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
-	String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
+	//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
 	//			String workingDirectory = "/Users/kpalopo/Desktop/scheduler/atl_data/";
-
+	String workingDirectory = "/Users/hhuynh/Desktop/scheduler/inputs/";
 	public FCFSArrival(){
 		rand = Math.abs(new java.util.Random().nextInt());
 
