@@ -39,7 +39,7 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		SchedularFCFS s = new SchedularFCFS();
+		SchedulerFCFS s = new SchedulerFCFS();
 		s.init();
 		
 		//FCFSFlexibleSpeed f = new FCFSFlexibleSpeed();

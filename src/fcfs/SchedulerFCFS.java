@@ -2,7 +2,7 @@ package fcfs;
 import java.util.*;
 import java.io.*;
 
-public class SchedularFCFS {
+public class SchedulerFCFS {
 
 	Flights flights; Sectors sectors; Airports airports;
 
