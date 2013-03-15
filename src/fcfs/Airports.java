@@ -90,12 +90,11 @@ public class Airports {
 					//aar = 9999; //testing unconstrained
 					
 					//Main.p(name);
-					/*
-					if(name.equals("KATL")){
-						adr = (int)(adr*1.);
-						aar = (int)(aar*1.);
+					
+					if(name.equals("KDFW")){
+						aar = 60;
 						//Main.p(adr + " katl " + aar );
-					}*/
+					}
 					
 					f.airportCapacities.add(new CapacityByTime(timeInMills, adr, aar));
 					//c.print();
@@ -204,6 +203,16 @@ public class Airports {
 		}
 		return a.getSoonestDepartureSlot(departureTime);
 	}
+	
+	/*
+	public int getSoonestCMParrival(String airportName, int arrivalTime) {
+		AirportTree a = airportList.get(airportName);
+		if(a == null) {
+			a = new AirportTree(airportName);
+			airportList.put(airportName,  a);
+		}
+		return a.getSoonestCMParrivalSlot(arrivalTime);
+	}*/
 	
 	public int getSoonestArrival(String airportName, int arrivalTime){
 		AirportTree a = airportList.get(airportName);

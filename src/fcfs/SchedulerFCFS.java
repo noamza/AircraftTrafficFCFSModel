@@ -23,7 +23,7 @@ public class SchedulerFCFS {
 		//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
 		String workingDirectory = "/Users/hhuynh/Desktop/scheduler/inputs/";
 		flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
-		//flights.loadFlightsFromAces(workingDirectory+"job_7.csv", true );
+		//flights.loadFlightsFromAces(workingDirectory+"job_9_sector_transitTime_takeoffLanding_35h_1.csv", true );
 		
 		//flights.loadFlightsFromAces(workingDirectory + "job_KSFO_arrs.csv", true);
 		//flights.loadFlightsFromAces(workingDirectory+"TEST_fcfsj.csv");
@@ -31,8 +31,8 @@ public class SchedulerFCFS {
 		//flights.loadFromAces(workingDirectory+"fcfsj2.csv");
 		//flights.printFlights();
 		
-		//sectors.loadFromAces(workingDirectory+"SectorList_AllUconstrained_b71_WxRerFds_Vor18High.csv");
-		
+		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
+		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		//sectors.printSectors();
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		//airports.printAirports();
@@ -54,6 +54,7 @@ public class SchedulerFCFS {
 		//*
 		//    Sort flights by Departure Time.
 		Collections.sort(flightList, new flightDepTimeComparator());
+		
 		for (Flight f: flightList){
 			boolean validFlight = false;
 			
@@ -67,19 +68,21 @@ public class SchedulerFCFS {
 				//Main.p("delay:: " + delay);
 				int maxDelay = 0;
 				maxDelay = java.lang.Math.max(airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed+delay)-(f.departureTimeProposed+delay),maxDelay);
-				/*for(SectorAirport s: path){	
+				for(SectorAirport s: path){	
 					//Main.p("delay " + delay);
 					maxDelay = java.lang.Math.max(sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay),maxDelay);
-				}*/
+				}
+				
 				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
 
 				//slow down
+				
 				if(arrivalDelay <= (longestDuration - nominalDuration)) {
 					arrivalDelay = 0;
 				}
 			
 				maxDelay = java.lang.Math.max(arrivalDelay, maxDelay);
-				//int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
+				
 				if(maxDelay == 0){
 					validFlight = true;
 					//System.out.println("found a flight at: " + delay);
@@ -87,10 +90,12 @@ public class SchedulerFCFS {
 					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay) - (f.departureTimeProposed+delay);
 					//Main.p("zero 0")
 					Main.Assert(zero==0, "errror in scheduling, should be 0");
-					/*for(SectorAirport s: path){	
+					
+					for(SectorAirport s: path){	
 						zero = sectors.schedule(s.name, s.entryTime + delay, s.entryTime + s.transitTime + delay) - (s.entryTime + delay);
 						Main.Assert(zero==0, "errror in scheduling, should be 0");
-					}*/
+					}
+					
 					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
 					//f.print();
 					//Main.Assert(zero==0, "errror in scheduling, should be 0");
@@ -109,7 +114,7 @@ public class SchedulerFCFS {
 		Runtime r = Runtime.getRuntime();
 		
 
-		//sectors.printSectorMaxCaps();
+		sectors.printSectorMaxCaps();
 		airports.printMinSpacing();
 
 		Main.p("total delay in hours = " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);

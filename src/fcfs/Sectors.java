@@ -20,7 +20,7 @@ public class Sectors {
 	public void loadFromAces(String filePath){
 		String[] subs = new String[1];
 		try{
-			//Read ACES Transit Time File Line by Line
+			
 			  FileInputStream fstream = new FileInputStream(filePath);
 			  DataInputStream in = new DataInputStream(fstream);
 			  BufferedReader br = new BufferedReader(new InputStreamReader(in));
