@@ -91,10 +91,10 @@ public class Airports {
 					
 					//Main.p(name);
 					
-					if(name.equals("KDFW")){
-						aar = 60;
+					//if(name.equals("KDFW")){
+						//aar = 60;
 						//Main.p(adr + " katl " + aar );
-					}
+					//}
 					
 					f.airportCapacities.add(new CapacityByTime(timeInMills, adr, aar));
 					//c.print();

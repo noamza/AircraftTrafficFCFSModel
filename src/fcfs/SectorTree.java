@@ -5,7 +5,7 @@ package fcfs;
 
 /**
  * @author nalmog
- * love u
+ * 
  */
 
 import java.io.PrintStream;

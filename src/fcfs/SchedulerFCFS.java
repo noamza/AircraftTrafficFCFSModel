@@ -19,10 +19,10 @@ public class SchedulerFCFS {
 		flights = new Flights();
 		sectors = new Sectors();
 		airports = new Airports();
-		//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
-		//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
-		String workingDirectory = "/Users/hhuynh/Desktop/scheduler/inputs/";
-		flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
+
+		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
+		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
+		flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true);
 		//flights.loadFlightsFromAces(workingDirectory+"job_9_sector_transitTime_takeoffLanding_35h_1.csv", true );
 		
 		//flights.loadFlightsFromAces(workingDirectory + "job_KSFO_arrs.csv", true);
@@ -115,7 +115,7 @@ public class SchedulerFCFS {
 		
 
 		sectors.printSectorMaxCaps();
-		airports.printMinSpacing();
+		//airports.printMinSpacing();
 
 		Main.p("total delay in hours = " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
 		Main.p("total delay per flight secs = " + td/(37000*1000));
