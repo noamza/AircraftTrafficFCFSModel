@@ -165,15 +165,24 @@ public class Airports {
 	}	
 	
 	public void printAirports(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
-			f.print();
+		for (AirportTree a : airportList.values()){ //io.println("");
+			
+			a.print();
 		}
 		io.println("TOTAL Airports: " + airportList.size());
 	}
 	
+	public void printAirports(String airport){ 
+		for (AirportTree a : airportList.values()){ //io.println("");
+			if (a.airportName.equals(airport)) {
+				a.print(airport);
+			}
+		}
+	}
+	
 	public void printMinSpacing(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
-			f.printMinSpacing();
+		for (AirportTree a : airportList.values()){ //io.println("");
+			a.printMinSpacing();
 		}
 	}
 	

@@ -22,7 +22,9 @@ public class SchedulerFCFS {
 
 		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
 		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
-		flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true);
+		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
+		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
+		//flights.loadTaxiOffset(workingDirectory+"AirportTaxi.csv");
 		//flights.loadFlightsFromAces(workingDirectory+"job_9_sector_transitTime_takeoffLanding_35h_1.csv", true );
 		
 		//flights.loadFlightsFromAces(workingDirectory + "job_KSFO_arrs.csv", true);
@@ -113,9 +115,19 @@ public class SchedulerFCFS {
 		System.out.println("done " + dateFormat.format(date));
 		Runtime r = Runtime.getRuntime();
 		
-
-		sectors.printSectorMaxCaps();
+		//sectors.printSectors();
+		
+		try {
+			FileWriter fstream = new FileWriter(workingDirectory+"fcfs_sector_traffic.csv");
+			BufferedWriter sector_out = new BufferedWriter(fstream);
+			sectors.printSectorsToFile(sector_out);
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+			//System.out.println("sectors max cap:");
+		//sectors.printSectorMaxCaps();
 		//airports.printMinSpacing();
+		airports.printAirports("KBOS");
 
 		Main.p("total delay in hours = " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
 		Main.p("total delay per flight secs = " + td/(37000*1000));
@@ -147,7 +159,22 @@ public class SchedulerFCFS {
 		int n = Integer.MAX_VALUE;
 		Main.p(""+n/(3600*1000*24.0));
 		Main.p("FIN!");
-
+		
+		Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
+		for(Flight f: flightList){
+			if(airportDelay.get(f.departureAirport)==null){
+				airportDelay.put(f.departureAirport, 0.0);
+			}				
+			airportDelay.put(f.departureAirport, airportDelay.get(f.departureAirport) + f.atcGroundDelay);
+		}
+		Enumeration<String> enumKey = airportDelay.keys();
+		while(enumKey.hasMoreElements()) {
+			String k = enumKey.nextElement();
+			Double val = airportDelay.get(k);
+			if(val != 0.0) { val /= 60000;}
+			//System.out.println(k + "," + val);
+		}
+				
 	}
 
 

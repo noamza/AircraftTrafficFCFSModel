@@ -28,7 +28,8 @@ class arrivalTrafficCMPcomparator implements Comparator<TreeSet<Integer>> {
 
 
 public class AirportTree {
-	final static int DEFAULT_ARR_DEP_RATE = 30;//3600000; // 1 per 2 minute, or 1 per 1 millisec (unconstrained)
+	//final static int DEFAULT_ARR_DEP_RATE = 30;//3600000; // 1 per 2 minute, or 1 per 1 millisec (unconstrained)
+	final static int DEFAULT_ARR_DEP_RATE = 31; 
 	final static int DEFAULT_UNIMPEDED_TAXI_TIME = 5;//(min) from Gano
 	String airportName;
 	PrintStream io = System.out;
@@ -509,10 +510,26 @@ public class AirportTree {
 	
 	public void print(){
 		io.println(airportName);
+		io.println("Arr Traffic: " + airportArrivalTraffic.size());
+		io.println("Dep Traffic: " + airportDepartureTraffic.size());
 		printDelayVars();
 		printCaps();
 		printArrTraffic();
 		printDepTraffic();
+		io.println("");
+	}
+	
+	public void print(String airport) {
+		if(airportName.equals(airport)) {
+			io.println(airportName);
+			io.println("Arr Traffic: " + airportArrivalTraffic.size());
+			io.println("Dep Traffic: " + airportDepartureTraffic.size());
+			printDelayVars();
+			printCaps();
+			printArrTraffic();
+			printDepTraffic();
+			io.println("");
+		}
 	}
 	
 	public void printMinSpacing(){

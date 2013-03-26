@@ -8,6 +8,7 @@ package fcfs;
  * 
  */
 
+import java.io.BufferedWriter;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -194,6 +195,25 @@ public class SectorTree {
 		
 	}
 	
+	public void printToFile(BufferedWriter out) {
+		if (sectorTraffic.size() == 0) return;
+		try {
+			int time;
+			int capacity;
+			out.write(sectorName + "," + maxCapacity + "," + sectorTraffic.size() + ",");
+			Iterator<FlightIntervalNode> it = sectorTraffic.iterator();
+			while(it.hasNext()) {
+				FlightIntervalNode cu = it.next();
+				time = cu.getTime();
+				capacity = cu.getCapacity();
+				out.write(time + ":" + capacity + ",");
+			}
+			out.write("\n");
+		}catch (Exception e){
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
 	public void printMaxCapacity(){
 		Iterator<FlightIntervalNode> it = sectorTraffic.iterator();
 		int max = 0;
@@ -201,7 +221,7 @@ public class SectorTree {
 			FlightIntervalNode cu = it.next();
 			max = (cu.capacity > max)? cu.capacity: max;
 		}
-		Main.p(sectorName + " max cap: " + max + " : " + maxCapacity);
+		Main.p(sectorName + " cap: " + max + " | max cap: " + maxCapacity);
 		if(max>maxCapacity){
 			Main.p("!!!!!!!!!!!!!!***********!!!!!!!ERROR MAX EXCEEDS CAPACITY");
 			System.out.println(sectorName + " max cap: " + max + " : " + maxCapacity);
@@ -225,6 +245,12 @@ public class SectorTree {
 		//compares by entering time, if entering times are equals, returns -1(?)
 		public int compareTo(FlightIntervalNode o ){
 			return (time-o.time); //!= 0? time-o.time:-1;
+		}
+		public int getTime() {
+			return time;
+		}
+		public int getCapacity() {
+			return capacity;
 		}
 	}
 	

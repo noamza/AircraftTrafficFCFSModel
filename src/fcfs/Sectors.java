@@ -54,6 +54,18 @@ public class Sectors {
 		}
 	}
 	
+	public void printSectorsToFile(BufferedWriter out) {
+		for (SectorTree s: sectorList.values()) {
+			try {
+				//out.write("**SectorName" + "," +"MaxCapacity" + "," + "TrafficSize");
+				s.printToFile(out);
+			}catch (Exception e){//Catch exception if any
+				System.err.println("Error: " + e.getMessage());
+			}
+			
+		}
+	}
+	
 	public void printSectorMaxCaps(){ 
 		for (SectorTree s : sectorList.values()){
 			s.printMaxCapacity();
