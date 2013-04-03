@@ -35,6 +35,7 @@ public class AirportTree {
 	PrintStream io = System.out;
 	
 	TreeSet<Integer> airportArrivalTraffic = new TreeSet<Integer>();
+	TreeSet<Integer> scheduledAirportArrivalTraffic = new TreeSet<Integer>();
 	/*
 	//Coupled Metering Points (CMP)
 	TreeSet<Integer> airportArrivalTrafficCMP1 = new TreeSet<Integer>();
@@ -46,8 +47,11 @@ public class AirportTree {
 	*/
 	
 	TreeSet<Integer> airportDepartureTraffic = new TreeSet<Integer>();
+	TreeSet<Integer> scheduledAirportDepartureTraffic = new TreeSet<Integer>();
 	
 	TreeSet<Flight> arrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());	
+
+	
 	private boolean departureContract = true;
 	
 	TreeSet<CapacityByTime> airportCapacities = new TreeSet<CapacityByTime>(); //aspm data
@@ -456,6 +460,13 @@ public class AirportTree {
 		return soonest;
 	}
 	
+	public int insertAtSoonestArrival(int arrival, int scheduledArrival){
+		int soonest = getSoonestArrivalSlot(arrival);
+		airportArrivalTraffic.add(soonest);
+		scheduledAirportArrivalTraffic.add(scheduledArrival);
+		return soonest;
+	}
+	
 	//returns false if this arrival time was not in list
 	public boolean freeArrivalSlot(int arrivalTimeToRemove){
 		int closest = airportArrivalTraffic.floor(arrivalTimeToRemove);
@@ -469,10 +480,17 @@ public class AirportTree {
 		
 	}
 	
-	
+	/*
 	public int insertAtSoonestDeparture(int departure){
 		int soonest = getSoonestDepartureSlot(departure);
 		airportDepartureTraffic.add(soonest);
+		return soonest;
+	}*/
+	
+	public int insertAtSoonestDeparture(int departure, int scheduledDeparture){
+		int soonest = getSoonestDepartureSlot(departure);
+		airportDepartureTraffic.add(soonest);
+		scheduledAirportDepartureTraffic.add(scheduledDeparture + (int)(Math.random()*1000));
 		return soonest;
 	}
 	
@@ -487,6 +505,15 @@ public class AirportTree {
 		}
 		io.println("***End deps");
 	}
+	
+	public void printScheduledDepTraffic(){
+		io.println("***Start ScheduledDEP(" + scheduledAirportDepartureTraffic.size() + ")");
+		for(int c: scheduledAirportDepartureTraffic){
+			System.out.println(c);
+		}
+		io.println("***End scheduled deps");
+	}
+	
 	public void printCaps(){
 		io.println("***Start caps(" + airportCapacities.size() + ")");
 		for(CapacityByTime cu: airportCapacities){
@@ -501,6 +528,14 @@ public class AirportTree {
 			System.out.println(c);
 		}
 		io.println("***End arrs");
+	}
+	
+	public void printScheduledArrTraffic() {
+		io.println("***Start ScheduledARR(" + scheduledAirportArrivalTraffic.size() + ")");
+		for(int c: scheduledAirportArrivalTraffic) {
+			System.out.println(c);
+		}
+		io.println("***End scheduled arrs");
 	}
 	
 	public void printDelayVars(){
@@ -527,7 +562,9 @@ public class AirportTree {
 			printDelayVars();
 			printCaps();
 			printArrTraffic();
+			printScheduledArrTraffic();
 			printDepTraffic();
+			printScheduledDepTraffic();
 			io.println("");
 		}
 	}

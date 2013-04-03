@@ -66,19 +66,22 @@ public class SchedulerFCFS {
 			
 			ArrayList<SectorAirport> path = f.path;
 			int delay = 0;
+			
 			while(!validFlight){
 				//Main.p("delay:: " + delay);
 				int maxDelay = 0;
-				maxDelay = java.lang.Math.max(airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed+delay)-(f.departureTimeProposed+delay),maxDelay);
+				int departureDelay = airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed+delay)-(f.departureTimeProposed+delay);
+				maxDelay = java.lang.Math.max(departureDelay,maxDelay);
+				
 				for(SectorAirport s: path){	
 					//Main.p("delay " + delay);
-					maxDelay = java.lang.Math.max(sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay),maxDelay);
+					int sectorDelay = sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay);
+					maxDelay = java.lang.Math.max(sectorDelay,maxDelay);
 				}
 				
 				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
 
 				//slow down
-				
 				if(arrivalDelay <= (longestDuration - nominalDuration)) {
 					arrivalDelay = 0;
 				}
@@ -89,7 +92,10 @@ public class SchedulerFCFS {
 					validFlight = true;
 					//System.out.println("found a flight at: " + delay);
 					int zero = 0;
-					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay) - (f.departureTimeProposed+delay);
+					int departureTimeFinal = f.departureTimeProposed + delay; 
+					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay, f.departureTimeProposed) - (f.departureTimeProposed+delay);
+					f.departureTimeFinal = departureTimeFinal;
+					
 					//Main.p("zero 0")
 					Main.Assert(zero==0, "errror in scheduling, should be 0");
 					
@@ -98,13 +104,16 @@ public class SchedulerFCFS {
 						Main.Assert(zero==0, "errror in scheduling, should be 0");
 					}
 					
-					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
+					int arrivalTimeFinal = f.arrivalTimeProposed + delay;
+					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
+					f.arrivalTimeFinal = arrivalTimeFinal;
 					//f.print();
 					//Main.Assert(zero==0, "errror in scheduling, should be 0");
 
 					f.atcGroundDelay = delay;
 
 					td+=delay; 
+					
 					if(delay!=0) c++;
 
 				} else delay+= maxDelay;
@@ -147,7 +156,6 @@ public class SchedulerFCFS {
 					out.write(f.id +","+ (s.entryTime+delay)+","+(s.entryTime+s.transitTime+delay)+"," + s.transitTime+","+ s.raw+"\n");
 				}				
 			}
-			//out.write("Hello Java");
 			//Close the output stream
 			out.close();
 		}catch (Exception e){//Catch exception if any
@@ -159,7 +167,7 @@ public class SchedulerFCFS {
 		int n = Integer.MAX_VALUE;
 		Main.p(""+n/(3600*1000*24.0));
 		Main.p("FIN!");
-		
+		/*
 		Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
 		for(Flight f: flightList){
 			if(airportDelay.get(f.departureAirport)==null){
@@ -173,8 +181,15 @@ public class SchedulerFCFS {
 			Double val = airportDelay.get(k);
 			if(val != 0.0) { val /= 60000;}
 			//System.out.println(k + "," + val);
-		}
-				
+		}*/
+		/*
+		System.out.println("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeProposed,ArrivalTimeProposed,atcGroundDelay");
+		for(Flight f: flightList) {
+			
+			if(f.departureAirport.equals("KJFK")) {
+				System.out.println(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," + f.arrivalTimeProposed + "," + f.atcGroundDelay);
+			}
+		}*/
 	}
 
 

@@ -30,9 +30,10 @@ public class Sectors {
 			  while ((line = br.readLine()) != null){
 				  // sectorid(0), capcity(1),
 				  subs = line.split(",");
+				  int cap = Integer.parseInt(subs[1]);
 				  if( subs.length == 2){ //&& !line.startsWith("*")){
 					  //f = new SectorTree(subs[0], Integer.parseInt(subs[1]));  
-					  sectorList.put(subs[0], new SectorTree(subs[0], Integer.parseInt(subs[1])));
+					  sectorList.put(subs[0], new SectorTree(subs[0], cap));
 				  } else {
 					  io.println("not 7 " + line);
 				  } 

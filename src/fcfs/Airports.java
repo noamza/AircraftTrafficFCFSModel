@@ -95,7 +95,7 @@ public class Airports {
 						//aar = 60;
 						//Main.p(adr + " katl " + aar );
 					//}
-					
+					//aar = 9999;
 					f.airportCapacities.add(new CapacityByTime(timeInMills, adr, aar));
 					//c.print();
 					//io.println(airportList.size());
@@ -185,7 +185,7 @@ public class Airports {
 			a.printMinSpacing();
 		}
 	}
-	
+	/*
 	public int scheduleDeparture(String airportName, int depTime){
 		AirportTree a = airportList.get(airportName);
 		if(a == null){
@@ -193,7 +193,7 @@ public class Airports {
 			airportList.put(airportName, a);
 		}
 		return a.insertAtSoonestDeparture(depTime);
-	}
+	}*/
 	
 	public int scheduleArrival(String airportName, int arrTime){
 		AirportTree a = airportList.get(airportName);
@@ -202,6 +202,24 @@ public class Airports {
 			airportList.put(airportName, a);
 		}
 		return a.insertAtSoonestArrival(arrTime);
+	}
+	
+	public int scheduleDeparture(String airportName, int depTime, int schDepTime){
+		AirportTree a = airportList.get(airportName);
+		if(a == null){
+			a = new AirportTree(airportName);
+			airportList.put(airportName, a);
+		}
+		return a.insertAtSoonestDeparture(depTime, schDepTime);
+	}
+	
+	public int scheduleArrival(String airportName, int arrTime, int schArrTime){
+		AirportTree a = airportList.get(airportName);
+		if(a == null){
+			a = new AirportTree(airportName);
+			airportList.put(airportName, a);
+		}
+		return a.insertAtSoonestArrival(arrTime, schArrTime);
 	}
 	
 	public int getSoonestDeparture(String airportName, int departureTime){

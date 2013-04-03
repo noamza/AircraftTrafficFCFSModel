@@ -20,14 +20,17 @@ public 	class Flight implements Comparable<Flight>{
 	
 	int gate_perturbation = 0; // based on ASPM data, always positive
 	int taxi_perturbation = 0; // based on ASPM data, always positive
-
+	
 	//change each run.
 	int atcAirDelay = 0;//air delay
 	int atcGroundDelay = 0;//ground delay	
 	int wheelsOffTime = -1; //wheels off time
 	int arrivalFirstSlot = -1; //original slot, if flight misses this slot, we want to know how much it misses it by
+	int departureTimeFinal = -1;
 	int arrivalTimeFinal = -1; //wheels on time
-
+	int arrivalAirportDelay = -1;
+	int departureAirportDelay = -1;
+	
 	//for debugging
 	int numberOfJiggles = 0; //number of times a flights departure and or arrival times are modified
 	int totalJiggleAmount = 0;// in millisecs
