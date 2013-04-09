@@ -1,5 +1,6 @@
 package fcfs;
 
+import java.io.BufferedWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,10 @@ class arrivalTrafficCMPcomparator implements Comparator<TreeSet<Integer>> {
 
 public class AirportTree {
 	//final static int DEFAULT_ARR_DEP_RATE = 30;//3600000; // 1 per 2 minute, or 1 per 1 millisec (unconstrained)
-	final static int DEFAULT_ARR_DEP_RATE = 31; 
+	final static int DEFAULT_ARR_DEP_RATE = 31;
+	final static int DEFAULT_ARR_RATE = 31;
+	final static int DEFAULT_DEP_RATE = 31;
+	
 	final static int DEFAULT_UNIMPEDED_TAXI_TIME = 5;//(min) from Gano
 	String airportName;
 	PrintStream io = System.out;
@@ -341,14 +345,14 @@ public class AirportTree {
 	//returns spacing in milleseconds i.e AAR 120 / hr = 30000 ms / arrival
 	public int getArrivalSpacing(int time){
 		CapacityByTime c = airportCapacities.floor(new CapacityByTime(time));
-		int aar = c != null? c.aar: DEFAULT_ARR_DEP_RATE; //3600000;//30;//9999;
+		int aar = c != null? c.aar: DEFAULT_ARR_RATE; //3600000;//30;//9999;
 		return 60*60*1000 / aar;
 		
 	}
 	
 	public int getDepartureSpacing(int time){
 		CapacityByTime c = airportCapacities.floor(new CapacityByTime(time));
-		int adr = c != null? c.adr: DEFAULT_ARR_DEP_RATE;//3600000; //30;//9999;
+		int adr = c != null? c.adr: DEFAULT_DEP_RATE;//3600000; //30;//9999;
 		return 60*60*1000 / adr;
 	}
 	
@@ -522,6 +526,25 @@ public class AirportTree {
 		io.println("***End caps");
 	}
 	
+	public void printCapsToFile(BufferedWriter out) {
+		try {
+			if(airportCapacities.isEmpty()) {
+				out.write(airportName +",");
+				out.write("0" + "," + DEFAULT_DEP_RATE +"," + DEFAULT_ARR_RATE);
+				out.write("\n");
+			}
+			else {
+				for(CapacityByTime cu: airportCapacities) {
+					out.write(airportName+",");
+					out.write(cu.time + "," + cu.adr + "," + cu.aar);
+					out.write("\n");
+				}
+			}
+		}catch (Exception e){
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
 	public void printArrTraffic(){
 		io.println("***Start ARR(" + airportArrivalTraffic.size() + ")");
 		for(int c: airportArrivalTraffic){
@@ -536,6 +559,43 @@ public class AirportTree {
 			System.out.println(c);
 		}
 		io.println("***End scheduled arrs");
+	}
+	
+	public void printDepTrafficToFile(BufferedWriter dep, BufferedWriter schedDep) {
+		try{
+			dep.write(airportName + ",");
+			for(int c: airportDepartureTraffic) {
+				dep.write(c +",");
+			}
+			dep.write("\n");
+			
+			schedDep.write(airportName + ",");
+			for(int d: scheduledAirportDepartureTraffic) {
+				schedDep.write(d+",");
+			}
+			schedDep.write("\n");
+			
+		}catch (Exception e){
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void printArrTrafficToFile(BufferedWriter arr, BufferedWriter schedArr) {
+		try{
+			arr.write(airportName + ",");
+			for(int c: airportArrivalTraffic) {
+				arr.write(c +",");
+			}
+			arr.write("\n");
+			
+			schedArr.write(airportName +",");
+			for(int c: scheduledAirportArrivalTraffic) {
+				schedArr.write(c+",");
+			}
+			schedArr.write("\n");
+		}catch (Exception e){
+			System.err.println("Error: " + e.getMessage());
+		}
 	}
 	
 	public void printDelayVars(){
@@ -566,6 +626,23 @@ public class AirportTree {
 			printDepTraffic();
 			printScheduledDepTraffic();
 			io.println("");
+		}
+	}
+	
+	public void printToFile(BufferedWriter cap, BufferedWriter dep, BufferedWriter schedDep, BufferedWriter arr, BufferedWriter schedArr) {
+		try{
+			printCapsToFile(cap);
+			if(!airportArrivalTraffic.isEmpty() && !scheduledAirportArrivalTraffic.isEmpty()) {
+				printArrTrafficToFile(arr, schedArr);
+			}
+			if(!airportDepartureTraffic.isEmpty() && !scheduledAirportDepartureTraffic.isEmpty()) {
+				printDepTrafficToFile(dep, schedDep);
+			}
+			
+			
+			
+		}catch (Exception e){
+			System.err.println("Error: " + e.getMessage());
 		}
 	}
 	
@@ -618,7 +695,9 @@ public class AirportTree {
 				
 				//REAL VALIDATION
 				int lastTimeSpace = currentTime-lastTime;
-				Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime), "lastTimeSpace >= getArrivalSpacing(lastTime)");
+				//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getArrivalSpacing(lastTime));
+				Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
+						" ARR lastTimeSpace >= getArrivalSpacing(lastTime) " + getArrivalSpacing(lastTime));
 				
 				if((currentTime-lastTime) < minSpacing){
 					minSpacing = currentTime-lastTime;
@@ -639,11 +718,11 @@ public class AirportTree {
 			lastTime = Short.MIN_VALUE*10;
 			timeOfMin = 0;
 
-			for(Integer currentTime: airportDepartureTraffic){
-				
+			for(Integer currentTime: airportDepartureTraffic){				
 				//REAL VALIDATION
 				int lastTimeSpace = currentTime-lastTime;
-				Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime), "lastTimeSpace >= getArrivalSpacing(lastTime)");
+				//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getDepartureSpacing(lastTime));
+				Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
 				
 				if((currentTime-lastTime) < minSpacing){
 					minSpacing = currentTime-lastTime;

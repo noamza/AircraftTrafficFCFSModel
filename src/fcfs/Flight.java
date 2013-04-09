@@ -74,6 +74,28 @@ public 	class Flight implements Comparable<Flight>{
 		return f;
 	}	
 	
+	public boolean validateFCFS(){
+		boolean valid = true;
+		if(id<0){Main.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
+		if(departureTimeProposed<0){Main.p("ERROR " + id + " is invalid! departureTimeProposed<0"); printVariables(); valid =  false;}
+		//if(atcAirDelay<0){Main.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
+		if(atcGroundDelay<0){Main.p("ERROR " + id + " is invalid! airDelayFromArrivalAirport<0"); printVariables(); valid =  false;}		
+		if(departureTimeFinal<0){Main.p("ERROR " + id + " is invalid! taxi_unimpeded_time<0"); printVariables(); valid =  false;}
+		if(departureTimeProposed>departureTimeFinal){Main.p("ERROR " + id + " is invalid! departureTimeProposed>departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeProposed>arrivalTimeFinal){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed>arrivalTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeFinal<=departureTimeFinal){Main.p("ERROR " + id + " is invalid! arrivalTimeFinal<=departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeProposed<=departureTimeProposed){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
+		if(departureTimeProposed+atcGroundDelay!=departureTimeFinal){
+			Main.p("ERROR " + id + " is invalid! departureTimeProposed+atcGroundDelay!=departureTimeFinal");printVariables(); valid =  false;}
+		//if(arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal){
+			//Main.p("ERROR " + id + " is invalid! arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal");printVariables(); valid =  false;}
+		//Main.p("here");
+		//if(arrivalTimeFinal - arrivalTimeProposed != atcGroundDelay){Main.p("good news");}
+		//if(id==36788){Main.p(arrivalTimeFinal - arrivalTimeProposed +" "+ atcGroundDelay);}
+		
+		return valid;
+	}
+	
 	public boolean validate(){
 		boolean valid = true;
 		if(id<0){Main.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
@@ -119,6 +141,7 @@ public 	class Flight implements Comparable<Flight>{
 		o.println("[] ");
 		o.println("id " + id + " " + arrivalAirport + " to " + departureAirport);
 		o.println("departureTimeProposed " + departureTimeProposed/toMinutes);
+		o.println("departureTimeFinal " + departureTimeFinal/toMinutes);
 		o.println("arrivalTimeProposed " + arrivalTimeProposed/toMinutes);
 		o.println("wheelsOffTime " + wheelsOffTime/toMinutes);
 		o.println("arrivalTimeFinal " + arrivalTimeFinal/toMinutes);

@@ -13,6 +13,7 @@ import java.util.*;
 public class Flights {
 	
 	PrintStream io = System.out;
+	int ACES_FDS_OFFSET = 3*3600000;//3 hours
 	Hashtable<Integer, Flight> flightList;
 	//Map<Integer,Flight> f = new Map<Integer, Flight>();
 	Hashtable<String, Integer> taxiOffset; //in millisecs
@@ -132,10 +133,10 @@ public class Flights {
 				  if( subs.length == 7){ //&& !line.startsWith("*")){
 					  //inputCount++;
 					  //test.put(Integer.parseInt(subs[0]),0);
-					  int entryTime = Integer.parseInt(subs[1]);
+					  int entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[2]));
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[1]));
-					  int transitTime = Integer.parseInt(subs[3]);
+					  int transitTime = Integer.parseInt(subs[3]) + ACES_FDS_OFFSET;
 					  String facilityName = subs[5];
 					  writeSector = true;
 					  
@@ -155,7 +156,8 @@ public class Flights {
 					  }
 
 					  if(subs[6].equals("XXXX")){
-						  f.arrivalTimeProposed = Integer.parseInt(subs[2]);
+						  int exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
+						  f.arrivalTimeProposed = exitTime;
 						  correctTransitSequence = false;
 						  f.arrivalAirport = facilityName;
 						  //add tracons to list
@@ -197,6 +199,12 @@ public class Flights {
 	void validate(){
 		for (Flight f : flightList.values()){
 			f.validate();
+		}
+	}
+	
+	void validateFCFS(){
+		for (Flight f : flightList.values()){
+			f.validateFCFS();
 		}
 	}
 	

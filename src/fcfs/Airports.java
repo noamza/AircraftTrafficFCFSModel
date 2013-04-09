@@ -81,21 +81,25 @@ public class Airports {
 					int day = Integer.parseInt(subs[1]) - 1;
 					int hour = Integer.parseInt(subs[2]);
 					int quarterHour = Integer.parseInt(subs[3])-1;
-					int timeInMills = (((day*24 + hour)*60 + quarterHour*15)*60*1000); //converts all to milliseconds  
+					int timeInMills = (((day*24 + hour)*60 + quarterHour*15)*60*1000);// - (3*3600000); //converts all to milliseconds  
 					String[] subss = subs[4].split("_");
 					int adr = Integer.parseInt(subss[2]);
 					int aar = Integer.parseInt(subss[4]);
 					
 					//adr = 9999; //testing unconstrained
 					//aar = 9999; //testing unconstrained
+					/*
+					if(!name.equals("KJFK")){
+						aar = 9999;
+						adr = 9999;
+					}
+					*/
+					/*
+					else{
+						aar = aar * 6/10;
+						adr = adr * 6/10;
+					}*/
 					
-					//Main.p(name);
-					
-					//if(name.equals("KDFW")){
-						//aar = 60;
-						//Main.p(adr + " katl " + aar );
-					//}
-					//aar = 9999;
 					f.airportCapacities.add(new CapacityByTime(timeInMills, adr, aar));
 					//c.print();
 					//io.println(airportList.size());
@@ -178,6 +182,17 @@ public class Airports {
 				a.print(airport);
 			}
 		}
+	}
+	
+	public void printAirportsToFile(BufferedWriter cap, BufferedWriter dep, BufferedWriter schedDep, BufferedWriter arr, BufferedWriter schedArr) {
+		for (AirportTree a : airportList.values()){
+			try{
+				a.printToFile(cap,dep,schedDep,arr, schedArr);
+			}catch (Exception e){
+				System.err.println("Error: " + e.getMessage());
+			}
+		}
+			
 	}
 	
 	public void printMinSpacing(){ 

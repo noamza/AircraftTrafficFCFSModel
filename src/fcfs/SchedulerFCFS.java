@@ -24,6 +24,7 @@ public class SchedulerFCFS {
 		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
 		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
 		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
+		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true);
 		//flights.loadTaxiOffset(workingDirectory+"AirportTaxi.csv");
 		//flights.loadFlightsFromAces(workingDirectory+"job_9_sector_transitTime_takeoffLanding_35h_1.csv", true );
 		
@@ -33,8 +34,8 @@ public class SchedulerFCFS {
 		//flights.loadFromAces(workingDirectory+"fcfsj2.csv");
 		//flights.printFlights();
 		
-		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
-		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
+		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
+		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		//sectors.printSectors();
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		//airports.printAirports();
@@ -46,13 +47,13 @@ public class SchedulerFCFS {
 		 * 	find soonest time that works for all sectors + airport, than insert there
 		 * print schedule and print delays
 		 */
-		//h.put("hey", 8);
-		//h.get("hey");
+
 		ArrayList<Flight> flightList = new ArrayList<Flight>(flights.getFlights());
 		//Collections.sort(flightList, new flightIDComparator());
 		//flights.printFlightsFull();
 
 		double td = 0; int c = 0;
+		double totalDelayAbsorbed = 0;
 		//*
 		//    Sort flights by Departure Time.
 		Collections.sort(flightList, new flightDepTimeComparator());
@@ -80,13 +81,25 @@ public class SchedulerFCFS {
 				}
 				
 				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
-
+				
+				boolean here = false;
+				
 				//slow down
+				int realDelay = 0;
 				if(arrivalDelay <= (longestDuration - nominalDuration)) {
+					//if(maxDelay==0&&arrivalDelay!=0){Main.p("is here " + arrivalDelay);}
+					if(maxDelay==0&&arrivalDelay!=0){
+						here = true; 
+						realDelay = arrivalDelay;
+					}
 					arrivalDelay = 0;
+					
 				}
-			
+				
 				maxDelay = java.lang.Math.max(arrivalDelay, maxDelay);
+				//if(here){Main.p(f.id+" " + realDelay);}
+				//{Main.p("maxdelay here: "+ maxDelay + " arrdelay " + arrivalDelay + " delay " + delay );}
+				//if(here)
 				
 				if(maxDelay == 0){
 					validFlight = true;
@@ -96,7 +109,6 @@ public class SchedulerFCFS {
 					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay, f.departureTimeProposed) - (f.departureTimeProposed+delay);
 					f.departureTimeFinal = departureTimeFinal;
 					
-					//Main.p("zero 0")
 					Main.Assert(zero==0, "errror in scheduling, should be 0");
 					
 					for(SectorAirport s: path){	
@@ -104,8 +116,10 @@ public class SchedulerFCFS {
 						Main.Assert(zero==0, "errror in scheduling, should be 0");
 					}
 					
-					int arrivalTimeFinal = f.arrivalTimeProposed + delay;
+					
 					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
+
+					int arrivalTimeFinal = f.arrivalTimeProposed + delay + zero;
 					f.arrivalTimeFinal = arrivalTimeFinal;
 					//f.print();
 					//Main.Assert(zero==0, "errror in scheduling, should be 0");
@@ -126,25 +140,35 @@ public class SchedulerFCFS {
 		
 		//sectors.printSectors();
 		
-		try {
-			FileWriter fstream = new FileWriter(workingDirectory+"fcfs_sector_traffic.csv");
-			BufferedWriter sector_out = new BufferedWriter(fstream);
-			sectors.printSectorsToFile(sector_out);
-		}catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
-		}
-			//System.out.println("sectors max cap:");
+		String fcfsdir = "fcfs_output/";
+		printSectorTraffic(sectors, workingDirectory+fcfsdir);
+		
+		//System.out.println("sectors max cap:");
 		//sectors.printSectorMaxCaps();
 		//airports.printMinSpacing();
-		airports.printAirports("KBOS");
-
-		Main.p("total delay in hours = " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
-		Main.p("total delay per flight secs = " + td/(37000*1000));
+		//airports.printAirports("CYYZ");
+		
+		printAirportTrafficCounts(airports,  workingDirectory+fcfsdir);
+		
+		airports.validate();
+		flights.validateFCFS();
+		double totalD = 0;
+		for(Flight f: flightList){
+			int scheduledArrival = f.arrivalTimeProposed;
+			int actualArrival = f.arrivalTimeFinal;
+			int delay = actualArrival-scheduledArrival;
+			totalD += delay;
+		}
+		
+		Main.p("total ground delay in hours = " + " " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
+		Main.p("total ground delay per flight secs = " + td/(37000*1000));
+		Main.p("Total Delay = " + totalD/3600000 + " Hours, or " + totalD + " milliseconds");
 		System.out.printf("max mem %f total mem %f free mem %f\n", (double)r.maxMemory()/1048576.0, (double)r.totalMemory()/1048576.0, (double)r.freeMemory()/1048576.0);
 		//sectors.printSectors();
 		//*
 		Collections.sort(flightList, new flightIDComparator());
 
+		/*
 		try{
 			// Create file 
 			FileWriter fstream = new FileWriter(workingDirectory+"fcfs_out.csv");
@@ -161,37 +185,111 @@ public class SchedulerFCFS {
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//*/
+		*/
+		
 		//byFlight(workingDirectory);
 
 		int n = Integer.MAX_VALUE;
 		Main.p(""+n/(3600*1000*24.0));
 		Main.p("FIN!");
-		/*
-		Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
-		for(Flight f: flightList){
-			if(airportDelay.get(f.departureAirport)==null){
-				airportDelay.put(f.departureAirport, 0.0);
-			}				
-			airportDelay.put(f.departureAirport, airportDelay.get(f.departureAirport) + f.atcGroundDelay);
-		}
-		Enumeration<String> enumKey = airportDelay.keys();
-		while(enumKey.hasMoreElements()) {
-			String k = enumKey.nextElement();
-			Double val = airportDelay.get(k);
-			if(val != 0.0) { val /= 60000;}
-			//System.out.println(k + "," + val);
-		}*/
-		/*
-		System.out.println("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeProposed,ArrivalTimeProposed,atcGroundDelay");
-		for(Flight f: flightList) {
-			
-			if(f.departureAirport.equals("KJFK")) {
-				System.out.println(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," + f.arrivalTimeProposed + "," + f.atcGroundDelay);
-			}
-		}*/
+		
+		printAirportDelays(flightList,workingDirectory+fcfsdir);
+		printFlightDetails(flightList, workingDirectory+fcfsdir);
 	}
-
+	
+	public void printFlightDetails(ArrayList<Flight> flightList, String dir){
+		try {
+			FileWriter fstream = new FileWriter(dir + "fcfs_flight_details.csv");
+			BufferedWriter out = new BufferedWriter(fstream);
+			out.write("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeProposed,DepartureTimeFinal,ArrivalTimeProposed,ArrivalTimeFinal,actualDelay,atcGroundDelay,DelayAbsorbedInAir");
+			out.write("\n");
+			for(Flight f: flightList) {
+				double actualDelay = f.arrivalTimeFinal - f.arrivalTimeProposed;
+				double delayAbsorbedInAir = actualDelay - f.atcGroundDelay;
+				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," 
+						+ f.departureTimeFinal + "," + f.arrivalTimeProposed + "," + f.arrivalTimeFinal + "," + f.atcGroundDelay+","+actualDelay+","+delayAbsorbedInAir);
+				out.write("\n");
+			}
+			out.close();
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void printAirportTrafficCounts(Airports airports, String dir) {
+		try {
+			
+			FileWriter capstream = new FileWriter( dir + "fcfs_airport_capacities.csv");
+			BufferedWriter airport_caps_out = new BufferedWriter(capstream);
+			
+			FileWriter depstream = new FileWriter(dir + "fcfs_airport_DEPtraffic.csv");
+			BufferedWriter airport_DEPtraffic_out = new BufferedWriter(depstream);
+			
+			FileWriter arrstream = new FileWriter(dir + "fcfs_airport_ARRtraffic.csv");
+			BufferedWriter airport_ARRtraffic_out = new BufferedWriter(arrstream);
+			
+			FileWriter sdepstream = new FileWriter(dir + "fcfs_airport_schedDEPtraffic.csv");
+			BufferedWriter airport_schedDEPtraffic_out = new BufferedWriter(sdepstream);
+			
+			FileWriter sarrstream = new FileWriter(dir + "fcfs_airport_schedARRtraffic.csv");
+			BufferedWriter airport_schedARRtraffic_out = new BufferedWriter(sarrstream);
+			
+			airports.printAirportsToFile(
+										 airport_caps_out, 
+										 airport_DEPtraffic_out, 
+										 airport_schedDEPtraffic_out, 
+										 airport_ARRtraffic_out, 
+										 airport_schedARRtraffic_out
+										 );
+			
+			airport_caps_out.close();
+			airport_DEPtraffic_out.close();
+			airport_ARRtraffic_out.close();
+			airport_schedDEPtraffic_out.close();
+			airport_schedARRtraffic_out.close();
+			
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void printSectorTraffic(Sectors sectors, String dir) {
+		try {
+			FileWriter fstream = new FileWriter(dir + "fcfs_sector_traffic.csv");
+			BufferedWriter sector_out = new BufferedWriter(fstream);
+			sectors.printSectorsToFile(sector_out);
+			sector_out.close();
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void printAirportDelays(ArrayList<Flight> flightList, String dir) {
+		try {
+			FileWriter fstream = new FileWriter(dir + "fcfs_airport_delays.csv");
+			BufferedWriter out = new BufferedWriter(fstream);
+			Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
+			for(Flight f: flightList){
+				double realDelay = f.arrivalTimeFinal - f.arrivalTimeProposed;
+				
+				if(airportDelay.get(f.arrivalAirport)==null){
+					airportDelay.put(f.arrivalAirport, 0.0);
+				}				
+				airportDelay.put(f.arrivalAirport, airportDelay.get(f.arrivalAirport) + realDelay);
+			}
+			Enumeration<String> enumKey = airportDelay.keys();
+			while(enumKey.hasMoreElements()) {
+				String k = enumKey.nextElement();
+				Double val = airportDelay.get(k);
+				if(val != 0.0) { val /= 60000;}
+				out.write(k + "," + val);
+				out.write("\n");
+			}
+			out.close();
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
 
 	public void byFlight(String workingDirectory){
 
