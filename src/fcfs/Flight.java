@@ -27,6 +27,7 @@ public 	class Flight implements Comparable<Flight>{
 	int wheelsOffTime = -1; //wheels off time
 	int arrivalFirstSlot = -1; //original slot, if flight misses this slot, we want to know how much it misses it by
 	int departureTimeFinal = -1;
+	int arrivalTimeScheduled = -1;
 	int arrivalTimeFinal = -1; //wheels on time
 	int arrivalAirportDelay = -1;
 	int departureAirportDelay = -1;
@@ -237,6 +238,12 @@ class flightFinalArrTimeComparator implements Comparator<Flight>{
 class flightIDComparator implements Comparator<Flight>{
 	public int compare(Flight f1, Flight f2){
 		return f1.id - f2.id;
+	}
+}
+
+class flightArrTimeComparator implements Comparator<Flight>{
+	public int compare(Flight f1, Flight f2) {
+		return f1.arrivalTimeProposed - f2.arrivalTimeProposed;
 	}
 }
 

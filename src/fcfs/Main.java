@@ -39,9 +39,10 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		SchedulerFCFS s = new SchedulerFCFS();
-		s.init();
-		
+		//SchedulerFCFS s = new SchedulerFCFS();
+		//s.init();
+		DepartureArrivalFCFS scheduler = new DepartureArrivalFCFS();
+		scheduler.scheduleFCFS();
 		//FCFSFlexibleSpeed f = new FCFSFlexibleSpeed();
 		//f.schedule(Action.scheduleAtPDT);
 		//f.schedule(Action.scheduleAtPushback);
