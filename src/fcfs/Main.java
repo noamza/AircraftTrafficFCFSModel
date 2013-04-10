@@ -41,8 +41,12 @@ public class Main {
 	public static void main(String[] args) {
 		//SchedulerFCFS s = new SchedulerFCFS();
 		//s.init();
+		
+		
 		DepartureArrivalFCFS scheduler = new DepartureArrivalFCFS();
 		scheduler.scheduleFCFS();
+		
+		
 		//FCFSFlexibleSpeed f = new FCFSFlexibleSpeed();
 		//f.schedule(Action.scheduleAtPDT);
 		//f.schedule(Action.scheduleAtPushback);

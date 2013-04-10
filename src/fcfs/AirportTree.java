@@ -11,12 +11,25 @@ import java.util.TreeSet;
 	
 //time in millisec
 class CapacityByTime implements Comparable<CapacityByTime>{
-	//actual departure rate //actual arrival rate
-	int time = -1; int adr = -1; int aar = -1;
+	//adr actual departure rate 
+	//aar actual arrival rate
+	int time = -1; 
+	int adr = -1; 
+	int aar = -1;
 	CapacityByTime(int t){ time = t;}
-	CapacityByTime(int t, int d, int a){time = t; adr = d; aar = a;}
-	public int compareTo(CapacityByTime o ){ return (time-o.time); } //!= 0? time-o.time:-1;
-	void print(){ System.out.printf("	%d: adr %d aar %d\n", time, adr, aar);}
+	CapacityByTime(int t, int d, int a){
+		time = t; 
+		adr = d; 
+		aar = a;
+	}
+	
+	public int compareTo(CapacityByTime o ){ 
+		return (time-o.time); 
+	} //!= 0? time-o.time:-1;
+	
+	void print(){ 
+		System.out.printf("	%d: adr %d aar %d\n", time, adr, aar);
+	}
 }
 
 
@@ -40,15 +53,6 @@ public class AirportTree {
 	
 	TreeSet<Integer> airportArrivalTraffic = new TreeSet<Integer>();
 	TreeSet<Integer> scheduledAirportArrivalTraffic = new TreeSet<Integer>();
-	/*
-	//Coupled Metering Points (CMP)
-	TreeSet<Integer> airportArrivalTrafficCMP1 = new TreeSet<Integer>();
-	TreeSet<Integer> airportArrivalTrafficCMP2 = new TreeSet<Integer>();
-	TreeSet<Integer> airportArrivalTrafficCMP3 = new TreeSet<Integer>();
-	TreeSet<Integer> airportArrivalTrafficCMP4 = new TreeSet<Integer>();
-	//Set containing the CMP sets
-	TreeSet<TreeSet<Integer>> airportArrivalTrafficSet = new TreeSet<TreeSet<Integer>>(new arrivalTrafficCMPcomparator());
-	*/
 	
 	TreeSet<Integer> airportDepartureTraffic = new TreeSet<Integer>();
 	TreeSet<Integer> scheduledAirportDepartureTraffic = new TreeSet<Integer>();
@@ -61,40 +65,7 @@ public class AirportTree {
 	TreeSet<CapacityByTime> airportCapacities = new TreeSet<CapacityByTime>(); //aspm data
 	double gateMean = 0, gateZeroProbablity = 1, gateStd = 0, taxiMean = 0, 
 		   taxiZeroProbablity = 1, taxiStd = 0, taxiUnimpeded = DEFAULT_UNIMPEDED_TAXI_TIME;//10 from aces 8.0;	
-	/*
-	//Gather arrival traffic CMP's in one set if they're not empty
-	public void gatherArrivalTrafficSet() {
-		if(!airportArrivalTrafficCMP1.isEmpty()) {
-			airportArrivalTrafficSet.add(airportArrivalTrafficCMP1);
-		}
-		else {
-			System.out.println("CMP1 is unused");
-		}
-		if(!airportArrivalTrafficCMP2.isEmpty()) {
-			airportArrivalTrafficSet.add(airportArrivalTrafficCMP2);
-		}
-		else {
-			System.out.println("CMP2 is unused");
-		}
-		if(!airportArrivalTrafficCMP2.isEmpty()) {
-			airportArrivalTrafficSet.add(airportArrivalTrafficCMP3);
-		}
-		else {
-			System.out.println("CMP3 is unused");
-		}
-		if(!airportArrivalTrafficCMP3.isEmpty()) {
-			airportArrivalTrafficSet.add(airportArrivalTrafficCMP4);
-		}
-		else {
-			System.out.println("CMP4 is unused");
-		}
-		
-		if(airportArrivalTrafficCMP1.isEmpty() && airportArrivalTrafficCMP2.isEmpty() 
-			&& airportArrivalTrafficCMP3.isEmpty() && airportArrivalTrafficCMP4.isEmpty()) {
-			System.out.println("all airportArrivalTrafficSets are Empty");
-		}
- 	}
-	*/
+
 	public void setDepartureContract(boolean b){
 		departureContract = false;
 	}
@@ -103,7 +74,8 @@ public class AirportTree {
 		if(airportCapacities!=null){
 			for(CapacityByTime c: airportCapacities){
 				c.time += offset;
-			}}
+			}
+		}
 	}
 	
 	public AirportTree(String name){
@@ -404,31 +376,6 @@ public class AirportTree {
 			}
 		}
 	}
-	/*
-	public int getSoonestCMParrivalSlot(int arrivalTime) {
-		Integer before, previousSpace, currentSpace, after;
-		
-		while(true){
-			
-			before = airportArrivalTraffic.floor(arrivalTime);
-			before = before != null? before : Integer.MIN_VALUE;
-			after = airportArrivalTraffic.ceiling(arrivalTime);
-			after = after!=null? after : Integer.MAX_VALUE;
-			currentSpace = getArrivalSpacing(arrivalTime);
-			previousSpace = getArrivalSpacing(before);
-			if( before + previousSpace <= arrivalTime && arrivalTime + currentSpace <= after){
-				//System.out.printf(" before: %d after: %d ",before, after);
-				return arrivalTime;
-			}
-			if(before + previousSpace > arrivalTime){
-				arrivalTime = before + previousSpace; 
-			} 
-			
-			else {
-				arrivalTime = after + getArrivalSpacing(after); 
-			}
-		}
-	}*/
 	
 	public int getSoonestArrivalSlot(int arrivalTime, int minArrivalTime, int maxArrivalTime){
 		Integer before, previousSpace, currentSpace, after; 
@@ -448,9 +395,7 @@ public class AirportTree {
 				
 				//System.out.println("arrivalTime " + arrivalTime);
 			} 
-			
 			else {
-				
 				arrivalTime = after + getArrivalSpacing(after); 
 			}
 		}
@@ -639,14 +584,35 @@ public class AirportTree {
 				printDepTrafficToFile(dep, schedDep);
 			}
 			
-			
-			
 		}catch (Exception e){
 			System.err.println("Error: " + e.getMessage());
 		}
 	}
 	
-	public void printMinSpacing(){
+	
+	public void printMinDepartureSpacing() {
+		Integer minSpacing = Integer.MAX_VALUE;
+		Integer lastTime = Short.MIN_VALUE*10;
+		Integer timeOfMin = 0;
+
+		for(Integer currentTime: airportDepartureTraffic){
+			if((currentTime-lastTime) < minSpacing){
+				minSpacing = currentTime-lastTime;
+				timeOfMin = lastTime;//currentTime;
+			} 
+			lastTime = currentTime;
+		}
+		if(minSpacing < getDepartureSpacing(timeOfMin)){
+			System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+			printCaps();
+			printDepTraffic();
+			Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
+		}
+		if(minSpacing == getDepartureSpacing(timeOfMin))
+		System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+	}
+	
+	public void printMinArrivalSpacing() {
 		Integer minSpacing = Integer.MAX_VALUE;
 		Integer lastTime = Short.MIN_VALUE*10;
 		Integer timeOfMin = 0;
@@ -666,11 +632,25 @@ public class AirportTree {
 		}
 		if(minSpacing == getArrivalSpacing(timeOfMin))
 		System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-		minSpacing = Integer.MAX_VALUE;
-		lastTime = Short.MIN_VALUE*10;
-		timeOfMin = 0;
+		
+	}
+	
+	public void printMinSpacing(){
+		printMinDepartureSpacing();
+		printMinArrivalSpacing();	
+	}
+	
+	public void validateDepartureTraffic() {
+		Integer minSpacing = Integer.MAX_VALUE;
+		Integer lastTime = Short.MIN_VALUE*10;
+		Integer timeOfMin = 0;
 
-		for(Integer currentTime: airportDepartureTraffic){
+		for(Integer currentTime: airportDepartureTraffic){				
+			//REAL VALIDATION
+			int lastTimeSpace = currentTime-lastTime;
+			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getDepartureSpacing(lastTime));
+			Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
+			
 			if((currentTime-lastTime) < minSpacing){
 				minSpacing = currentTime-lastTime;
 				timeOfMin = lastTime;//currentTime;
@@ -683,62 +663,43 @@ public class AirportTree {
 			printDepTraffic();
 			Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
 		}
-		if(minSpacing == getDepartureSpacing(timeOfMin))
-		System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+		if(minSpacing == getDepartureSpacing(timeOfMin)){
+		//System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+		}
+	}
+	
+	public void validateArrivalTraffic() {
+		Integer minSpacing = Integer.MAX_VALUE;
+		Integer lastTime = Short.MIN_VALUE*10;
+		Integer timeOfMin = 0;
+		for(Integer currentTime: airportArrivalTraffic){
+			
+			//REAL VALIDATION
+			int lastTimeSpace = currentTime-lastTime;
+			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getArrivalSpacing(lastTime));
+			Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
+					" ARR lastTimeSpace >= getArrivalSpacing(lastTime) " + getArrivalSpacing(lastTime));
+			
+			if((currentTime-lastTime) < minSpacing){
+				minSpacing = currentTime-lastTime;
+				timeOfMin = lastTime;//currentTime;
+			}
+			lastTime = currentTime;
+		}
+		if(minSpacing < getArrivalSpacing(timeOfMin)){
+			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+			printCaps();
+			printArrTraffic();
+			Main.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
+		}
+		if(minSpacing == getArrivalSpacing(timeOfMin)){
+			//System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
+		}
 	}
 	
 	public void validate(){
-			Integer minSpacing = Integer.MAX_VALUE;
-			Integer lastTime = Short.MIN_VALUE*10;
-			Integer timeOfMin = 0;
-			for(Integer currentTime: airportArrivalTraffic){
-				
-				//REAL VALIDATION
-				int lastTimeSpace = currentTime-lastTime;
-				//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getArrivalSpacing(lastTime));
-				Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
-						" ARR lastTimeSpace >= getArrivalSpacing(lastTime) " + getArrivalSpacing(lastTime));
-				
-				if((currentTime-lastTime) < minSpacing){
-					minSpacing = currentTime-lastTime;
-					timeOfMin = lastTime;//currentTime;
-				}
-				lastTime = currentTime;
-			}
-			if(minSpacing < getArrivalSpacing(timeOfMin)){
-				System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-				printCaps();
-				printArrTraffic();
-				Main.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
-			}
-			if(minSpacing == getArrivalSpacing(timeOfMin)){
-				//System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			}
-			minSpacing = Integer.MAX_VALUE;
-			lastTime = Short.MIN_VALUE*10;
-			timeOfMin = 0;
-
-			for(Integer currentTime: airportDepartureTraffic){				
-				//REAL VALIDATION
-				int lastTimeSpace = currentTime-lastTime;
-				//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getDepartureSpacing(lastTime));
-				Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
-				
-				if((currentTime-lastTime) < minSpacing){
-					minSpacing = currentTime-lastTime;
-					timeOfMin = lastTime;//currentTime;
-				} 
-				lastTime = currentTime;
-			}
-			if(minSpacing < getDepartureSpacing(timeOfMin)){
-				System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-				printCaps();
-				printDepTraffic();
-				Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
-			}
-			if(minSpacing == getDepartureSpacing(timeOfMin)){
-			//System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			}
+		validateDepartureTraffic();
+		validateArrivalTraffic();
 	}
 	
 	public void test(){

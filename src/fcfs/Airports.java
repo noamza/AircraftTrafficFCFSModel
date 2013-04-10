@@ -149,13 +149,26 @@ public class Airports {
 		}
 		a.insertAtSoonestArrivalWithForwardGapsRemoved(flight, proposedArrivalTime, currentTime);
 	}
+	
+	public void validateDepartureTraffic(){
+		for (AirportTree at: airportList.values()) {
+			at.validateDepartureTraffic();
+		}
+	}
+	
+	public void validateArrivalTraffic() {
+		for (AirportTree at: airportList.values()) {
+			at.validateArrivalTraffic();
+		}
+	}
+	
 	public void validate(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
+		for (AirportTree f : airportList.values()){ 
 			f.validate();
 		}
 	}	
 	public void resetToStart(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
+		for (AirportTree f : airportList.values()){
 			f.resetToStart();
 		}
 	}
