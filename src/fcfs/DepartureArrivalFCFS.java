@@ -1,3 +1,8 @@
+/*
+ * @author hvhuynh
+ * 
+ * */
+
 package fcfs;
 import java.util.*;
 import java.io.*;
@@ -9,8 +14,8 @@ public class DepartureArrivalFCFS {
 
 	public void scheduleFCFS(){
 
-		double speedUp = 0.025;
-		double slowDown = 0.05;
+		//double speedUp = 0.025;
+		//double slowDown = 0.05;
 		double totalGroundDelay = 0;
 		double totalAirDelay = 0;
 		flights = new Flights();
@@ -34,19 +39,23 @@ public class DepartureArrivalFCFS {
 		Collections.sort(flightList, new flightDepTimeComparator());
 		
 		//Schedule Departing Flights
-		for (Flight f: flightList) {
+		for (Flight flight: flightList) {
+			
 			//get soonest time slot the flight can depart
-			int departureTimeProposed = airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed);
+			int departureTimeProposed = airports.getSoonestDeparture(flight.departureAirport, flight.departureTimeProposed);
+			
+			
+			
 			//schedule the flight
-			int departureTimeFinal = airports.scheduleDeparture(f.departureAirport, departureTimeProposed, f.departureTimeProposed);
-			int groundDelay = departureTimeFinal - f.departureTimeProposed;
+			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeProposed);
+			int groundDelay = departureTimeFinal - flight.departureTimeProposed;
 			totalGroundDelay += groundDelay;
-			f.atcGroundDelay = groundDelay;
-			f.departureTimeFinal = departureTimeFinal;
-			f.arrivalTimeScheduled = f.arrivalTimeProposed;
+			flight.atcGroundDelay = groundDelay;
+			flight.departureTimeFinal = departureTimeFinal;
+			flight.arrivalTimeScheduled = flight.arrivalTimeProposed;
 			//scheduled arrival time changes when ground delay is taken into account
-			f.arrivalTimeProposed = f.arrivalTimeProposed + groundDelay;
-			arrivingFlightList.add(f);			
+			flight.arrivalTimeProposed = flight.arrivalTimeProposed + groundDelay;
+			arrivingFlightList.add(flight);			
 		}
 		
 		//validate departure traffic spacing at airports.
@@ -69,6 +78,7 @@ public class DepartureArrivalFCFS {
 		
 		//validate arrival traffic spacing at airports.
 		airports.validateArrivalTraffic();
+		//validate individual flights by checking departure/arrival times
 		flights.validateFCFS();
 		
 		System.out.println("Total Ground Delay = " + totalGroundDelay/3600000);
@@ -81,22 +91,22 @@ public class DepartureArrivalFCFS {
 		printAirportDelays(flightList, workingDirectory+outputdir);
 		printAirportTrafficCounts(airports,  workingDirectory+outputdir);
 		printFlightDetails(flightList, workingDirectory+outputdir);
+		
+		System.out.println("Finished");
 	}
 		
 
-		
-		
-		
-	
 	
 	public void printFlightDetails(ArrayList<Flight> flightList, String dir){
 		try {
-			FileWriter fstream = new FileWriter(dir + "depArr_fcfs_flight_details.csv");
+			String fname = "depArr_fcfs_flight_details.csv";
+			System.out.println("Printing flight details to " + dir +fname);
+			FileWriter fstream = new FileWriter(dir + fname);
 			BufferedWriter out = new BufferedWriter(fstream);
 			out.write("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeScheduled,DepartureTimeFinal,ArrivalTimeScheduled,ArrivalTimeFinal,TotalDelay,GroundDelay,AirDelay");
 			out.write("\n");
 			for(Flight f: flightList) {
-				double totalDelay = f.atcGroundDelay - f.atcAirDelay;
+				double totalDelay = f.atcGroundDelay + f.atcAirDelay;
 				double totalGroundDelay = f.atcGroundDelay;
 				double totalAirDelay = f.atcAirDelay;
 				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," 
@@ -111,7 +121,7 @@ public class DepartureArrivalFCFS {
 	
 	public void printAirportTrafficCounts(Airports airports, String dir) {
 		try {
-			
+			System.out.println("Printing traffic counts to " + dir);
 			FileWriter capstream = new FileWriter( dir + "fcfs_airport_capacities.csv");
 			BufferedWriter airport_caps_out = new BufferedWriter(capstream);
 			
@@ -159,7 +169,9 @@ public class DepartureArrivalFCFS {
 	
 	public void printAirportDelays(ArrayList<Flight> flightList, String dir) {
 		try {
-			FileWriter fstream = new FileWriter(dir + "deparr_fcfs_airport_delays.csv");
+			String fname = "deparr_fcfs_airport_delays.csv";
+			System.out.println("Printing airport delays to " + dir+fname);
+			FileWriter fstream = new FileWriter(dir + fname);
 			BufferedWriter out = new BufferedWriter(fstream);
 			Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
 			for(Flight f: flightList){
