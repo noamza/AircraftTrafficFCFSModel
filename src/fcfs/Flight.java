@@ -12,6 +12,7 @@ public 	class Flight implements Comparable<Flight>{
 	static PrintStream io = System.out;
 	
 	int id = -1;
+	int departureTimeScheduled = -1;
 	int departureTimeProposed = -1;//proposed times loaded by ACES/ASDI
 	int arrivalTimeProposed = -1;//proposed times loaded by ACES/ASDI
 	int taxi_unimpeded_time = AirportTree.DEFAULT_UNIMPEDED_TAXI_TIME*60000; //from gano

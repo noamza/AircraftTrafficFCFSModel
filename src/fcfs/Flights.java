@@ -148,6 +148,7 @@ public class Flights {
 						  correctTransitSequence = true;
 						  //SETS f.departureTimeProposed
 						  f = new Flight(Integer.parseInt(subs[0]));
+						  f.departureTimeScheduled = entryTime;
 						  f.departureTimeProposed = entryTime; 
 						  f.departureAirport = facilityName;
 						  //add tracons to list;
@@ -158,6 +159,7 @@ public class Flights {
 					  if(subs[6].equals("XXXX")){
 						  int exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
 						  f.arrivalTimeProposed = exitTime;
+						  f.arrivalTimeScheduled = exitTime;
 						  correctTransitSequence = false;
 						  f.arrivalAirport = facilityName;
 						  //add tracons to list

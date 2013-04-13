@@ -11,16 +11,19 @@ public class DepartureArrivalFCFS {
 
 	Flights flights; 
 	Airports airports;
-
+	Sectors sectors;
+	
 	public void scheduleFCFS(){
 
 		//double speedUp = 0.025;
 		//double slowDown = 0.05;
 		double totalGroundDelay = 0;
 		double totalAirDelay = 0;
+		double totalSectorDelay = 0;
 		flights = new Flights();
 		airports = new Airports();
-
+		sectors = new Sectors();
+		
 		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
 		String outputdir = "departureArrivalFCFS_output/";
 		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
@@ -28,7 +31,7 @@ public class DepartureArrivalFCFS {
 		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true); //constrained
 		
 		
-		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
+		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 
@@ -42,24 +45,44 @@ public class DepartureArrivalFCFS {
 		for (Flight flight: flightList) {
 			
 			//get soonest time slot the flight can depart
-			int departureTimeProposed = airports.getSoonestDeparture(flight.departureAirport, flight.departureTimeProposed);
-			
-			
+			int departureTimeProposed = airports.getSoonestDeparture(flight.departureAirport, flight.departureTimeScheduled);
 			
 			//schedule the flight
-			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeProposed);
+			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeScheduled);
 			int groundDelay = departureTimeFinal - flight.departureTimeProposed;
 			totalGroundDelay += groundDelay;
 			flight.atcGroundDelay = groundDelay;
 			flight.departureTimeFinal = departureTimeFinal;
-			flight.arrivalTimeScheduled = flight.arrivalTimeProposed;
 			//scheduled arrival time changes when ground delay is taken into account
-			flight.arrivalTimeProposed = flight.arrivalTimeProposed + groundDelay;
-			arrivingFlightList.add(flight);			
+			flight.arrivalTimeProposed = flight.arrivalTimeScheduled + groundDelay;
+			arrivingFlightList.add(flight);
+			/*
+			int blockDelay = 0;
+			for (SectorAirport sa: flight.path) {
+				if(flight.id == 30448) { 
+					System.out.println("this is a good place to stop");
+				}
+				int proposedEntryTime = sa.entryTime + groundDelay + blockDelay;
+				
+				int sectorTimeProposed = sectors.getSoonestSlot(sa.name, proposedEntryTime, proposedEntryTime + sa.transitTime);
+				
+				//blockDelay += sectorTimeProposed - proposedEntryTime;
+				
+				int sectorTimeFinal = sectors.schedule(sa.name, sectorTimeProposed, sectorTimeProposed + sa.transitTime);
+				blockDelay += sectorTimeFinal - proposedEntryTime;
+				
+			}
+			System.out.println(flight.id);
+			System.out.println(blockDelay);
+			totalSectorDelay += blockDelay;*/
 		}
 		
 		//validate departure traffic spacing at airports.
 		airports.validateDepartureTraffic();
+		
+		//sectors
+		
+		
 		
 		//Sort flights by proposed arrival time.
 		Collections.sort(arrivingFlightList, new flightArrTimeComparator());
@@ -83,6 +106,7 @@ public class DepartureArrivalFCFS {
 		
 		System.out.println("Total Ground Delay = " + totalGroundDelay/3600000);
 		System.out.println("Total Air Delay = " + totalAirDelay/3600000);
+		System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
 		System.out.println("Total Delay = " + (totalGroundDelay+totalAirDelay)/3600000);
 		System.out.println("Total Flights Flown = " + arrivingFlightList.size());
 			
