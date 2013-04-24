@@ -12,6 +12,7 @@ public class DepartureArrivalFCFS {
 	Flights flights; 
 	Airports airports;
 	Sectors sectors;
+	Centers centers;
 	
 	public void scheduleFCFS(){
 
@@ -20,21 +21,28 @@ public class DepartureArrivalFCFS {
 		double totalGroundDelay = 0;
 		double totalAirDelay = 0;
 		double totalSectorDelay = 0;
+		
 		flights = new Flights();
 		airports = new Airports();
 		sectors = new Sectors();
+		centers = new Centers();
 		
 		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
 		String outputdir = "departureArrivalFCFS_output/";
+		
 		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
 		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
 		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true); //constrained
 		
 		
+		//job 29 is an unconstrained ACES run used to gather center transit data
+		flights.loadCenterTransitFromAces(workingDirectory + "centerCrossing_job_29_ldc_20130418_160504_20130418_deftfm_j611fid_uncons_5fts.csv");
+		
 		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
+		centers.loadFromAces(workingDirectory+"centerList_2007_may_9999.csv");
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
-
+		
 		ArrayList<Flight> flightList = new ArrayList<Flight>(flights.getFlights());
 		ArrayList<Flight> arrivingFlightList = new ArrayList<Flight>();
 		
@@ -56,12 +64,13 @@ public class DepartureArrivalFCFS {
 			//scheduled arrival time changes when ground delay is taken into account
 			flight.arrivalTimeProposed = flight.arrivalTimeScheduled + groundDelay;
 			arrivingFlightList.add(flight);
-			/*
+			
+			
+			//BEGIN SECTOR
+			/* calculate sector delay.  TODO: add delay from sectors to arrival = more arrival delay*
 			int blockDelay = 0;
 			for (SectorAirport sa: flight.path) {
-				if(flight.id == 30448) { 
-					System.out.println("this is a good place to stop");
-				}
+				//if(flight.id == 30448) { System.out.println("this is a good place to stop");}
 				int proposedEntryTime = sa.entryTime + groundDelay + blockDelay;
 				
 				int sectorTimeProposed = sectors.getSoonestSlot(sa.name, proposedEntryTime, proposedEntryTime + sa.transitTime);
@@ -72,17 +81,23 @@ public class DepartureArrivalFCFS {
 				blockDelay += sectorTimeFinal - proposedEntryTime;
 				
 			}
-			System.out.println(flight.id);
-			System.out.println(blockDelay);
 			totalSectorDelay += blockDelay;*/
+			//END SECTOR STUFF
+			
+			//BEGIN CENTER
+			for (CenterTransit ct: flight.centerPath) {
+				int scheduledCenterEntryTime = ct.entryTime;
+				int scheduledCenterExitTime = ct.exitTime;
+				int transitTime = ct.transitTime;
+				String facilityName = ct.facilityName;
+				String prevFacility = ct.prevFacilityName;
+				int finalCenterEntryTime = centers.schedule(facilityName, scheduledCenterEntryTime, scheduledCenterExitTime);
+			}
+			//END CENTER STUFF
 		}
-		
+
 		//validate departure traffic spacing at airports.
 		airports.validateDepartureTraffic();
-		
-		//sectors
-		
-		
 		
 		//Sort flights by proposed arrival time.
 		Collections.sort(arrivingFlightList, new flightArrTimeComparator());
@@ -104,6 +119,8 @@ public class DepartureArrivalFCFS {
 		//validate individual flights by checking departure/arrival times
 		flights.validateFCFS();
 		
+		//centers.printCenters();
+		
 		System.out.println("Total Ground Delay = " + totalGroundDelay/3600000);
 		System.out.println("Total Air Delay = " + totalAirDelay/3600000);
 		System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
@@ -115,11 +132,24 @@ public class DepartureArrivalFCFS {
 		printAirportDelays(flightList, workingDirectory+outputdir);
 		printAirportTrafficCounts(airports,  workingDirectory+outputdir);
 		printFlightDetails(flightList, workingDirectory+outputdir);
+		printCenterTransitTraffic(centers, workingDirectory+outputdir);
+		
 		
 		System.out.println("Finished");
 	}
 		
 
+	public void printCenterTransitTraffic(Centers centers, String dir) {
+		try {
+			String fname = "center_transit.csv";
+			System.out.println("Printing center transit details to " + dir +fname);
+			FileWriter fstream = new FileWriter(dir + fname);
+			BufferedWriter out = new BufferedWriter(fstream);
+			centers.printCentersTransit(out);
+		}catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
 	
 	public void printFlightDetails(ArrayList<Flight> flightList, String dir){
 		try {

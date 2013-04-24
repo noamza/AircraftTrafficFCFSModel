@@ -9,6 +9,8 @@ public 	class Flight implements Comparable<Flight>{
 	static double toMinutes = 60*1000.0;
 	
 	ArrayList<SectorAirport> path = new ArrayList<SectorAirport>();
+	ArrayList<CenterTransit> centerPath = new ArrayList<CenterTransit>();
+	
 	static PrintStream io = System.out;
 	
 	int id = -1;
@@ -258,6 +260,20 @@ class flightGateTaxiUnimDepComparator implements Comparator<Flight>{
 	public int compare(Flight f1, Flight f2){
 		return (f1.departureTimeProposed+f1.gate_perturbation+f1.taxi_unimpeded_time) - 
 			   (f2.departureTimeProposed+f2.gate_perturbation+f2.taxi_unimpeded_time);
+	}
+}
+
+class CenterTransit{
+	String facilityName;
+	String prevFacilityName;
+	int entryTime;
+	int exitTime;
+	int transitTime = exitTime - entryTime;
+	CenterTransit(String facility, String prevFacility, int entry, int exit) {
+		facilityName = facility;
+		prevFacilityName = prevFacility;
+		entryTime = entry;
+		exitTime = exit;
 	}
 }
 

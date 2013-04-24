@@ -136,7 +136,7 @@ public class Flights {
 					  int entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[2]));
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[1]));
-					  int transitTime = Integer.parseInt(subs[3]) + ACES_FDS_OFFSET;
+					  int transitTime = Integer.parseInt(subs[3]);
 					  String facilityName = subs[5];
 					  writeSector = true;
 					  
@@ -192,6 +192,45 @@ public class Flights {
 		//io.println(test.size() + " total, usable " + flightList.size());
 		//io.println(inputCount + " total, usable " + flightList.size());
 		//flightList.get(36440).fullPrint();
+	}
+	
+	
+	public void loadCenterTransitFromAces(String filePath){
+		String[] subs = new String[1];
+		try{
+			  FileInputStream fstream = new FileInputStream(filePath);
+			  DataInputStream in = new DataInputStream(fstream);
+			  BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			  String line;
+			  //skip past header line
+			  br.readLine();
+			  while ((line = br.readLine()) != null){
+				  subs = line.split(",");
+				  int fid = Integer.parseInt(subs[0]);
+				  int entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
+				  int exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
+				  int transitTime = Integer.parseInt(subs[3]);
+				  String prevFacilityName = subs[4];
+				  String facilityName = subs[5];
+				  
+				  if (flightList.containsKey(fid)) {
+					  Flight flight = flightList.get(fid);
+					  flight.centerPath.add(new CenterTransit(facilityName, prevFacilityName, entryTime, exitTime));
+				  }
+					  
+				  else {
+					  //flight is not in flight list and has no departure airport/arrival airport to be used
+					  System.out.println("Center Transit path for flight " + fid + " not used");
+				  }
+					
+			  }
+			  in.close();
+			  
+		}catch (Exception e){
+			io.println(subs[0]);
+			System.err.println("Parse Error: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 	
 	Flight getFlightByID(int id){
