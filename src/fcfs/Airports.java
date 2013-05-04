@@ -89,9 +89,9 @@ public class Airports {
 					//adr = 9999; //testing unconstrained
 					//aar = 9999; //testing unconstrained
 					/*
-					if(!name.equals("KJFK")){
-						aar = 9999;
-						adr = 9999;
+					if(name.equals("KDFW")){
+						aar = 50;
+						//adr = 50;
 					}
 					*/
 					/*
@@ -248,6 +248,15 @@ public class Airports {
 			airportList.put(airportName, a);
 		}
 		return a.insertAtSoonestArrival(arrTime, schArrTime);
+	}
+	
+	public int scheduleArrival(String airportName, int arrTime, int schArrTime, Flight f) {
+		AirportTree a = airportList.get(airportName);
+		if(a == null){
+			a = new AirportTree(airportName);
+			airportList.put(airportName, a);
+		}
+		return a.insertAtSoonestArrival(arrTime, schArrTime, f);
 	}
 	
 	public int getSoonestDeparture(String airportName, int departureTime){

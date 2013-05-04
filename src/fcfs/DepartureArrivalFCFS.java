@@ -21,7 +21,7 @@ public class DepartureArrivalFCFS {
 		double totalGroundDelay = 0;
 		double totalAirDelay = 0;
 		double totalSectorDelay = 0;
-		
+		double totalCenterDelay = 0;
 		flights = new Flights();
 		airports = new Airports();
 		sectors = new Sectors();
@@ -85,16 +85,62 @@ public class DepartureArrivalFCFS {
 			//END SECTOR STUFF
 			
 			//BEGIN CENTER
+			
+			int centerBlockDelay = 0;
 			for (CenterTransit ct: flight.centerPath) {
 				int scheduledCenterEntryTime = ct.entryTime;
 				int scheduledCenterExitTime = ct.exitTime;
 				int transitTime = ct.transitTime;
 				String facilityName = ct.facilityName;
 				String prevFacility = ct.prevFacilityName;
-				int finalCenterEntryTime = centers.schedule(facilityName, scheduledCenterEntryTime, scheduledCenterExitTime);
+				String centerBoundaryName = prevFacility + "->" + facilityName;
+				
+				if (flight.centersTravelledPath == null) {
+					flight.centersTravelledPath = prevFacility + "->" + facilityName;
+					flight.centersTravelled.add(prevFacility);
+					flight.centersTravelled.add(facilityName);
+				} 
+				else {
+					flight.centersTravelledPath += ("->" + facilityName);
+					flight.centersTravelled.add(facilityName);
+				}
+				
+				int proposedCenterEntryTime = centers.getSoonestSlot(facilityName, scheduledCenterEntryTime + flight.atcGroundDelay + centerBlockDelay, scheduledCenterExitTime + flight.atcGroundDelay + centerBlockDelay);
+				//int proposedCenterDelay = proposedCenterEntryTime - scheduledCenterEntryTime;
+
+				
+				int finalCenterEntryTime = centers.schedule(facilityName, proposedCenterEntryTime,proposedCenterEntryTime+transitTime);
+				
+				int centerDelay = finalCenterEntryTime - proposedCenterEntryTime;
+				centerBlockDelay += centerDelay;
+				totalCenterDelay += centerDelay;
+				flight.centerDelay += centerDelay;
+				ct.finalEntryTime = finalCenterEntryTime;
+				
+				ct.finalExitTime = finalCenterEntryTime + transitTime;
+				
+				
+				//add center name to the path of the flight
+				//if (facilityName.startsWith("Z")) {
+					flight.centersTravelled.add(facilityName);
+				//}
 			}
 			//END CENTER STUFF
-		}
+			System.out.println(flight.centersTravelledPath + " " + flight.id);
+			for (String facility : flight.centersTravelled) {
+				System.out.printf("%s", facility);
+				System.out.printf("->");
+			}
+			System.out.println("");
+			/*
+			System.out.printf("%d", flight.id);
+			for (String center: flight.centersTravelled) {
+				System.out.printf(" %s", center);
+			}
+			System.out.println("");
+			*/
+			
+		}//end departures
 
 		//validate departure traffic spacing at airports.
 		airports.validateDepartureTraffic();
@@ -105,9 +151,9 @@ public class DepartureArrivalFCFS {
 		//Schedule Arriving Flights
 		for (Flight flight: arrivingFlightList) {
 			//get soonest time slot the flight can land
-			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed);
+			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed + flight.centerDelay);
 			//schedule the flight
-			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport,arrivalTimeProposed, flight.arrivalTimeScheduled);
+			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled, flight);
 			flight.arrivalTimeFinal = arrivalTimeFinal;
 			int airDelay = arrivalTimeFinal - flight.arrivalTimeProposed;
 			flight.atcAirDelay = airDelay;
@@ -123,7 +169,8 @@ public class DepartureArrivalFCFS {
 		
 		System.out.println("Total Ground Delay = " + totalGroundDelay/3600000);
 		System.out.println("Total Air Delay = " + totalAirDelay/3600000);
-		System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
+		//System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
+		System.out.println("Total Delay in centers = " + totalCenterDelay/3600000);
 		System.out.println("Total Delay = " + (totalGroundDelay+totalAirDelay)/3600000);
 		System.out.println("Total Flights Flown = " + arrivingFlightList.size());
 			

@@ -10,6 +10,8 @@ public 	class Flight implements Comparable<Flight>{
 	
 	ArrayList<SectorAirport> path = new ArrayList<SectorAirport>();
 	ArrayList<CenterTransit> centerPath = new ArrayList<CenterTransit>();
+	ArrayList<String> centersTravelled = new ArrayList<String>();
+	
 	
 	static PrintStream io = System.out;
 	
@@ -34,6 +36,8 @@ public 	class Flight implements Comparable<Flight>{
 	int arrivalTimeFinal = -1; //wheels on time
 	int arrivalAirportDelay = -1;
 	int departureAirportDelay = -1;
+	int centerDelay = 0;
+	
 	
 	//for debugging
 	int numberOfJiggles = 0; //number of times a flights departure and or arrival times are modified
@@ -45,7 +49,7 @@ public 	class Flight implements Comparable<Flight>{
 	int uncertaintyMinusGroundDelay = 0; //uncertaintyMinusGroundDelay + atcAirDelay
 	
 	String airline = "unknown";
-	
+	String centersTravelledPath = null;
 	
 
 	public void resetValuesNotPerturbations(){
@@ -269,6 +273,9 @@ class CenterTransit{
 	int entryTime;
 	int exitTime;
 	int transitTime = exitTime - entryTime;
+	int finalEntryTime = -1;
+	int finalExitTime = -1;
+	
 	CenterTransit(String facility, String prevFacility, int entry, int exit) {
 		facilityName = facility;
 		prevFacilityName = prevFacility;

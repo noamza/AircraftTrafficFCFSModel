@@ -416,6 +416,14 @@ public class AirportTree {
 		return soonest;
 	}
 	
+	public int insertAtSoonestArrival(int arrival, int scheduledArrival, Flight f) {
+		int soonest = getSoonestArrivalSlot(arrival);
+		airportArrivalTraffic.add(soonest);
+		scheduledAirportArrivalTraffic.add(scheduledArrival);
+		arrivalTrafficByFlight.add(f);
+		return soonest;
+	}
+	
 	//returns false if this arrival time was not in list
 	public boolean freeArrivalSlot(int arrivalTimeToRemove){
 		int closest = airportArrivalTraffic.floor(arrivalTimeToRemove);

@@ -213,6 +213,7 @@ public class Flights {
 				  String prevFacilityName = subs[4];
 				  String facilityName = subs[5];
 				  
+				  
 				  if (flightList.containsKey(fid)) {
 					  Flight flight = flightList.get(fid);
 					  flight.centerPath.add(new CenterTransit(facilityName, prevFacilityName, entryTime, exitTime));

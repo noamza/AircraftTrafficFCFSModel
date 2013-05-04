@@ -25,6 +25,11 @@ public class Centers {
 				  subs = line.split(",");
 				  int cap = Integer.parseInt(subs[1]);
 				  if( subs.length == 2){  
+					  
+					  /*if (subs[0].equals("ZFW")){
+						  cap = 31;
+					  }*/
+					  //cap=100;
 					  centerList.put(subs[0], new CenterTree(subs[0], cap));
 				  } 
 			  }
