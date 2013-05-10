@@ -13,6 +13,7 @@ public class DepartureArrivalFCFS {
 	Airports airports;
 	Sectors sectors;
 	Centers centers;
+	CenterBoundaries centerBoundaries;
 	
 	public void scheduleFCFS(){
 
@@ -26,6 +27,7 @@ public class DepartureArrivalFCFS {
 		airports = new Airports();
 		sectors = new Sectors();
 		centers = new Centers();
+		centerBoundaries = new CenterBoundaries();
 		
 		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
 		String outputdir = "departureArrivalFCFS_output/";
@@ -33,15 +35,13 @@ public class DepartureArrivalFCFS {
 		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
 		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
 		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true); //constrained
-		
-		
-		//job 29 is an unconstrained ACES run used to gather center transit data
-		flights.loadCenterTransitFromAces(workingDirectory + "centerCrossing_job_29_ldc_20130418_160504_20130418_deftfm_j611fid_uncons_5fts.csv");
-		
 		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		centers.loadFromAces(workingDirectory+"centerList_2007_may_9999.csv");
 		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		
+		//job 29 is an unconstrained ACES run used to gather center transit data
+		flights.loadCenterTransitFromAces(workingDirectory + "centerCrossingV2_job_29_ldc_20130418_160504_20130418_deftfm_j611fid_uncons_5fts.csv");
 		
 		ArrayList<Flight> flightList = new ArrayList<Flight>(flights.getFlights());
 		ArrayList<Flight> arrivingFlightList = new ArrayList<Flight>();
@@ -86,8 +86,16 @@ public class DepartureArrivalFCFS {
 			
 			//BEGIN CENTER
 			
+			if (flight.centerPath.size() == 1) {
+				continue;//flight only crosses 1 center boundary - from TRACON to center and not from center to center.
+			}
+			
 			int centerBlockDelay = 0;
+			int centerBoundaryDelay = 0;
+			//sort the path through center boundaries
+			Collections.sort(flight.centerPath, new centerBoundaryEntryTimeComparator());
 			for (CenterTransit ct: flight.centerPath) {
+				
 				int scheduledCenterEntryTime = ct.entryTime;
 				int scheduledCenterExitTime = ct.exitTime;
 				int transitTime = ct.transitTime;
@@ -95,6 +103,12 @@ public class DepartureArrivalFCFS {
 				String prevFacility = ct.prevFacilityName;
 				String centerBoundaryName = prevFacility + "->" + facilityName;
 				
+				//skip initial Center boundary between TRACON and Center. We only care about Center to Center
+				if (prevFacility.startsWith("T") || prevFacility.startsWith("C") || prevFacility.startsWith("N")) {
+					continue;
+				}
+				
+				//record center path of flight
 				if (flight.centersTravelledPath == null) {
 					flight.centersTravelledPath = prevFacility + "->" + facilityName;
 					flight.centersTravelled.add(prevFacility);
@@ -105,40 +119,37 @@ public class DepartureArrivalFCFS {
 					flight.centersTravelled.add(facilityName);
 				}
 				
+				/*TODO: incorporate this into the center boundary model later
+				//schedule flights through Center
 				int proposedCenterEntryTime = centers.getSoonestSlot(facilityName, scheduledCenterEntryTime + flight.atcGroundDelay + centerBlockDelay, scheduledCenterExitTime + flight.atcGroundDelay + centerBlockDelay);
 				//int proposedCenterDelay = proposedCenterEntryTime - scheduledCenterEntryTime;
-
-				
 				int finalCenterEntryTime = centers.schedule(facilityName, proposedCenterEntryTime,proposedCenterEntryTime+transitTime);
-				
 				int centerDelay = finalCenterEntryTime - proposedCenterEntryTime;
 				centerBlockDelay += centerDelay;
 				totalCenterDelay += centerDelay;
 				flight.centerDelay += centerDelay;
 				ct.finalEntryTime = finalCenterEntryTime;
-				
 				ct.finalExitTime = finalCenterEntryTime + transitTime;
+				*/
 				
 				
-				//add center name to the path of the flight
-				//if (facilityName.startsWith("Z")) {
-					flight.centersTravelled.add(facilityName);
-				//}
-			}
-			//END CENTER STUFF
-			System.out.println(flight.centersTravelledPath + " " + flight.id);
-			for (String facility : flight.centersTravelled) {
-				System.out.printf("%s", facility);
-				System.out.printf("->");
-			}
-			System.out.println("");
-			/*
-			System.out.printf("%d", flight.id);
-			for (String center: flight.centersTravelled) {
-				System.out.printf(" %s", center);
-			}
-			System.out.println("");
-			*/
+				//TODO: Still need to add delay into the scheduling of center boundaries. Pass more than just the CenterTransit object to the scheduling function.
+				//schedule flights through center boundary
+				int proposedCenterBoundaryEntryTime = centerBoundaries.getSoonestSlot(centerBoundaryName, ct);
+				//int proposedCenterBoundaryEntryTime = centerBoundaries.getSoonestProposedSlot(centerBoundaryName, prevFacility, facilityName, scheduledCenterEntryTime + flight.atcGroundDelay + centerBoundaryDelay);
+				
+				int finalProposedCenterBoundaryEntryTime = centerBoundaries.schedule(centerBoundaryName, ct);
+				
+				
+				//int finalProposedCenterBoundaryEntryTime = centerBoundaries.scheduleProposed(centerBoundaryName, prevFacility, facilityName, proposedCenterBoundaryEntryTime, scheduledCenterEntryTime);
+				ct.proposedEntryTime = finalProposedCenterBoundaryEntryTime;
+				centerBoundaryDelay += (finalProposedCenterBoundaryEntryTime - (scheduledCenterEntryTime + flight.atcGroundDelay + centerBoundaryDelay));
+				ct.flightid = flight.id;
+				//System.out.println(proposedCenterBoundaryEntryTime - (scheduledCenterEntryTime+flight.atcGroundDelay));
+				
+			}//END CENTER STUFF
+			
+			//System.out.println(flight.centersTravelledPath + " " + flight.id);
 			
 		}//end departures
 
@@ -153,11 +164,29 @@ public class DepartureArrivalFCFS {
 			//get soonest time slot the flight can land
 			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed + flight.centerDelay);
 			//schedule the flight
+			int airDelay = arrivalTimeProposed - flight.arrivalTimeProposed;
+			
+			//reverse path of flight through center boundaries because we want to disperse air delay starting from the boundary closest to the airport
+			Collections.reverse(flight.centerPath);
+			while (airDelay > 0) {
+				for (CenterTransit ct: flight.centerPath) {
+					int scheduledCenterEntryTime = ct.entryTime;
+					int scheduledCenterExitTime = ct.exitTime;
+					int transitTime = ct.transitTime;
+					int proposedEntryTime = ct.proposedEntryTime;
+					String facilityName = ct.facilityName;
+					String prevFacility = ct.prevFacilityName;
+					String centerBoundaryName = prevFacility + "->" + facilityName;
+				}
+					
+			}
+			
 			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled, flight);
 			flight.arrivalTimeFinal = arrivalTimeFinal;
-			int airDelay = arrivalTimeFinal - flight.arrivalTimeProposed;
+			
 			flight.atcAirDelay = airDelay;
 			totalAirDelay += airDelay;
+			
 		}
 		
 		//validate arrival traffic spacing at airports.

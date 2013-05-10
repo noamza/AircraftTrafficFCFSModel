@@ -267,6 +267,18 @@ class flightGateTaxiUnimDepComparator implements Comparator<Flight>{
 	}
 }
 
+class centerBoundaryEntryTimeComparator implements Comparator<CenterTransit>{
+	public int compare(CenterTransit ct1, CenterTransit ct2) {
+		return (ct1.entryTime - ct2.entryTime);
+	}
+}
+
+class centerBoundaryFinalEntryTimeComparator implements Comparator<CenterTransit>{
+	public int compare(CenterTransit ct1, CenterTransit ct2) {
+		return (ct1.finalEntryTime - ct2.finalEntryTime);
+	}
+}
+
 class CenterTransit{
 	String facilityName;
 	String prevFacilityName;
@@ -275,6 +287,8 @@ class CenterTransit{
 	int transitTime = exitTime - entryTime;
 	int finalEntryTime = -1;
 	int finalExitTime = -1;
+	int proposedEntryTime = -1;
+	int flightid = -1;
 	
 	CenterTransit(String facility, String prevFacility, int entry, int exit) {
 		facilityName = facility;

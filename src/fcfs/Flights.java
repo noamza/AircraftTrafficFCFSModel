@@ -202,14 +202,18 @@ public class Flights {
 			  DataInputStream in = new DataInputStream(fstream);
 			  BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			  String line;
+			  int fid = -1;
+			  int entryTime = -1;
+			  int exitTime = -1;
+			  int transitTime = -1;
 			  //skip past header line
 			  br.readLine();
 			  while ((line = br.readLine()) != null){
 				  subs = line.split(",");
-				  int fid = Integer.parseInt(subs[0]);
-				  int entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
-				  int exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
-				  int transitTime = Integer.parseInt(subs[3]);
+				  fid = Integer.parseInt(subs[0]);
+				  entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
+				  exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
+				  transitTime = Integer.parseInt(subs[3]);
 				  String prevFacilityName = subs[4];
 				  String facilityName = subs[5];
 				  
