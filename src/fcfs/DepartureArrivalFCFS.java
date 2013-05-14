@@ -199,6 +199,10 @@ public class DepartureArrivalFCFS {
 				break;	
 			}
 			
+			//re-check for arrival time with new center boundary delays
+			int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeProposed);
+			
+			
 			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled, flight);
 			flight.arrivalTimeFinal = arrivalTimeFinal;
 			

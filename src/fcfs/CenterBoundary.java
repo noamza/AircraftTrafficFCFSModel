@@ -16,7 +16,7 @@ public class CenterBoundary {
 	String exitingCenter = "";
 	String centerBoundaryName = "";
 	//int centerBoundarySpacing = 5000; //5 second
-	int centerBoundarySpacing = 5000;
+	int centerBoundarySpacing = 15000;
 	
 	TreeSet<Integer> CenterBoundaryScheduledTraffic = new TreeSet<Integer>();
 	TreeSet<Integer> CenterBoundaryActualTraffic = new TreeSet<Integer>();
