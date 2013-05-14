@@ -37,7 +37,7 @@ public 	class Flight implements Comparable<Flight>{
 	int arrivalAirportDelay = -1;
 	int departureAirportDelay = -1;
 	int centerDelay = 0;
-	
+	int centerBoundaryDelay = 0;
 	
 	//for debugging
 	int numberOfJiggles = 0; //number of times a flights departure and or arrival times are modified
@@ -289,6 +289,7 @@ class CenterTransit{
 	int finalExitTime = -1;
 	int proposedEntryTime = -1;
 	int flightid = -1;
+	int delay = 0;
 	
 	CenterTransit(String facility, String prevFacility, int entry, int exit) {
 		facilityName = facility;

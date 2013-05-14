@@ -33,7 +33,7 @@ public class CenterBoundaries {
 			cb = new CenterBoundary(ct.prevFacilityName, ct.facilityName);
 			centerBoundaryList.put(centerBoundaryName, cb);
 		}
-		return cb.getSoonestEntrySlot(ct);
+		return cb.getSoonestEntrySlot(ct, ct.proposedEntryTime);
 	}
 	
 	public int schedule(String centerBoundaryName, CenterTransit ct){
@@ -43,6 +43,15 @@ public class CenterBoundaries {
 			centerBoundaryList.put(centerBoundaryName, cb);
 		}
 		return cb.insertAtSoonestCenterBoundary(ct);
+	}
+	
+	public void removeFromSchedule(CenterTransit ct, String centerBoundaryName) {
+		CenterBoundary cb = centerBoundaryList.get(centerBoundaryName);
+		if(cb == null){
+			cb = new CenterBoundary(ct.prevFacilityName,ct.facilityName);
+			centerBoundaryList.put(centerBoundaryName, cb);
+		}
+		cb.removeFromSchedule(ct);
 	}
 }
 

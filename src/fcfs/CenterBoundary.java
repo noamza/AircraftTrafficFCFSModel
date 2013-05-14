@@ -16,7 +16,7 @@ public class CenterBoundary {
 	String exitingCenter = "";
 	String centerBoundaryName = "";
 	//int centerBoundarySpacing = 5000; //5 second
-	int centerBoundarySpacing = 60000;
+	int centerBoundarySpacing = 5000;
 	
 	TreeSet<Integer> CenterBoundaryScheduledTraffic = new TreeSet<Integer>();
 	TreeSet<Integer> CenterBoundaryActualTraffic = new TreeSet<Integer>();
@@ -32,6 +32,10 @@ public class CenterBoundary {
 		exitingCenter = exitName;
 		enteringCenter = enterName;
 		centerBoundaryName = exitName + "->" + enterName;
+	}
+	
+	public void removeFromSchedule(CenterTransit ct) {
+		CenterTransitBoundaryActualTraffic.remove(ct);
 	}
 	
 	public int getSoonestEntrySlot(int entryTime){
@@ -63,16 +67,16 @@ public class CenterBoundary {
 	}
 	
 	//using center transit objects so we can alter schedule by specific objects
-	public int getSoonestEntrySlot(CenterTransit ct){
-		int entryTime = ct.proposedEntryTime;
+	public int getSoonestEntrySlot(CenterTransit ct, int entryTime){
 		Integer before, previousSpace, currentSpace, after;
 		while(true){
 			CenterTransit tempBefore = CenterTransitBoundaryActualTraffic.floor(ct);
-			before = tempBefore.finalEntryTime;
-			before = before != null? before : Integer.MIN_VALUE;
+			if (tempBefore == null) { before = Integer.MIN_VALUE; }
+			else { before = tempBefore.finalEntryTime; }
+			
 			CenterTransit tempAfter = CenterTransitBoundaryActualTraffic.ceiling(ct);
-			after = tempAfter.finalEntryTime;
-			after = after!=null? after : Integer.MAX_VALUE;
+			if (tempAfter == null) { after = Integer.MAX_VALUE; }
+			else { after = tempAfter.finalEntryTime; }
 			
 			//spacing based on entries per time
 			currentSpace =  centerBoundarySpacing;
@@ -86,9 +90,13 @@ public class CenterBoundary {
 			//first tries to set entry time at the space after last flight.
 			if(before + previousSpace > entryTime){
 				entryTime = before + previousSpace;
+				ct.proposedEntryTime = entryTime;
+				ct.finalEntryTime = entryTime;
 			//otherwise at space after next flight
 			} else {
 				entryTime = after + centerBoundarySpacing;
+				ct.proposedEntryTime = entryTime;
+				ct.finalEntryTime = entryTime;
 			}
 		}
 	}
@@ -102,7 +110,7 @@ public class CenterBoundary {
 	}
 	
 	public int insertAtSoonestCenterBoundary(CenterTransit ct){
-		int soonest = getSoonestEntrySlot(ct);
+		int soonest = getSoonestEntrySlot(ct, ct.proposedEntryTime);
 		ct.finalEntryTime = soonest;
 		CenterTransitBoundaryActualTraffic.add(ct);
 		CenterBoundaryScheduledTraffic.add(ct.entryTime);

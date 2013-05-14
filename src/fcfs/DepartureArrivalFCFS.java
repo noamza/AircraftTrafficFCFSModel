@@ -23,6 +23,7 @@ public class DepartureArrivalFCFS {
 		double totalAirDelay = 0;
 		double totalSectorDelay = 0;
 		double totalCenterDelay = 0;
+		double totalCenterBoundaryDelay = 0;
 		flights = new Flights();
 		airports = new Airports();
 		sectors = new Sectors();
@@ -135,17 +136,21 @@ public class DepartureArrivalFCFS {
 				
 				//TODO: Still need to add delay into the scheduling of center boundaries. Pass more than just the CenterTransit object to the scheduling function.
 				//schedule flights through center boundary
+				ct.proposedEntryTime = ct.entryTime + flight.atcGroundDelay + centerBoundaryDelay;
+				ct.finalEntryTime = ct.proposedEntryTime; //need this to sort Center Transit objects correctly.  Gets overridden by real finalEntryTime later on.
 				int proposedCenterBoundaryEntryTime = centerBoundaries.getSoonestSlot(centerBoundaryName, ct);
 				//int proposedCenterBoundaryEntryTime = centerBoundaries.getSoonestProposedSlot(centerBoundaryName, prevFacility, facilityName, scheduledCenterEntryTime + flight.atcGroundDelay + centerBoundaryDelay);
-				
+				ct.proposedEntryTime = proposedCenterBoundaryEntryTime;
 				int finalProposedCenterBoundaryEntryTime = centerBoundaries.schedule(centerBoundaryName, ct);
 				
 				
 				//int finalProposedCenterBoundaryEntryTime = centerBoundaries.scheduleProposed(centerBoundaryName, prevFacility, facilityName, proposedCenterBoundaryEntryTime, scheduledCenterEntryTime);
-				ct.proposedEntryTime = finalProposedCenterBoundaryEntryTime;
-				centerBoundaryDelay += (finalProposedCenterBoundaryEntryTime - (scheduledCenterEntryTime + flight.atcGroundDelay + centerBoundaryDelay));
+				ct.finalEntryTime = finalProposedCenterBoundaryEntryTime;
+				centerBoundaryDelay = (ct.finalEntryTime - (ct.entryTime + flight.atcGroundDelay + centerBoundaryDelay));
+				ct.delay = centerBoundaryDelay;
+				flight.centerBoundaryDelay += centerBoundaryDelay;
+				//System.out.println(centerBoundaryName + " " + flight.id + " : " + centerBoundaryDelay);
 				ct.flightid = flight.id;
-				//System.out.println(proposedCenterBoundaryEntryTime - (scheduledCenterEntryTime+flight.atcGroundDelay));
 				
 			}//END CENTER STUFF
 			
@@ -161,8 +166,9 @@ public class DepartureArrivalFCFS {
 		
 		//Schedule Arriving Flights
 		for (Flight flight: arrivingFlightList) {
+			
 			//get soonest time slot the flight can land
-			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed + flight.centerDelay);
+			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed + flight.centerBoundaryDelay);
 			//schedule the flight
 			int airDelay = arrivalTimeProposed - flight.arrivalTimeProposed;
 			
@@ -177,8 +183,20 @@ public class DepartureArrivalFCFS {
 					String facilityName = ct.facilityName;
 					String prevFacility = ct.prevFacilityName;
 					String centerBoundaryName = prevFacility + "->" + facilityName;
-				}
 					
+					//remove from schedule to re-schedule with added air delay
+					centerBoundaries.removeFromSchedule(ct, centerBoundaryName);
+					ct.proposedEntryTime = ct.finalEntryTime + airDelay;
+					ct.finalEntryTime = ct.proposedEntryTime;
+					int proposedBoundaryCrossingTime = centerBoundaries.getSoonestSlot(centerBoundaryName, ct);
+					ct.proposedEntryTime = proposedBoundaryCrossingTime;
+					int finalCenterBoundaryCrossingTime = centerBoundaries.schedule(centerBoundaryName, ct);
+					
+					//ct.proposedEntryTime += airDelay;
+					ct.finalEntryTime = finalCenterBoundaryCrossingTime;
+					break;
+				}
+				break;	
 			}
 			
 			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled, flight);
@@ -186,7 +204,7 @@ public class DepartureArrivalFCFS {
 			
 			flight.atcAirDelay = airDelay;
 			totalAirDelay += airDelay;
-			
+			totalCenterBoundaryDelay += flight.centerBoundaryDelay;
 		}
 		
 		//validate arrival traffic spacing at airports.
@@ -199,8 +217,8 @@ public class DepartureArrivalFCFS {
 		System.out.println("Total Ground Delay = " + totalGroundDelay/3600000);
 		System.out.println("Total Air Delay = " + totalAirDelay/3600000);
 		//System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
-		System.out.println("Total Delay in centers = " + totalCenterDelay/3600000);
-		System.out.println("Total Delay = " + (totalGroundDelay+totalAirDelay)/3600000);
+		System.out.println("Total Center Boundary Delay = " + totalCenterBoundaryDelay/3600000);
+		System.out.println("Total Delay = " + (totalGroundDelay+totalAirDelay+totalCenterBoundaryDelay)/3600000);
 		System.out.println("Total Flights Flown = " + arrivingFlightList.size());
 			
 		//printSectorTraffic(sectors, workingDirectory+outputdir);
