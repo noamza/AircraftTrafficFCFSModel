@@ -24,6 +24,10 @@ public class DepartureArrivalFCFS {
 		double totalSectorDelay = 0;
 		double totalCenterDelay = 0;
 		double totalCenterBoundaryDelay = 0;
+		double newTotalAirDelay = 0;
+		double totalAllDelay = 0;
+		double MAX_SLOWDOWN = 0.10;
+		
 		flights = new Flights();
 		airports = new Airports();
 		sectors = new Sectors();
@@ -173,44 +177,64 @@ public class DepartureArrivalFCFS {
 			int airDelay = arrivalTimeProposed - flight.arrivalTimeProposed;
 			
 			//reverse path of flight through center boundaries because we want to disperse air delay starting from the boundary closest to the airport
+			int delayPassedBack = 0;
+			int leftOverDelay = 0;
 			Collections.reverse(flight.centerPath);
-			while (airDelay > 0) {
+			int delayToAbsorb = airDelay;
+			while (delayToAbsorb > 0) {
 				for (CenterTransit ct: flight.centerPath) {
 					int scheduledCenterEntryTime = ct.entryTime;
 					int scheduledCenterExitTime = ct.exitTime;
-					int transitTime = ct.transitTime;
+					int transitTime = scheduledCenterExitTime - scheduledCenterEntryTime;
 					int proposedEntryTime = ct.proposedEntryTime;
 					String facilityName = ct.facilityName;
 					String prevFacility = ct.prevFacilityName;
 					String centerBoundaryName = prevFacility + "->" + facilityName;
 					
+					double max_absorbable_delay = (MAX_SLOWDOWN * transitTime);
+					
+					if (max_absorbable_delay > delayToAbsorb) {
+						max_absorbable_delay = delayToAbsorb;
+						delayToAbsorb = 0;
+					}
+					else {
+						delayToAbsorb -= max_absorbable_delay;
+					}
 					//remove from schedule to re-schedule with added air delay
 					centerBoundaries.removeFromSchedule(ct, centerBoundaryName);
-					ct.proposedEntryTime = ct.finalEntryTime + airDelay;
+					ct.proposedEntryTime = (int) (ct.finalEntryTime + max_absorbable_delay);
 					ct.finalEntryTime = ct.proposedEntryTime;
 					int proposedBoundaryCrossingTime = centerBoundaries.getSoonestSlot(centerBoundaryName, ct);
 					ct.proposedEntryTime = proposedBoundaryCrossingTime;
 					int finalCenterBoundaryCrossingTime = centerBoundaries.schedule(centerBoundaryName, ct);
-					
 					//ct.proposedEntryTime += airDelay;
 					ct.finalEntryTime = finalCenterBoundaryCrossingTime;
-					break;
+					delayPassedBack += (ct.finalEntryTime - proposedEntryTime);
 				}
-				break;	
+				if (delayToAbsorb > 0) {
+					//System.out.println(delayToAbsorb);
+					leftOverDelay = delayToAbsorb;
+					delayToAbsorb = 0;
+				}
 			}
-			
+			//if (delayPassedBack > 0) System.out.println(delayPassedBack);
 			//re-check for arrival time with new center boundary delays
-			int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeProposed);
+			int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeProposed + leftOverDelay);
 			
-			
-			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled, flight);
+			int newAirDelay = arrivalTimeProposed_new - (flight.arrivalTimeProposed + leftOverDelay);
+			//System.out.println(newAirDelay);
+			newTotalAirDelay+=newAirDelay;
+			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed_new, flight.arrivalTimeScheduled, flight);
 			flight.arrivalTimeFinal = arrivalTimeFinal;
-			
+			totalAllDelay += (flight.arrivalTimeFinal - flight.arrivalTimeScheduled);
 			flight.atcAirDelay = airDelay;
 			totalAirDelay += airDelay;
 			totalCenterBoundaryDelay += flight.centerBoundaryDelay;
+			
+			
 		}
-		
+		System.out.println("Total Of All Delays :" + totalAllDelay/3600000);
+		System.out.println("Total new Air Delay: " + newTotalAirDelay/3600000);
 		//validate arrival traffic spacing at airports.
 		airports.validateArrivalTraffic();
 		//validate individual flights by checking departure/arrival times
