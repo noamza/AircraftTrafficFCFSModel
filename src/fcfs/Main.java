@@ -41,10 +41,11 @@ public class Main {
 	public static void main(String[] args) {
 		//SchedulerFCFS s = new SchedulerFCFS();
 		//s.init();
-		
-		
-		DepartureArrivalFCFS scheduler = new DepartureArrivalFCFS();
+		DepartureArrivalFCFS_basic scheduler = new DepartureArrivalFCFS_basic();
 		scheduler.scheduleFCFS();
+		
+		//DepartureArrivalFCFS scheduler = new DepartureArrivalFCFS();
+		//scheduler.scheduleFCFS();
 		
 		
 		//FCFSFlexibleSpeed f = new FCFSFlexibleSpeed();
