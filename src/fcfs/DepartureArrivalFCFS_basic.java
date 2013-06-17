@@ -7,34 +7,102 @@ package fcfs;
 import java.util.*;
 import java.io.*;
 
-public class DepartureArrivalFCFS_basic {
+/**
+ * @todo Deprecate the {@link #scheduleFCFS()} method and use externally initialized data
+ */
+/**
+ * 
+ */
+public class DepartureArrivalFCFS_basic implements Scheduler {
 
-	Flights flights; 
-	Airports airports;
-	Sectors sectors;
-	
-	public void scheduleFCFS(){
+	Flights flights = new Flights();
+	Airports airports = new Airports();
+	Sectors sectors = new Sectors();
 
+	/**
+	 * Added to support programmatic initialization (as opposed to initialization from files).
+	 * @param flights
+	 * @param airports
+	 * @param sectors
+	 */
+	public DepartureArrivalFCFS_basic(Flights flights, Airports airports, Sectors sectors)
+	{
+		this.flights = flights;
+		this.airports = airports;
+		this.sectors = sectors;
+	}
+
+	@Deprecated
+	public DepartureArrivalFCFS_basic()
+	{
+	}
+
+	@Deprecated
+	public void scheduleFCFS(String workingDirectory, String outputDirectory){
+
+		initialize();
+
+		loadDataFromFiles(workingDirectory);
+
+		ArrayList<Flight> flightList = schedule();
+			
+		printResults(flightList, workingDirectory, outputDirectory);
+		
+		System.out.println("Finished");
+	}
+
+	/**
+	 * 
+	 */
+	@Deprecated
+	private void initialize()
+	{
+		flights = new Flights();
+		airports = new Airports();
+		sectors = new Sectors();
+	}
+
+	/**
+	 * @param flightList
+	 * @param workingDirectory
+	 * @param outputdir
+	 */
+	@Deprecated
+	public void printResults(ArrayList<Flight> flightList, String workingDirectory, String outputDirectory)
+	{
+		String dir = new File(workingDirectory, outputDirectory).getAbsolutePath();
+
+		printResults(flightList, dir);
+	}
+
+	/**
+	 * @param flightList
+	 * @param dir
+	 */
+	@Override
+	public void printResults(ArrayList<Flight> flightList, String dir)
+	{
+		//printSectorTraffic(sectors, dir);
+
+		printAirportDelays(flightList, dir);
+		printAirportTrafficCounts(airports,  dir);
+		printFlightDetails(flightList, dir);
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	@Override
+	public ArrayList<Flight> schedule()
+	{
 		//double speedUp = 0.025;
 		//double slowDown = 0.05;
 		double totalGroundDelay = 0;
 		double totalAirDelay = 0;
 		double totalSectorDelay = 0;
-		flights = new Flights();
-		airports = new Airports();
-		sectors = new Sectors();
 		
-		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
-		String outputdir = "departureArrivalFCFS_output/";
-		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
-		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
-		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true); //constrained
-		
-		
-		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
-		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
-		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
-
 		ArrayList<Flight> flightList = new ArrayList<Flight>(flights.getFlights());
 		ArrayList<Flight> arrivingFlightList = new ArrayList<Flight>();
 		
@@ -104,14 +172,26 @@ public class DepartureArrivalFCFS_basic {
 		System.out.println("Total Delay in sectors = " + totalSectorDelay/3600000);
 		System.out.println("Total Delay = " + (totalGroundDelay+totalAirDelay)/3600000);
 		System.out.println("Total Flights Flown = " + arrivingFlightList.size());
-			
-		//printSectorTraffic(sectors, workingDirectory+outputdir);
+
+		return flightList;
+	}
+
+
+
+	/**
+	 * @param workingDirectory
+	 */
+	@Deprecated
+	public void loadDataFromFiles(String workingDirectory)
+	{
+		//flights.loadFlightsFromAces(workingDirectory+"job_23_sector_transitTime_takeoffLanding_35h_1.csv", true); // constrained
+		flights.loadFlightsFromAces(workingDirectory +"job_24_sector_transitTime_takeoffLanding_35h_1.csv", true); //unconstrained
+		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true); //constrained
 		
-		printAirportDelays(flightList, workingDirectory+outputdir);
-		printAirportTrafficCounts(airports,  workingDirectory+outputdir);
-		printFlightDetails(flightList, workingDirectory+outputdir);
 		
-		System.out.println("Finished");
+		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
+		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
+		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 	}
 		
 
@@ -119,8 +199,9 @@ public class DepartureArrivalFCFS_basic {
 	public void printFlightDetails(ArrayList<Flight> flightList, String dir){
 		try {
 			String fname = "depArr_fcfs_flight_details.csv";
-			System.out.println("Printing flight details to " + dir +fname);
-			FileWriter fstream = new FileWriter(dir + fname);
+			String filepath = new File(dir, fname).getAbsolutePath();
+			System.out.println("Printing flight details to " + filepath);
+			FileWriter fstream = new FileWriter(filepath);
 			BufferedWriter out = new BufferedWriter(fstream);
 			out.write("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeScheduled,DepartureTimeFinal,ArrivalTimeScheduled,ArrivalTimeFinal,TotalDelay,GroundDelay,AirDelay");
 			out.write("\n");
@@ -141,19 +222,24 @@ public class DepartureArrivalFCFS_basic {
 	public void printAirportTrafficCounts(Airports airports, String dir) {
 		try {
 			System.out.println("Printing traffic counts to " + dir);
-			FileWriter capstream = new FileWriter( dir + "fcfs_airport_capacities.csv");
+			String capsFile = new File(dir, "fcfs_airport_capacities.csv").getAbsolutePath();
+			FileWriter capstream = new FileWriter( capsFile);
 			BufferedWriter airport_caps_out = new BufferedWriter(capstream);
 			
-			FileWriter depstream = new FileWriter(dir + "fcfs_airport_DEPtraffic.csv");
+			String depsFile = new File(dir, "fcfs_airport_DEPtraffic.csv").getAbsolutePath();
+			FileWriter depstream = new FileWriter(depsFile);
 			BufferedWriter airport_DEPtraffic_out = new BufferedWriter(depstream);
 			
-			FileWriter arrstream = new FileWriter(dir + "fcfs_airport_ARRtraffic.csv");
+			String arrsFile = new File(dir, "fcfs_airport_ARRtraffic.csv").getAbsolutePath();
+			FileWriter arrstream = new FileWriter(arrsFile);
 			BufferedWriter airport_ARRtraffic_out = new BufferedWriter(arrstream);
 			
-			FileWriter sdepstream = new FileWriter(dir + "fcfs_airport_schedDEPtraffic.csv");
+			String schedDepsFile = new File(dir, "fcfs_airport_schedDEPtraffic.csv").getAbsolutePath();
+			FileWriter sdepstream = new FileWriter(schedDepsFile);
 			BufferedWriter airport_schedDEPtraffic_out = new BufferedWriter(sdepstream);
 			
-			FileWriter sarrstream = new FileWriter(dir + "fcfs_airport_schedARRtraffic.csv");
+			String schedArrsFile = new File(dir, "fcfs_airport_schedARRtraffic.csv").getAbsolutePath();
+			FileWriter sarrstream = new FileWriter(schedArrsFile);
 			BufferedWriter airport_schedARRtraffic_out = new BufferedWriter(sarrstream);
 			
 			airports.printAirportsToFile(
@@ -189,8 +275,9 @@ public class DepartureArrivalFCFS_basic {
 	public void printAirportDelays(ArrayList<Flight> flightList, String dir) {
 		try {
 			String fname = "deparr_fcfs_airport_delays.csv";
-			System.out.println("Printing airport delays to " + dir+fname);
-			FileWriter fstream = new FileWriter(dir + fname);
+			String filepath = new File(dir, fname).getAbsolutePath();
+			System.out.println("Printing airport delays to " + filepath);
+			FileWriter fstream = new FileWriter(filepath);
 			BufferedWriter out = new BufferedWriter(fstream);
 			Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
 			for(Flight f: flightList){

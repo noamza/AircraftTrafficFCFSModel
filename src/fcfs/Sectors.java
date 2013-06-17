@@ -15,7 +15,22 @@ public class Sectors {
 	
 	//Hashtable<String, SectorTree>() = ;
 	//could make smaller <<
+
+	/**
+	 * Build a map of sectors and 
+	 */
+	@Deprecated
+	public Sectors()
+	{
+	}
 	
+	public Sectors(Map<String, Integer> sectors)
+	{
+		for (Map.Entry<String, Integer> entry : sectors.entrySet())
+		{
+			sectorList.put(entry.getKey(), new SectorTree(entry.getKey(), entry.getValue()));
+		}
+	}
 	 
 	public void loadFromAces(String filePath){
 		String[] subs = new String[1];

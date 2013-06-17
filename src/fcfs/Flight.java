@@ -3,9 +3,22 @@ package fcfs;
 import java.io.PrintStream;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
+
+/**
+ * To initialize a flight add the transit times in sequence starting from departure
+ * airport and ending at arrival airport.
+ * 
+ * @author nalmog
+ */
 public 	class Flight implements Comparable<Flight>{
+	private final static Logger logger = LoggerFactory.getLogger(Flight.class);
+
+	public final static String NONE = "XXXX";
+
 	static double toMinutes = 60*1000.0;
 	
 	ArrayList<SectorAirport> path = new ArrayList<SectorAirport>();
@@ -15,7 +28,7 @@ public 	class Flight implements Comparable<Flight>{
 	
 	static PrintStream io = System.out;
 	
-	int id = -1;
+	final int id;
 	int departureTimeScheduled = -1;
 	int departureTimeProposed = -1;//proposed times loaded by ACES/ASDI
 	int arrivalTimeProposed = -1;//proposed times loaded by ACES/ASDI
@@ -50,7 +63,72 @@ public 	class Flight implements Comparable<Flight>{
 	
 	String airline = "unknown";
 	String centersTravelledPath = null;
+
+	/**
+	 * @todo does the tracon name need a TRACON prefix (TKDFW vs TRACONTKDFW)?
+	 */
+	/**
+	 * Sets departure time and transit time through departure airport.
+	 * 
+	 * @param airport departure airport name (KDFW for example)
+	 * @param tracon departure tracon name (TKDFW or TRACONTKDFW for example)
+	 * @param departure departure time [msec]
+	 * @param transit surface transit time (gate departure to runway takeoff) [msec]
+	 */
+	public void setDeparture(String airport, String tracon, int departure, int transit)
+	{
+		departureTimeScheduled = departure;
+		departureTimeProposed = departure;
+		departureAirport = airport;
+		path.add(new SectorAirport(airport, departure, transit, makePath(NONE, airport, tracon)));
+		logger.debug("{}, {}, {}, {}, {}", id, airport, departure, transit, makePath(NONE, airport, tracon));
+	}
+
+	/**
+	 * Sets arrival time and transit through arrival airport
+	 * 
+	 * @param airport arrival airport name (KDFW for example)
+	 * @param tracon arrival tracon name (TKDFW or TRACONTKDFW for example)
+	 * @param entry arrival time - transit time [msec]
+	 * @param transit surface transit time (runway landing to gate arrival) [msec]
+	 */
+	public void setArrival(String airport, String tracon, int entry, int transit)
+	{
+		arrivalTimeScheduled = entry + transit;
+		arrivalTimeProposed = entry + transit;
+		arrivalAirport = airport;
+		path.add(new SectorAirport(airport, entry, transit, makePath(tracon, airport, NONE)));
+		logger.debug("{}, {}, {}, {}, {}", id, airport, entry, transit, makePath(tracon, airport, NONE));
+	}
+
+	/**
+	 * @todo does it matter if we have multiple crossings?
+	 */
+	/**
+	 * Should be done in order of crossing
+	 * 
+	 * @param current current facility (sector or tracon) name
+	 * @param from facility entering from
+	 * @param to facility exiting towards
+	 * @param entry entry time [msec]
+	 * @param transit transit time [msec]
+	 */
+	public void addTransit(String current, String from, String to, int entry, int transit)
+	{
+		path.add(new SectorAirport(current, entry, transit, makePath(from, current, to)));
+		logger.debug("{}, {}, {}, {}, {}", id, current, entry, transit, makePath(from, current, to));
+	}
 	
+	/**
+	 * @param from
+	 * @param current
+	 * @param to
+	 * @return
+	 */
+	public String makePath(String from, String current, String to)
+	{
+		return from + "," + current + "," + to;
+	}
 
 	public void resetValuesNotPerturbations(){
 		 atcAirDelay = 0;
@@ -171,7 +249,7 @@ public 	class Flight implements Comparable<Flight>{
 	
 	
 	public Flight(int i){
-		id = i;
+		this.id = i;
 	}
 	
 	public void addDelay(int d){
@@ -232,7 +310,305 @@ public 	class Flight implements Comparable<Flight>{
 	public int compareTo(Flight o) {
 		return (departureTimeProposed-o.departureTimeProposed);
 	}
-	
+
+	/**
+	 * @return none
+	 */
+	public static String getNone()
+	{
+		return NONE;
+	}
+
+	/**
+	 * @return toMinutes
+	 */
+	public static double getToMinutes()
+	{
+		return toMinutes;
+	}
+
+	/**
+	 * @return path
+	 */
+	public ArrayList<SectorAirport> getPath()
+	{
+		return path;
+	}
+
+	/**
+	 * @return centerPath
+	 */
+	public ArrayList<CenterTransit> getCenterPath()
+	{
+		return centerPath;
+	}
+
+	/**
+	 * @return centersTravelled
+	 */
+	public ArrayList<String> getCentersTravelled()
+	{
+		return centersTravelled;
+	}
+
+	/**
+	 * @return io
+	 */
+	public static PrintStream getIo()
+	{
+		return io;
+	}
+
+	/**
+	 * @return id
+	 */
+	public int getId()
+	{
+		return id;
+	}
+
+	/**
+	 * @return departureTimeScheduled
+	 */
+	public int getDepartureTimeScheduled()
+	{
+		return departureTimeScheduled;
+	}
+
+	/**
+	 * @return departureTimeProposed
+	 */
+	public int getDepartureTimeProposed()
+	{
+		return departureTimeProposed;
+	}
+
+	/**
+	 * @return arrivalTimeProposed
+	 */
+	public int getArrivalTimeProposed()
+	{
+		return arrivalTimeProposed;
+	}
+
+	/**
+	 * @return taxi_unimpeded_time
+	 */
+	public int getTaxi_unimpeded_time()
+	{
+		return taxi_unimpeded_time;
+	}
+
+	/**
+	 * @return arrivalAirport
+	 */
+	public String getArrivalAirport()
+	{
+		return arrivalAirport;
+	}
+
+	/**
+	 * @return departureAirport
+	 */
+	public String getDepartureAirport()
+	{
+		return departureAirport;
+	}
+
+	/**
+	 * @return gate_perturbation
+	 */
+	public int getGate_perturbation()
+	{
+		return gate_perturbation;
+	}
+
+	/**
+	 * @return taxi_perturbation
+	 */
+	public int getTaxi_perturbation()
+	{
+		return taxi_perturbation;
+	}
+
+	/**
+	 * @return atcAirDelay
+	 */
+	public int getAtcAirDelay()
+	{
+		return atcAirDelay;
+	}
+
+	/**
+	 * @return atcGroundDelay
+	 */
+	public int getAtcGroundDelay()
+	{
+		return atcGroundDelay;
+	}
+
+	/**
+	 * @return wheelsOffTime
+	 */
+	public int getWheelsOffTime()
+	{
+		return wheelsOffTime;
+	}
+
+	/**
+	 * @return arrivalFirstSlot
+	 */
+	public int getArrivalFirstSlot()
+	{
+		return arrivalFirstSlot;
+	}
+
+	/**
+	 * @return departureTimeFinal
+	 */
+	public int getDepartureTimeFinal()
+	{
+		return departureTimeFinal;
+	}
+
+	/**
+	 * @return arrivalTimeScheduled
+	 */
+	public int getArrivalTimeScheduled()
+	{
+		return arrivalTimeScheduled;
+	}
+
+	/**
+	 * @return arrivalTimeFinal
+	 */
+	public int getArrivalTimeFinal()
+	{
+		return arrivalTimeFinal;
+	}
+
+	/**
+	 * @return arrivalAirportDelay
+	 */
+	public int getArrivalAirportDelay()
+	{
+		return arrivalAirportDelay;
+	}
+
+	/**
+	 * @return departureAirportDelay
+	 */
+	public int getDepartureAirportDelay()
+	{
+		return departureAirportDelay;
+	}
+
+	/**
+	 * @return centerDelay
+	 */
+	public int getCenterDelay()
+	{
+		return centerDelay;
+	}
+
+	/**
+	 * @return centerBoundaryDelay
+	 */
+	public int getCenterBoundaryDelay()
+	{
+		return centerBoundaryDelay;
+	}
+
+	/**
+	 * @return numberOfJiggles
+	 */
+	public int getNumberOfJiggles()
+	{
+		return numberOfJiggles;
+	}
+
+	/**
+	 * @return totalJiggleAmount
+	 */
+	public int getTotalJiggleAmount()
+	{
+		return totalJiggleAmount;
+	}
+
+	/**
+	 * @return gateUncertainty
+	 */
+	public int getGateUncertainty()
+	{
+		return gateUncertainty;
+	}
+
+	/**
+	 * @return additionalGDfromReschedule
+	 */
+	public int getAdditionalGDfromReschedule()
+	{
+		return additionalGDfromReschedule;
+	}
+
+	/**
+	 * @return rescheduled
+	 */
+	public boolean isRescheduled()
+	{
+		return rescheduled;
+	}
+
+	/**
+	 * @return originalJiggle
+	 */
+	public int getOriginalJiggle()
+	{
+		return originalJiggle;
+	}
+
+	/**
+	 * @return uncertaintyMinusGroundDelay
+	 */
+	public int getUncertaintyMinusGroundDelay()
+	{
+		return uncertaintyMinusGroundDelay;
+	}
+
+	/**
+	 * @return airline
+	 */
+	public String getAirline()
+	{
+		return airline;
+	}
+
+	/**
+	 * @return centersTravelledPath
+	 */
+	public String getCentersTravelledPath()
+	{
+		return centersTravelledPath;
+	}
+
+	public void pathCsvHeader(StringBuilder buffer)
+	{
+		buffer.append("**flightid,entryTime(milliseconds),exitTime(milliseconds),transitTime(milliseconds)," +
+				"upperStreamSector,currentSector,downStreamSector");
+	}
+	public void pathAsCsvString(StringBuilder buffer)
+	{
+		for (SectorAirport segment : path)
+		{
+			buffer.append(id).append(",");
+			buffer.append(segment.name).append(",");
+			buffer.append(segment.entryTime).append(",");
+			buffer.append(segment.entryTime + segment.transitTime).append(",");
+			buffer.append(segment.transitTime).append(",");
+			buffer.append(segment.raw);
+			buffer.append("\n");
+		}
+	}
 }
 
 class flightFinalArrTimeComparator implements Comparator<Flight>{

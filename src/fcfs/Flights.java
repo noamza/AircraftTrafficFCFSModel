@@ -22,7 +22,21 @@ public class Flights {
 		flightList = new Hashtable<Integer, Flight>();
 		taxiOffset = new Hashtable<String, Integer>();
 	}
-	
+
+	/**
+	 * Overwrites flight if it exists
+	 * @param id
+	 * @param flight
+	 */
+	public void put(int id, Flight flight)
+	{
+		flightList.put(id, flight);
+	}
+
+	public Flight get(int id)
+	{
+		return flightList.get(id);
+	}
 	
 	public void loadCallSigns(String path){
 		try{
