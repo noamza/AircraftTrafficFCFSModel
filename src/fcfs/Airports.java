@@ -5,8 +5,13 @@ package fcfs;
  *
  */
 import java.io.*;
+import java.io.ObjectInputStream.GetField;
 import java.util.*;
 
+/*
+ * this class holds the collection of airports in scheduling
+ * has get, sets for the airports and loading from input data
+ */
 public class Airports {
 
 	PrintStream io = System.out;
@@ -30,7 +35,7 @@ public class Airports {
 				//make list of capacities.
 				AirportTree a = airportList.get(airportName);
 				if(a == null){
-					a = new AirportTree(airportName);
+					a = new AirportTree(airportName, this);
 					airportList.put(airportName, a);
 				}
 				
@@ -63,7 +68,7 @@ public class Airports {
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String line;
 			String name = "noexist";
-			AirportTree f = new AirportTree(name);
+			AirportTree f = new AirportTree(name, this);
 			while ((line = br.readLine()) != null){
 				line = line.trim();
 				// location(0), sim day(1), hour(2), quarter(3), rates(4)
@@ -74,7 +79,7 @@ public class Airports {
 					if (!name.equals(subs[0])){
 						if(!name.equals("noexist")){airportList.put(name, f);}
 						name = subs[0];
-						f = new AirportTree(name); 
+						f = new AirportTree(name, this); 
 					}
 					
 					//make list of capacities.
@@ -119,6 +124,61 @@ public class Airports {
 		}
 
 	}
+	
+	public boolean removeFlightFromDepartureQueue(Flight f){
+			AirportTree a = getAirport(f.departureAirport);
+			return a.freeDepartureSlot(f);
+	}
+	
+	public boolean effectedByCFR(Flight f){
+		return getAirport(f.arrivalAirport).effectedByCFR(f.arrivalTimeACES);
+	}
+	
+	public int getSoonestArrival(Flight f, int proposedArrivalTime, int currentTime){
+		return getAirport(f.arrivalAirport).getSoonestNonPrioritySlot(f, proposedArrivalTime, false) - proposedArrivalTime;
+	}
+	
+	public int getSoonestNonPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).getSoonestNonPrioritySlot(f, proposedDepartureTime, true) - proposedDepartureTime;
+	}
+	
+	public int getSoonestPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).getSoonestPriorityDepartureSlot(f, proposedDepartureTime) - proposedDepartureTime;
+	}
+
+	public int scheduleArrival(Flight f, int proposedArrivalTime, int currentTime){
+		//return getAirport(f.arrivalAirport).insertNonPriorityArrival(f, proposedArrivalTime, currentTime);
+		return getAirport(f.arrivalAirport).scheduleArrival(f, proposedArrivalTime, currentTime);
+	}
+	
+	public int scheduleDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).scheduleDeparture(f, proposedDepartureTime, currentTime);
+	}
+	/*
+	public int scheduleNonPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).scheduleDeparture(f, proposedDepartureTime, currentTime);
+	}
+	
+	public int schedulePriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).scheduleDeparture(f, proposedDepartureTime, currentTime);
+	}
+	*/
+	public AirportTree getAirport(String airportName){
+		AirportTree a = airportList.get(airportName);
+		if(a == null){
+			a = new AirportTree(airportName, this);
+			airportList.put(airportName, a);
+		}
+		return a;
+	}
+	
+	public AirportTree getDepartureAirport(Flight f){
+		return getAirport(f.departureAirport);
+	}
+	
+	public AirportTree getArrivalAirport(Flight f){
+		return getAirport(f.arrivalAirport);
+	}
 
 	public void turnOffDepartureContract(){ 
 		for (AirportTree f : airportList.values()){ //io.println("");
@@ -133,20 +193,12 @@ public class Airports {
 	}	
 	
 	public boolean removeFlightFromArrivalQueue(Flight f){
-		AirportTree a = airportList.get(f.arrivalAirport);
-		if(a == null){
-			a = new AirportTree(f.arrivalAirport);
-			airportList.put(f.arrivalAirport, a);
-		}
+		AirportTree a = getAirport(f.arrivalAirport);
 		return a.freeArrivalSlot(f);
 	}
 	
 	public void schedulePackedArrival(Flight flight, int proposedArrivalTime, int currentTime){
-		AirportTree a = airportList.get(flight.arrivalAirport);
-		if(a == null){
-			a = new AirportTree(flight.arrivalAirport);
-			airportList.put(flight.arrivalAirport, a);
-		}
+		AirportTree a = getAirport(flight.arrivalAirport);
 		a.insertAtSoonestArrivalWithForwardGapsRemoved(flight, proposedArrivalTime, currentTime);
 	}
 	
@@ -163,20 +215,20 @@ public class Airports {
 	}
 	
 	public void validate(){ 
-		for (AirportTree f : airportList.values()){ 
-			f.validate();
+		for (AirportTree a : airportList.values()){ 
+			a.validate();
 		}
 	}	
 	public void resetToStart(){ 
-		for (AirportTree f : airportList.values()){
-			f.resetToStart();
+		for (AirportTree a : airportList.values()){
+			a.resetToStart();
 		}
 	}
 	
 	public void printDelays(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
-			Main.p(f.airportName + "*");
-			f.printDelayVars();
+		for (AirportTree a : airportList.values()){ //io.println("");
+			Main.p(a.airportName + "*");
+			a.printDelayVars();
 		}
 		io.println("TOTAL Airports: " + airportList.size());
 	}	
@@ -224,47 +276,27 @@ public class Airports {
 	}*/
 	
 	public int scheduleArrival(String airportName, int arrTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestArrival(arrTime);
 	}
 	
 	public int scheduleDeparture(String airportName, int depTime, int schDepTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestDeparture(depTime, schDepTime);
 	}
 	
 	public int scheduleArrival(String airportName, int arrTime, int schArrTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestArrival(arrTime, schArrTime);
 	}
 	
 	public int scheduleArrival(String airportName, int arrTime, int schArrTime, Flight f) {
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestArrival(arrTime, schArrTime, f);
 	}
 	
 	public int getSoonestDeparture(String airportName, int departureTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.getSoonestDepartureSlot(departureTime);
 	}
 	
@@ -279,29 +311,17 @@ public class Airports {
 	}*/
 	
 	public int getSoonestArrival(String airportName, int arrivalTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.getSoonestArrivalSlot(arrivalTime);
 	}
 	
 	public int getSoonestArrival(String airportName, int arrivalTime, int minArrivalTime, int maxArrivalTime) {
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.getSoonestArrivalSlot(arrivalTime, minArrivalTime, maxArrivalTime);
 	}
 	
 	public boolean removeFlightFromArrivalQueue(String airportName, int arrivalTime){
-		AirportTree a = airportList.get(airportName);
-		if(a == null){
-			a = new AirportTree(airportName);
-			airportList.put(airportName, a);
-		}
+		AirportTree a = getAirport(airportName);
 		return a.freeArrivalSlot(arrivalTime);
 	}
 }

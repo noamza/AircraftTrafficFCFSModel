@@ -2,12 +2,20 @@ package fcfs;
 import java.util.*;
 import java.io.*;
 
+/*
+ * This is a straight forward implementation of FCFS (by departure for scheduling 
+ * flights with departure, sector, and arrival constraints.
+ * 
+ * it sorts flights by departure time, then for each flight, it does a depth-first
+ * search from departure->sectors->arrival, adding delay for each one, until it
+ * finds the amount of delay where it can take off and pass through each node
+ * without violating any constraints.
+*/
 public class SchedulerFCFS {
 
 	Flights flights; Sectors sectors; Airports airports;
 
 	public void init(){
-
 
 		//test comment
 		java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("HH:mm:ss:SSSS");
@@ -27,7 +35,6 @@ public class SchedulerFCFS {
 		//flights.loadFlightsFromAces(workingDirectory +"job_40_sector_transitTime_takeoffLanding_35h_1.csv",true);
 		//flights.loadTaxiOffset(workingDirectory+"AirportTaxi.csv");
 		//flights.loadFlightsFromAces(workingDirectory+"job_9_sector_transitTime_takeoffLanding_35h_1.csv", true );
-		
 		//flights.loadFlightsFromAces(workingDirectory + "job_KSFO_arrs.csv", true);
 		//flights.loadFlightsFromAces(workingDirectory+"TEST_fcfsj.csv");
 		//flights.loadFromAces(workingDirectory+"recapture_chunki_from_clean.csv");
@@ -41,6 +48,7 @@ public class SchedulerFCFS {
 		//airports.printAirports();
 		date = new Date();
 		System.out.println("loaded " + dateFormat.format(date));
+		
 		/*
 		 * sort by departure time
 		 * For Each Flight
@@ -54,107 +62,92 @@ public class SchedulerFCFS {
 
 		double td = 0; int c = 0;
 		double totalDelayAbsorbed = 0;
-		//*
 		//    Sort flights by Departure Time.
-		Collections.sort(flightList, new flightDepTimeComparator());
-		
+		Collections.sort(flightList, new flightDepTimeIDComparator());
+		//schedule each flight
 		for (Flight f: flightList){
 			boolean validFlight = false;
 			
-			int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
+			int nominalDuration = f.arrivalTimeACES-f.departureTimeACES;
 			int fastestDuration =  (int)(nominalDuration/(1+speedUp));
-			int longestDuration = (int)(nominalDuration/(1-slowDown));
+			int longestDuration = (int)(nominalDuration/(1-slowDown)); 
 			
 			ArrayList<SectorAirport> path = f.path;
 			int delay = 0;
 			
+			/*for each iteration of the loop, a schedule is checked starting at the scheduled departure time
+			 * plus the delay from the last iteration. The max delay of all the constraints is saved from each
+			 * iteration, because this is the soonest the aircraft can depart without violating any constraints
+			 * 
+			 */
 			while(!validFlight){
-				//Main.p("delay:: " + delay);
 				int maxDelay = 0;
-				int departureDelay = airports.getSoonestDeparture(f.departureAirport, f.departureTimeProposed+delay)-(f.departureTimeProposed+delay);
+				//departure delay
+				int departureDelay = airports.getSoonestDeparture(f.departureAirport, f.departureTimeACES+delay)-(f.departureTimeACES+delay);
 				maxDelay = java.lang.Math.max(departureDelay,maxDelay);
-				
+				//sector delay
 				for(SectorAirport s: path){	
 					//Main.p("delay " + delay);
 					int sectorDelay = sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay);
 					maxDelay = java.lang.Math.max(sectorDelay,maxDelay);
 				}
-				
-				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeProposed+delay)-(f.arrivalTimeProposed+delay);
-				
-				boolean here = false;
-				
+				//arrival delay
+				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeACES+delay)-(f.arrivalTimeACES+delay);
 				//slow down
-				int realDelay = 0;
 				if(arrivalDelay <= (longestDuration - nominalDuration)) {
-					//if(maxDelay==0&&arrivalDelay!=0){Main.p("is here " + arrivalDelay);}
-					if(maxDelay==0&&arrivalDelay!=0){
-						here = true; 
-						realDelay = arrivalDelay;
-					}
-					arrivalDelay = 0;
-					
+					//this does not seem correct since it would effect sector entry times as well.
+					//without sector times it would be correct.
+					arrivalDelay = 0;	
 				}
-				
+				//use max such that the constraint with the most needed delay is met.
+				//this should be optimally the least amount of delay.
 				maxDelay = java.lang.Math.max(arrivalDelay, maxDelay);
-				//if(here){Main.p(f.id+" " + realDelay);}
-				//{Main.p("maxdelay here: "+ maxDelay + " arrdelay " + arrivalDelay + " delay " + delay );}
-				//if(here)
 				
+				//when max delay==0 it means that the loop can end, because a departure time
+				//that causes no delay (does not violate any constraints) has been found.
 				if(maxDelay == 0){
 					validFlight = true;
-					//System.out.println("found a flight at: " + delay);
-					int zero = 0;
-					int departureTimeFinal = f.departureTimeProposed + delay; 
-					zero = airports.scheduleDeparture(f.departureAirport, f.departureTimeProposed+delay, f.departureTimeProposed) - (f.departureTimeProposed+delay);
+					//asserting that in fact none of the constraints add any additional delay
+					int shouldBeZero = 0;
+					int departureTimeFinal = f.departureTimeACES + delay; 
+					shouldBeZero = airports.scheduleDeparture(f.departureAirport, f.departureTimeACES+delay, f.departureTimeACES) - (f.departureTimeACES+delay);
+					Main.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
 					f.departureTimeFinal = departureTimeFinal;
-					
-					Main.Assert(zero==0, "errror in scheduling, should be 0");
-					
 					for(SectorAirport s: path){	
-						zero = sectors.schedule(s.name, s.entryTime + delay, s.entryTime + s.transitTime + delay) - (s.entryTime + delay);
-						Main.Assert(zero==0, "errror in scheduling, should be 0");
+						shouldBeZero = sectors.schedule(s.name, s.entryTime + delay, s.entryTime + s.transitTime + delay) - (s.entryTime + delay);
+						Main.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
 					}
-					
-					
-					zero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
-
-					int arrivalTimeFinal = f.arrivalTimeProposed + delay + zero;
+					//shouldBeZero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
+					//Main.Assert(zero==0, "errror in scheduling, should be 0"); //should this be back in?
+																				 //maybe it is taken out to account for slow down
+					int amountAbsorbedSlowingDown = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeACES+delay, f.arrivalTimeACES)-(f.arrivalTimeACES+delay);
+					int arrivalTimeFinal = f.arrivalTimeACES + delay + amountAbsorbedSlowingDown; //in this case should be zero 
 					f.arrivalTimeFinal = arrivalTimeFinal;
-					//f.print();
-					//Main.Assert(zero==0, "errror in scheduling, should be 0");
-
 					f.atcGroundDelay = delay;
-
-					td+=delay; 
-					
+					td+=delay; 					
 					if(delay!=0) c++;
-
-				} else delay+= maxDelay;
+				} else {
+					delay+= maxDelay;
+				}
 			}
 		}
 		//*/
 		date = new Date();
 		System.out.println("done " + dateFormat.format(date));
 		Runtime r = Runtime.getRuntime();
-		
 		//sectors.printSectors();
-		
 		String fcfsdir = "fcfs_output/";
 		printSectorTraffic(sectors, workingDirectory+fcfsdir);
-		
 		//System.out.println("sectors max cap:");
 		//sectors.printSectorMaxCaps();
 		//airports.printMinSpacing();
 		//airports.printAirports("CYYZ");
-		
 		printAirportTrafficCounts(airports,  workingDirectory+fcfsdir);
-		
 		airports.validate();
 		flights.validateFCFS();
 		double totalD = 0;
 		for(Flight f: flightList){
-			int scheduledArrival = f.arrivalTimeProposed;
+			int scheduledArrival = f.arrivalTimeACES;
 			int actualArrival = f.arrivalTimeFinal;
 			int delay = actualArrival-scheduledArrival;
 			totalD += delay;
@@ -165,34 +158,10 @@ public class SchedulerFCFS {
 		Main.p("Total Delay = " + totalD/3600000 + " Hours, or " + totalD + " milliseconds");
 		System.out.printf("max mem %f total mem %f free mem %f\n", (double)r.maxMemory()/1048576.0, (double)r.totalMemory()/1048576.0, (double)r.freeMemory()/1048576.0);
 		//sectors.printSectors();
-		//*
 		Collections.sort(flightList, new flightIDComparator());
-
-		/*
-		try{
-			// Create file 
-			FileWriter fstream = new FileWriter(workingDirectory+"fcfs_out.csv");
-			BufferedWriter out = new BufferedWriter(fstream);
-			out.write("**flightid,entryTime(milliseconds),exitTime(milliseconds),transitTime(milliseconds),upperStreamSector,currentSector,downStreamSector\n");
-			for (Flight f: flightList){
-				int delay = f.atcGroundDelay;
-				for(SectorAirport s: f.path){
-					out.write(f.id +","+ (s.entryTime+delay)+","+(s.entryTime+s.transitTime+delay)+"," + s.transitTime+","+ s.raw+"\n");
-				}				
-			}
-			//Close the output stream
-			out.close();
-		}catch (Exception e){//Catch exception if any
-			System.err.println("Error: " + e.getMessage());
-		}
-		*/
-		
-		//byFlight(workingDirectory);
-
 		int n = Integer.MAX_VALUE;
-		Main.p(""+n/(3600*1000*24.0));
+		Main.p("maximum millisec-days in int "+n/(3600*1000*24.0));
 		Main.p("FIN!");
-		
 		printAirportDelays(flightList,workingDirectory+fcfsdir);
 		printFlightDetails(flightList, workingDirectory+fcfsdir);
 	}
@@ -204,10 +173,10 @@ public class SchedulerFCFS {
 			out.write("FlightId,DepartureAirport,ArrivalAirport,DepartureTimeProposed,DepartureTimeFinal,ArrivalTimeProposed,ArrivalTimeFinal,actualDelay,atcGroundDelay,DelayAbsorbedInAir");
 			out.write("\n");
 			for(Flight f: flightList) {
-				double actualDelay = f.arrivalTimeFinal - f.arrivalTimeProposed;
+				double actualDelay = f.arrivalTimeFinal - f.arrivalTimeACES;
 				double delayAbsorbedInAir = actualDelay - f.atcGroundDelay;
-				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," 
-						+ f.departureTimeFinal + "," + f.arrivalTimeProposed + "," + f.arrivalTimeFinal + "," + f.atcGroundDelay+","+actualDelay+","+delayAbsorbedInAir);
+				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeACES + "," 
+						+ f.getDepartureTimeFinal() + "," + f.arrivalTimeACES + "," + f.arrivalTimeFinal + "," + f.atcGroundDelay+","+actualDelay+","+delayAbsorbedInAir);
 				out.write("\n");
 			}
 			out.close();
@@ -270,7 +239,7 @@ public class SchedulerFCFS {
 			BufferedWriter out = new BufferedWriter(fstream);
 			Hashtable<String, Double> airportDelay = new Hashtable<String,Double>();
 			for(Flight f: flightList){
-				double realDelay = f.arrivalTimeFinal - f.arrivalTimeProposed;
+				double realDelay = f.arrivalTimeFinal - f.arrivalTimeACES;
 				
 				if(airportDelay.get(f.arrivalAirport)==null){
 					airportDelay.put(f.arrivalAirport, 0.0);
@@ -352,8 +321,6 @@ public class SchedulerFCFS {
 				l.add(f);
 			}
 		}
-
-
 
 		for( ArrayList<Flight> s: byAirport.values()){
 

@@ -107,7 +107,7 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 		ArrayList<Flight> arrivingFlightList = new ArrayList<Flight>();
 		
 		//Sort flights by Departure Time.
-		Collections.sort(flightList, new flightDepTimeComparator());
+		Collections.sort(flightList, new flightDepTimeIDComparator());
 		
 		//Schedule Departing Flights
 		for (Flight flight: flightList) {
@@ -117,12 +117,12 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 			
 			//schedule the flight
 			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeScheduled);
-			int groundDelay = departureTimeFinal - flight.departureTimeProposed;
+			int groundDelay = departureTimeFinal - flight.departureTimeACES;
 			totalGroundDelay += groundDelay;
 			flight.atcGroundDelay = groundDelay;
 			flight.departureTimeFinal = departureTimeFinal;
 			//scheduled arrival time changes when ground delay is taken into account
-			flight.arrivalTimeProposed = flight.arrivalTimeScheduled + groundDelay;
+			flight.arrivalTimeACES = flight.arrivalTimeScheduled + groundDelay;
 			arrivingFlightList.add(flight);
 			
 			int blockDelay = 0;
@@ -148,16 +148,16 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 		
 		
 		//Sort flights by proposed arrival time.
-		Collections.sort(arrivingFlightList, new flightArrTimeComparator());
+		Collections.sort(arrivingFlightList, new flightArrTimeIDComparator());
 		
 		//Schedule Arriving Flights
 		for (Flight flight: arrivingFlightList) {
 			//get soonest time slot the flight can land
-			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed);
+			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeACES);
 			//schedule the flight
 			int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport,arrivalTimeProposed, flight.arrivalTimeScheduled);
 			flight.arrivalTimeFinal = arrivalTimeFinal;
-			int airDelay = arrivalTimeFinal - flight.arrivalTimeProposed;
+			int airDelay = arrivalTimeFinal - flight.arrivalTimeACES;
 			flight.atcAirDelay = airDelay;
 			totalAirDelay += airDelay;
 		}
@@ -209,8 +209,8 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 				double totalDelay = f.atcGroundDelay + f.atcAirDelay;
 				double totalGroundDelay = f.atcGroundDelay;
 				double totalAirDelay = f.atcAirDelay;
-				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," 
-						+ f.departureTimeFinal + "," + f.arrivalTimeScheduled + "," + f.arrivalTimeFinal + "," + totalDelay +","+ totalGroundDelay+","+totalAirDelay);
+				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeACES + "," 
+						+ f.getDepartureTimeFinal() + "," + f.arrivalTimeScheduled + "," + f.arrivalTimeFinal + "," + totalDelay +","+ totalGroundDelay+","+totalAirDelay);
 				out.write("\n");
 			}
 			out.close();

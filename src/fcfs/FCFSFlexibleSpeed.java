@@ -58,7 +58,16 @@ class rescheduleEvent implements Comparable{
  * Store delay on ground and in the air.
  * 
  * 
+ * 
+ * 
+ * 
  */	
+
+
+/*
+ * this seems to have been replaced by FCFSArrival.java
+ * not necessary
+ */
 
 public class FCFSFlexibleSpeed {
 	
@@ -162,7 +171,7 @@ public class FCFSFlexibleSpeed {
 							double taxi_noise_minutes = Math.exp(random.nextGaussian()*da.taxiStd + da.taxiMean);
 							taxi_noise_minutes = taxi_noise_minutes < 45? taxi_noise_minutes: 45;
 							taxi_noise_seconds = (int)(taxi_noise_minutes*60000);
-							f.taxi_perturbation = taxi_noise_seconds;
+							f.taxiUncertainty = taxi_noise_seconds;
 						}
 					}
 
@@ -172,11 +181,11 @@ public class FCFSFlexibleSpeed {
 					//else rescheduleQueue.add(new rescheduleEvent(f.departureTimeProposed + f.gate_perturbation, -2, Action.scheduleAtPushback, f));
 					
 					//schedules at PDT
-					if(schedulingMode == Action.scheduleAtPDT)rescheduleQueue.add(new rescheduleEvent(f.departureTimeProposed, -3, Action.scheduleAtPDT, f));
+					if(schedulingMode == Action.scheduleAtPDT)rescheduleQueue.add(new rescheduleEvent(f.departureTimeACES, -3, Action.scheduleAtPDT, f));
 					//schedules at CFR
-					if(schedulingMode == Action.scheduleAtPushback) rescheduleQueue.add(new rescheduleEvent(f.departureTimeProposed + f.gate_perturbation, -2, Action.scheduleAtPushback, f));
+					if(schedulingMode == Action.scheduleAtPushback) rescheduleQueue.add(new rescheduleEvent(f.departureTimeACES + f.gate_perturbation, -2, Action.scheduleAtPushback, f));
 					//schedule at ARRIVAL
-					if(schedulingMode == Action.scheduleByArrival)rescheduleQueue.add(new rescheduleEvent(f.arrivalTimeProposed+f.taxi_unimpeded_time, -4, Action.scheduleByArrival, f));
+					if(schedulingMode == Action.scheduleByArrival)rescheduleQueue.add(new rescheduleEvent(f.arrivalTimeACES+f.taxi_unimpeded_time, -4, Action.scheduleByArrival, f));
 					
 				}
 				//int p = 0, c= 0, a= 0, id = 85; double totalAirDelay = 0, totalGroundDelay = 0; double maxGroundDelay = 0, maxAirDelay = 0 ;
@@ -185,7 +194,7 @@ public class FCFSFlexibleSpeed {
 					//execute earliest event;
 					rescheduleEvent event = rescheduleQueue.remove();
 					Flight f = event.flight;
-					int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
+					int nominalDuration = f.arrivalTimeACES-f.departureTimeACES;
 					int fastestDuration =  (int)(nominalDuration/(1+speedUp));
 					//if(f.id == 15073)Main.p("n "+ nominalDuration /1000 + " f " + fastestDuration/1000);
 
@@ -194,7 +203,7 @@ public class FCFSFlexibleSpeed {
 					case scheduleByArrival:
 					{ //more flights have to be scheduled twice with ground since slot arrival time estimate is bad,
 						//so more totalAirDelayl delay per pdt run.
-						int proposedArrivalTime = f.arrivalTimeProposed + f.taxi_unimpeded_time;
+						int proposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time;
 						int arrivalSlot = airports.scheduleArrival(f.arrivalAirport, proposedArrivalTime); //Make Slot
 						f.arrivalFirstSlot = arrivalSlot;
 						int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime; 
@@ -202,10 +211,10 @@ public class FCFSFlexibleSpeed {
 						int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0);
 						f.atcGroundDelay = delayFromFirstScheduling; 
 						//f.departureDelayFromArrivalAirport = delayDelta;
-						int addons = f.taxi_perturbation + f.gate_perturbation + f.taxi_unimpeded_time;
-						int pushbackTime = f.departureTimeProposed + delayDelta + f.gate_perturbation + f.taxi_unimpeded_time; //add in taxi??
+						int addons = f.taxiUncertainty + f.gate_perturbation + f.taxi_unimpeded_time;
+						int pushbackTime = f.departureTimeACES + delayDelta + f.gate_perturbation + f.taxi_unimpeded_time; //add in taxi??
 						//int wheelsOffTime =  f.departureTimeProposed + f.departureDelayFromArrivalAirport + f.taxi_unimpeded_time; //add in taxi??
-						int wheelsOffTime =  pushbackTime + f.taxi_perturbation;
+						int wheelsOffTime =  pushbackTime + f.taxiUncertainty;
 						f.wheelsOffTime = wheelsOffTime;
 						int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
 						//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
@@ -248,7 +257,7 @@ public class FCFSFlexibleSpeed {
 					case scheduleAtPDT:
 					{ //more flights have to be scheduled twice with ground since slot arrival time estimate is bad,
 						//so more totalAirDelayl delay per pdt run.
-						int proposedArrivalTime = f.arrivalTimeProposed + f.taxi_unimpeded_time;
+						int proposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time;
 						int arrivalSlot = airports.scheduleArrival(f.arrivalAirport, proposedArrivalTime); //Make Slot
 						f.arrivalFirstSlot = arrivalSlot;
 						int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime; 
@@ -256,8 +265,8 @@ public class FCFSFlexibleSpeed {
 						int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0);
 						f.atcGroundDelay = delayFromFirstScheduling; 
 						//f.departureDelayFromArrivalAirport = delayDelta; 
-						int pushbackTime = f.departureTimeProposed+ delayDelta + f.gate_perturbation + f.taxi_unimpeded_time; //add in taxi??
-						int wheelsOffTime =  pushbackTime + f.taxi_perturbation;
+						int pushbackTime = f.departureTimeACES+ delayDelta + f.gate_perturbation + f.taxi_unimpeded_time; //add in taxi??
+						int wheelsOffTime =  pushbackTime + f.taxiUncertainty;
 						f.wheelsOffTime = wheelsOffTime;
 						int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
 						//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
@@ -296,14 +305,14 @@ public class FCFSFlexibleSpeed {
 					case scheduleAtPushback:
 					{
 						//calling at CFR
-						int cfrProposedArrivalTime = f.arrivalTimeProposed + f.taxi_unimpeded_time + f.gate_perturbation; 
+						int cfrProposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time + f.gate_perturbation; 
 						int cfrArrivalSlot = airports.scheduleArrival(f.arrivalAirport, cfrProposedArrivalTime); //Make Slot including perturbation
 						f.arrivalFirstSlot = cfrArrivalSlot;
 						int delayFromCfrScheduling = cfrArrivalSlot - cfrProposedArrivalTime; 
 						if(delayFromCfrScheduling!= 0){ delayedOnGround++; }
 						f.atcGroundDelay = delayFromCfrScheduling; 
 						totalGroundDelay+=delayFromCfrScheduling/60000.0;
-						int wheelsOffTime = f.departureTimeProposed+f.gate_perturbation + delayFromCfrScheduling + f.taxi_perturbation + f.taxi_unimpeded_time; 
+						int wheelsOffTime = f.departureTimeACES+f.gate_perturbation + delayFromCfrScheduling + f.taxiUncertainty + f.taxi_unimpeded_time; 
 						f.wheelsOffTime = wheelsOffTime;
 						int lastOnTimeDeparturePoint = cfrArrivalSlot - fastestDuration;
 						//slot should be more reachable since slot is further out.
@@ -315,7 +324,7 @@ public class FCFSFlexibleSpeed {
 							rescheduleQueue.add(new rescheduleEvent(lastOnTimeDeparturePoint, cfrArrivalSlot, Action.remove, f));
 							rescheduleQueue.add(new rescheduleEvent(wheelsOffTime,-6, Action.scheduleInTheAir, f));// wheelsOffTime+nominalDuration
 							
-							if(wheelsOffTime < f.departureTimeProposed + f.gate_perturbation){
+							if(wheelsOffTime < f.departureTimeACES + f.gate_perturbation){
 								Main.p("error scheduling in past tense");
 							}
 
@@ -359,7 +368,7 @@ public class FCFSFlexibleSpeed {
 						totalAirDelay += airDelay/60000.0;
 						f.arrivalTimeFinal = finalArrivalSlot;
 						totalMissedSlotMetric += (finalArrivalSlot- f.arrivalFirstSlot)/toMinutes;
-						tp += (finalArrivalSlot - f.arrivalTimeProposed)/toMinutes;
+						tp += (finalArrivalSlot - f.arrivalTimeACES)/toMinutes;
 						
 						//delay by airport
 						if(airDelay!=0){
@@ -398,7 +407,7 @@ public class FCFSFlexibleSpeed {
 				//Main.p("mg " + maxGroundDelay); Main.p("ma " + maxAirDelay);
 				flights.validate();
 				//flights.getFlightByID(18).printVariables();
-				flights.resetValues();
+				flights.resetPerturbationAndSchedulingDependentVariables();
 				airports.resetToStart();
 				//flights.getFlightByID(18).printVariables();
 				
@@ -587,13 +596,13 @@ totaL 2706 hrs
 			for (Flight f: flightList){
 				out.write(f.id +"," + 
 						f.taxi_unimpeded_time + "," + 
-						f.taxi_perturbation + "," + 
+						f.taxiUncertainty + "," + 
 						f.gate_perturbation + "," + 
 						f.atcGroundDelay +","+ 
 						f.atcAirDelay+ "," + 
-						f.departureTimeProposed +","+ 
+						f.departureTimeACES +","+ 
 						f.wheelsOffTime + "," + 
-						f.arrivalTimeProposed +","+ 
+						f.arrivalTimeACES +","+ 
 						f.arrivalTimeFinal +"\n"
 						);	
 				totalGroundDelay += f.atcGroundDelay/3600000.0;

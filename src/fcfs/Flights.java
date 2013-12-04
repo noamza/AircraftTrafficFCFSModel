@@ -9,11 +9,15 @@ package fcfs;
  */
 import java.io.*;
 import java.util.*;
-
+/*
+ * this class holds the collection of flights in scheduling
+ * has get, sets for the flights and loading from input data
+ */
 public class Flights {
 	
 	PrintStream io = System.out;
-	int ACES_FDS_OFFSET = 3*3600000;//3 hours
+	int ACES_FDS_OFFSET = 3*3600000;//3 hours This offset is based on the ACES config file.
+	//It's the amount of time ACES holds flights on the ground before starting the simulation.
 	Hashtable<Integer, Flight> flightList;
 	//Map<Integer,Flight> f = new Map<Integer, Flight>();
 	Hashtable<String, Integer> taxiOffset; //in millisecs
@@ -100,18 +104,18 @@ public class Flights {
 		
 		for (Flight f: flightList.values()){
 			//Main.p("be " + f.departureTimeProposed + " " + f.arrivalTimeProposed );
-			int a = f.departureTimeProposed, b = f.arrivalTimeProposed;
+			int a = f.departureTimeACES, b = f.arrivalTimeACES;
 			if(taxiOffset.get(f.departureAirport)!=null){
 					f.correctForTaxiOffset(taxiOffset.get(f.departureAirport));
 					//check for correctness
-					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeProposed ){Main.p("ERROR in to");}
-					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeProposed ){Main.p("ERROR in to");}
+					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeACES ){Main.p("ERROR in to");}
+					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeACES ){Main.p("ERROR in to");}
 			} else {
 				//corrects default of 10 minutes
 				f.correctForTaxiOffset(600000);
 				//check for correctness
-				if(a - 600000 + 540000 != f.departureTimeProposed ){Main.p("ERROR in to d");}
-				if(b - 600000 + 540000 != f.arrivalTimeProposed){Main.p("ERROR in to d");}
+				if(a - 600000 + 540000 != f.departureTimeACES ){Main.p("ERROR in to d");}
+				if(b - 600000 + 540000 != f.arrivalTimeACES){Main.p("ERROR in to d");}
 			}
 			//Main.p("a " + f.departureTimeProposed + " " + f.arrivalTimeProposed + " " + );
 			
@@ -163,7 +167,7 @@ public class Flights {
 						  //SETS f.departureTimeProposed
 						  f = new Flight(Integer.parseInt(subs[0]));
 						  f.departureTimeScheduled = entryTime;
-						  f.departureTimeProposed = entryTime; 
+						  f.departureTimeACES = entryTime; 
 						  f.departureAirport = facilityName;
 						  //add tracons to list;
 						  facilityName = subs[6];
@@ -172,7 +176,7 @@ public class Flights {
 
 					  if(subs[6].equals("XXXX")){
 						  int exitTime = Integer.parseInt(subs[2]) + ACES_FDS_OFFSET;
-						  f.arrivalTimeProposed = exitTime;
+						  f.arrivalTimeACES = exitTime;
 						  f.arrivalTimeScheduled = exitTime;
 						  correctTransitSequence = false;
 						  f.arrivalAirport = facilityName;
@@ -268,15 +272,15 @@ public class Flights {
 		}
 	}
 	
-	void resetValues(){
+	void resetPerturbationAndSchedulingDependentVariables(){
 		for (Flight f : flightList.values()){
-			f.resetValues();
+			f.resetPerturbationAndSchedulingDependentVariables();
 		}
 	}
 	
-	void resetValuesNotPerturbations(){
+	void resetSchedulingDependentVariables(){
 		for (Flight f : flightList.values()){
-			f.resetValuesNotPerturbations();
+			f.resetSchedulingDependentVariables();
 		}
 	}
 	

@@ -52,7 +52,7 @@ public class DepartureArrivalFCFS {
 		ArrayList<Flight> arrivingFlightList = new ArrayList<Flight>();
 		
 		//Sort flights by Departure Time.
-		Collections.sort(flightList, new flightDepTimeComparator());
+		Collections.sort(flightList, new flightDepTimeIDComparator());
 		
 		//Schedule Departing Flights
 		for (Flight flight: flightList) {
@@ -62,12 +62,12 @@ public class DepartureArrivalFCFS {
 			
 			//schedule the flight
 			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeScheduled);
-			int groundDelay = departureTimeFinal - flight.departureTimeProposed;
+			int groundDelay = departureTimeFinal - flight.departureTimeACES;
 			totalGroundDelay += groundDelay;
 			flight.atcGroundDelay = groundDelay;
 			flight.departureTimeFinal = departureTimeFinal;
 			//scheduled arrival time changes when ground delay is taken into account
-			flight.arrivalTimeProposed = flight.arrivalTimeScheduled + groundDelay;
+			flight.arrivalTimeACES = flight.arrivalTimeScheduled + groundDelay;
 			arrivingFlightList.add(flight);
 			
 			
@@ -166,15 +166,15 @@ public class DepartureArrivalFCFS {
 		airports.validateDepartureTraffic();
 		
 		//Sort flights by proposed arrival time.
-		Collections.sort(arrivingFlightList, new flightArrTimeComparator());
+		Collections.sort(arrivingFlightList, new flightArrTimeIDComparator());
 		
 		//Schedule Arriving Flights
 		for (Flight flight: arrivingFlightList) {
 			
 			//get soonest time slot the flight can land
-			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeProposed + flight.centerBoundaryDelay);
+			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeACES + flight.centerBoundaryDelay);
 			//schedule the flight
-			int airDelay = arrivalTimeProposed - flight.arrivalTimeProposed;
+			int airDelay = arrivalTimeProposed - flight.arrivalTimeACES;
 			
 			//if (airDelay != 0) {System.out.println(airDelay);}
 			
@@ -182,7 +182,7 @@ public class DepartureArrivalFCFS {
 			if (flight.centerPath.size() == 1) {
 				int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled);
 				flight.arrivalTimeFinal = arrivalTimeFinal;
-				airDelay = arrivalTimeFinal - flight.arrivalTimeProposed;
+				airDelay = arrivalTimeFinal - flight.arrivalTimeACES;
 				flight.atcAirDelay = airDelay;
 				totalAirDelay += airDelay;
 				totalAllDelay += (flight.arrivalTimeFinal - flight.arrivalTimeScheduled);
@@ -238,9 +238,9 @@ public class DepartureArrivalFCFS {
 				}
 				//if (delayPassedBack > 0) System.out.println(delayPassedBack);
 				//re-check for arrival time with new center boundary delays
-				int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeProposed + leftOverDelay);
+				int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeACES + leftOverDelay);
 				
-				int newAirDelay = arrivalTimeProposed_new - (flight.arrivalTimeProposed + leftOverDelay);
+				int newAirDelay = arrivalTimeProposed_new - (flight.arrivalTimeACES + leftOverDelay);
 				//System.out.println(newAirDelay);
 				newTotalAirDelay+=newAirDelay;
 				int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed_new, flight.arrivalTimeScheduled, flight);
@@ -304,8 +304,8 @@ public class DepartureArrivalFCFS {
 				double totalDelay = f.atcGroundDelay + f.atcAirDelay;
 				double totalGroundDelay = f.atcGroundDelay;
 				double totalAirDelay = f.atcAirDelay;
-				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeProposed + "," 
-						+ f.departureTimeFinal + "," + f.arrivalTimeScheduled + "," + f.arrivalTimeFinal + "," + totalDelay +","+ totalGroundDelay+","+totalAirDelay);
+				out.write(f.id + "," + f.departureAirport + "," + f.arrivalAirport + "," + f.departureTimeACES + "," 
+						+ f.getDepartureTimeFinal() + "," + f.arrivalTimeScheduled + "," + f.arrivalTimeFinal + "," + totalDelay +","+ totalGroundDelay+","+totalAirDelay);
 				out.write("\n");
 			}
 			out.close();
