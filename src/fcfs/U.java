@@ -72,6 +72,7 @@ public class U{
 	
 	public static void start() { System.out.println("Start! " + dateFormat.format(new Date()));}
 	public static void end() { System.out.println("FIN! " + dateFormat.format(new Date()));}
+	public static String now() { return dateFormat.format(new Date()).toString();}
 
 	
 }

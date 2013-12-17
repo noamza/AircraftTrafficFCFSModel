@@ -45,6 +45,7 @@ public class Stats {
 	public static Hashtable<String, Double> count_sum_mean_std_min_max(Double data[])
 	{
 		final int n = data.length;
+		U.Assert(n>0,"error stats: data length must be greater than 0");
 		// return false if n is too small
 //		T.Assert(n<2, "not enough data");
 		double min = 0, max = 0,  sum = 0;
