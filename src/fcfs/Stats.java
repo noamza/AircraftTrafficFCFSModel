@@ -45,6 +45,15 @@ public class Stats {
 	public static Hashtable<String, Double> count_sum_mean_std_min_max(Double data[])
 	{
 		final int n = data.length;
+		if(n==0){
+			System.err.println("warning this data array is empty, you sure about this?");
+			Hashtable<String, Double> temp = new Hashtable<String, Double>();
+			temp.put("count", n*1.);temp.put("sum", 0d);temp.put("mean", 0d);
+			temp.put("std", 0d);temp.put("min",0d);temp.put("max", 0d);
+			//Double[] temp = {n*1., sum, mean, Math.sqrt(sumVariance /n), min, max};
+			return temp;
+		}
+		
 		U.Assert(n>0,"error stats: data length must be greater than 0");
 		// return false if n is too small
 //		T.Assert(n<2, "not enough data");

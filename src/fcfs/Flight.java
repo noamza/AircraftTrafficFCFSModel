@@ -71,6 +71,7 @@ public 	class Flight implements Comparable<Flight>{
 	boolean arrivalTimeFrozen = false;
 	boolean scheduled = false;
 	int numberOfevents = 0;
+	boolean nonCFRInternal = false;
 	/*
 	public void setDepartureTimeFinal(int s){
 		departureTimeFinal = s;
@@ -101,6 +102,7 @@ public 	class Flight implements Comparable<Flight>{
 		 arrivalAirportDelay = 0;
 		 scheduled = false;
 		 numberOfevents = 0;
+		 nonCFRInternal = false;
 		 
 	}
 

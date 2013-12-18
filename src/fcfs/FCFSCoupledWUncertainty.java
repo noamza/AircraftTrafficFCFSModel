@@ -113,20 +113,25 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 	//			String workingDirectory = "/Users/kpalopo/Desktop/scheduler/atl_data/";
 	String workingDirectory = "/Users/nalmog/Desktop/scheduler/";
 	java.util.Random random = new java.util.Random(1);//98);//98);//rand);//9 85); //used 98 for 100000 //6 it goes up //11 goes up
-	
+
 	Hashtable<Integer, Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>> 
-		resultsFreezeSchedulinghorizonColumnCountmeanstd = new Hashtable<Integer, Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>>();
+	resultsFreezeSchedulinghorizonColumnCountmeanstd = new Hashtable<Integer, Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>>();
 	//Hashtable<Integer, Hashtable<Integer, Hashtable<String, ArrayList<Double>>>> 
-		//dataFreezeSchedulinghorizonColumnList = new Hashtable<Integer, Hashtable<Integer, Hashtable<String, ArrayList<Double>>>>();
-	String[] columns = {"ground_delay_cfr_min","air_delay_cfr_min", "ground_delay_non_min", "air_delay_non_min", "arrival_airport_delay_hr",
-				"weighted_delay_cfr_min","weighted_delay_non_min"};
-	
+	//dataFreezeSchedulinghorizonColumnList = new Hashtable<Integer, Hashtable<Integer, Hashtable<String, ArrayList<Double>>>>();
+	String[] columns = {"ground_delay_cfr_min","air_delay_cfr_min", 
+						"ground_delay_non_min", "air_delay_non_min", 
+						"arrival_airport_delay_hr",
+						"weighted_delay_cfr_min","weighted_delay_non_min",
+						"ground_delay_non_internal_min", "air_delay_non_internal_min","weighted_delay_non_internal_min",
+						"ground_delay_non_external_min", "air_delay_non_external_min","weighted_delay_non_external_min"
+						};
+
 	//Hashtable<String, File> filesFreezeSchedulinghorizonColumnList = new Hashtable<String, File>();
-	
+
 	//File file = new File("C:/a");
-	
+
 	//initialize result structures
-	
+
 	public FCFSCoupledWUncertainty(){
 		rand = Math.abs(new java.util.Random().nextInt());
 	}
@@ -151,7 +156,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 	int schedulingHorizon;
 	int freezeHorizon;
-	
+
 	TreeMap<String, BufferedWriter> files = new TreeMap<String, BufferedWriter>();
 
 	public ArrayList<Flight> schedule(int sh, int fh){
@@ -181,21 +186,21 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		//FIN! Start! 2013:12:09:19:59:48 2013:12:09:22:49:25
 
 		ScheduleMode modes[] = { ScheduleMode.IAHCFR };
-		
+
 		U.p("monte carlo: " + montecarlo + " estimated time " + 1.6*montecarlo/100 + " min");
 		U.p("limited uncertainty: " + limitedCFRUncertainty);
-		
+
 		//INIT FILES
 		String dname = montecarlo + "_limited_CFR_Uncertainty_" +limitedCFRUncertainty;
 		String mcpath = workingDirectory+ofolder+"/"+ dname + "/";
 		File mft = new File(mcpath);
 		mft.mkdirs();
 		String montecarlofolder = mft.getPath()+"/";
-		
+
 		//MAIN MONTE CARLO LOOP
 		while (counter < montecarlo) {
 			counter++;
-			
+
 			if(montecarlo > 1000){ if(counter % 1000 == 0){ U.p( U.now() + " " + (double)counter/montecarlo); } } 
 			ArrayList<Flight> flightList = new ArrayList<Flight>(flights.getFlights());
 			schedulingQueue = new java.util.PriorityQueue<SchedulingEvent>();
@@ -212,11 +217,11 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 					int c = temp.get(f.departureAirport) == null? 1: temp.get(f.departureAirport)+1;// + 1;
 					temp.put(f.departureAirport, c);
 					//avg flight time
-					
-					
+
+
 				}
 			}
-			
+
 			String[] targets ={ "KATL","KAUS","KCLT","KDEN","KMIA","KDFW"};
 			TreeMap<String, ArrayList<Double>> ft = new TreeMap<String, ArrayList<Double>>();
 			for (String s: targets){ft.put(s, new ArrayList<Double>());}
@@ -238,14 +243,14 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						);
 			}
 			U.p("**");
-			*/
+			 */
 			//U.p(iahn + "*********airports into IAH*************** " + temp.size());
 			//for(String s: temp.keySet()) U.p(s + " " + temp.get(s));
-			
+
 			Collections.sort(flightList, new flightDepTimeIDComparator());
 
 			flights.resetPerturbationAndSchedulingDependentVariables();
-			
+
 			// SET KIAH CFR
 			airports.getAirport("KIAH").setCFR(0, Integer.MAX_VALUE);
 
@@ -266,7 +271,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 					f.taxi_unimpeded_time = (int)(departureAirport.taxiUnimpeded)*60000;
 					if(pertrubGate && departureAirport.gateZeroProbablity < gateR){
 						double gate_noise_minutes = Math.exp(random.nextGaussian()*departureAirport.gateStd + departureAirport.gateMean);
-						
+
 						gate_noise_minutes = gate_noise_minutes < 120? gate_noise_minutes: 120;
 						gate_noise_seconds = (int)(gate_noise_minutes*60000);
 						f.gate_perturbation = gate_noise_seconds;
@@ -275,7 +280,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						//f.gate_perturbation = 0;
 						//Main.p("random");
 						//((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
-								f.gate_perturbation = 0;//////GATE PERTURBATION REMOVED
+						f.gate_perturbation = 0;//////GATE PERTURBATION REMOVED
 						//((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
 					}
 					if(pertrubTaxi && departureAirport.taxiZeroProbablity < taxiR){
@@ -318,18 +323,18 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 
 			for(ScheduleMode mode: modes){
-				
+
 				for(freezeHorizon = 30; freezeHorizon <= 120; freezeHorizon += 5){					
-					
+
 					if(counter == 1){
 						resultsFreezeSchedulinghorizonColumnCountmeanstd.put(
-							new Integer(freezeHorizon), new  Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>());
+								new Integer(freezeHorizon), new  Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>());
 					}
 
 					for(schedulingHorizon = 0; schedulingHorizon <= 60; schedulingHorizon += 15){
-						
+
 						String currentFilePrefix = freezeHorizon+"_"+schedulingHorizon+"_";
-						
+
 						if(counter == 1){
 							resultsFreezeSchedulinghorizonColumnCountmeanstd.get(freezeHorizon).put(
 									schedulingHorizon, new Hashtable<String, Hashtable<String, Double>>());
@@ -342,7 +347,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 									files.put(n, open(file.getPath()));
 								}
 							}
-							
+
 						}
 
 						//RESET TO 0
@@ -359,28 +364,32 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						int internalDeparturesC = 0;
 						TreeMap<String, ArrayList<String>> demandIAH = new TreeMap<String, ArrayList<String>>();
 						for(int t = 0; t <= 23; t++){String s = t<10? "0"+t: t+""; 
-							demandIAH.put("3:"+s,new ArrayList<String>());demandIAH.put("4:"+s,new ArrayList<String>());}
+						demandIAH.put("3:"+s,new ArrayList<String>());demandIAH.put("4:"+s,new ArrayList<String>());}
 						//U.p("******************************** " + temp.size());
 						for (Flight f: flightList){
-							
+
 							//counting internal departures
 							if(schedulingHorizon==0){
 								//tracking demand.
 								if(freezeHorizon==30){
-									//U.p(U.timeToDateAdjustedShort(f.arrivalTimeACES));
-									String s[] = U.timeToDateAdjustedShort(f.arrivalTimeACES).split(":");
-									//U.p(s[0]+":"+ s[1] +":"+s[2]);
-									demandIAH.get(s[0]+":"+s[1]).add(s[2]);
-									//demandIAH.put(key, value)
+									String s[] = U.timeToDateAdjustedShort(f.arrivalTimeACES).split(":");//U.p(s[0]+":"+ s[1] +":"+s[2]);
+									demandIAH.get(s[0]+":"+s[1]).add(s[2]);//demandIAH.put(key, value)
 								}
-								
+								//checking internals departures
 								if(f.arrivalTimeACES-f.departureTimeACES < freezeHorizon*U.toMinutes){
 									int t = internalDepartures.get(f.departureAirport) == null? 1: internalDepartures.get(f.departureAirport)+1;// + 1;
 									internalDepartures.put(f.departureAirport, t);
 									internalDeparturesC++;
+									
 								}
 							}
-
+							
+							//checking internal departures
+											//flight time
+							if(f.arrivalTimeACES-f.departureTimeACES < freezeHorizon*U.toMinutes){
+								if(!f.cfrEffected)f.nonCFRInternal = true;
+							}
+							
 							switch (mode) {
 
 							case IAHCFR:
@@ -392,14 +401,14 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 									f.cfrEffected = true;
 								}
 								U.Assert(f.arrivalAirport.equals("KIAH"));
-								
+
 								//DETERMINING WHEN FLIGHTS ARE FIRST SCHEDULED
-								
+
 								int departureSchedulingTime = f.departureTimeACES + f.gate_perturbation;
-								
+
 								//CFR UNCERTAINTY
 								if(f.cfrEffected){
-									
+
 									departureSchedulingTime -= (int)(schedulingHorizon*U.toMinutes);
 									AirportTree departureAirport = airports.getDepartureAirport(f);
 									//net effect is 1.1 for 0 horizon and +.05 for every 15 min
@@ -409,7 +418,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 											(departureAirport.gateStd*lookAheadUncertaintyConstant) + departureAirport.gateMean);
 									f.gateUncertainty = (int)(gate_uncertainty_minutes*U.toMinutes);
 									//determine if 0 probability
-									
+
 									//* ADD BACK IN
 									double taxi_noise_minutes = Math.exp(random.nextGaussian()*departureAirport.taxiStd + departureAirport.taxiMean);
 									taxi_noise_minutes = taxi_noise_minutes < 45? taxi_noise_minutes: 45;
@@ -417,17 +426,18 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 									//U.p(""+taxi_noise_seconds/U.toMinutes);
 									f.taxiUncertainty = taxi_noise_seconds;
 									//*/
-									
+
 									//this is for -2 +1 min at 0 horizon scheduling. Not allowing leaving early, so only 0 or late.
 									//SCHEDULE AT PUSHBSCK
 									if(schedulingHorizon==0 || limitedCFRUncertainty){ //0
 										double plus1minus2 = random.nextDouble()*3;
 										plus1minus2 = plus1minus2 < 1? plus1minus2: 0;
+										//plus1minus2 -= 2;
 										if(schedulingHorizon!=0) U.Assert(limitedCFRUncertainty);
 										f.taxiUncertainty = (int) (plus1minus2*U.toMinutes); 
 										f.gateUncertainty = 0;
 									}
-									
+
 									//0 probability
 									double gateR = random.nextDouble();
 									double taxiR = random.nextDouble();
@@ -437,14 +447,14 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 									if(departureAirport.gateZeroProbablity > taxiR){
 										f.taxiUncertainty = 0;
 									}
-									
+
 									U.Assert(f.gateUncertainty >= 0);
-									
-								//NON CFR 	
+
+									//NON CFR 	
 								} else {
-									
+
 								}
-								
+
 								schedulingQueue.add(new SchedulingEvent(departureSchedulingTime, - 1, ScheduleMode.scheduleDeparture, f));
 
 								//}
@@ -474,16 +484,16 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 								//U.pp(k+":"+internalDepartures.get(k)+", ");
 							} //if(!internalDepartures.isEmpty())U.p("");
 						}
-						
+
 						SchedulingEvent prevEvent = new SchedulingEvent(0, 0, ScheduleMode.scheduleDeparture, Flight.dummyDeparture(0));
 						while(!schedulingQueue.isEmpty()){ // while there are events to process (main loop)
 
 							//execute earliest event;
 							SchedulingEvent event = schedulingQueue.remove();
 
-							U.Assert(prevEvent.eventTime <= event.eventTime, prevEvent.mode + " " + prevEvent.eventTime 
-									+ " ERROR events happening out of order " + event.mode + " " + event.eventTime);
-							
+							//U.Assert(prevEvent.eventTime <= event.eventTime, prevEvent.mode + " " + prevEvent.eventTime 
+							//		+ " ERROR events happening out of order " + event.mode + " " + event.eventTime);
+
 							Flight f = event.flight;
 							f.scheduled = true;
 							f.numberOfevents++;
@@ -526,7 +536,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 								removeFromArrivalQueue(event);
 							}
 							break;
-							
+
 							case undef:
 							{
 								Main.p("should not be here");
@@ -552,12 +562,12 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						//validate
 						//flights.validate();
 						airports.validate();
-						
+
 						Hashtable<String, Double> data = new Hashtable <String, Double>();
 						for (String col: columns){
 							data.put(col, 0d);
 						}
-						
+
 						double groundDelayCFR = 0, airDelayCFR = 0, groundDelayAll = 0, airDelayAll = 0, arrivalAirportDelay = 0;
 						int cfrs = 0, all = 0;
 						//double minFt = 45;
@@ -565,39 +575,54 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						for(Flight f: flightList){
 							if(f.scheduled){
 								U.Assert(f.gate_perturbation == 0);
+								//CFR
 								if(f.cfrEffected){
 									cfrs++;
 									groundDelayCFR+= f.atcGroundDelay;
 									airDelayCFR += f.atcAirDelay;
 									U.Assert(f.atcGroundDelay + f.atcAirDelay == f.arrivalAirportDelay);
-									
+
 									write(files.get(currentFilePrefix+columns[0]), ""+(f.atcGroundDelay/U.toMinutes));
 									write(files.get(currentFilePrefix+columns[1]), ""+(f.atcAirDelay/U.toMinutes));
 									write(files.get(currentFilePrefix+columns[5]), ""+((2*f.atcAirDelay+f.atcGroundDelay)/U.toMinutes));
-									
-									
+
 								} else {
+									//NON CFR
 									groundDelayAll += f.atcGroundDelay;
 									airDelayAll += f.atcAirDelay;
 									write(files.get(currentFilePrefix+columns[2]), ""+(f.atcGroundDelay/U.toMinutes));
 									write(files.get(currentFilePrefix+columns[3]), ""+(f.atcAirDelay/U.toMinutes));
 									write(files.get(currentFilePrefix+columns[6]), ""+((2*f.atcAirDelay+f.atcGroundDelay)/U.toMinutes));
+									
+//						"ground_delay_non_internal_min", "air_delay_non_internal_min","weighted_delay_non_internal_min",
+//						"ground_delay_non_external_min", "air_delay_non_external_min","weighted_delay_non_external_min"
+									
+									//INTERNAL VS EXTERNAL
+									if(f.nonCFRInternal){
+										write(files.get(currentFilePrefix+"ground_delay_non_internal_min"), ""+(f.atcGroundDelay/U.toMinutes));
+										write(files.get(currentFilePrefix+"air_delay_non_internal_min"), ""+(f.atcAirDelay/U.toMinutes));
+										write(files.get(currentFilePrefix+"weighted_delay_non_internal_min"), ""+((2*f.atcAirDelay+f.atcGroundDelay)/U.toMinutes));
+									} else {
+										write(files.get(currentFilePrefix+"ground_delay_non_external_min"), ""+(f.atcGroundDelay/U.toMinutes));
+										write(files.get(currentFilePrefix+"air_delay_non_external_min"), ""+(f.atcAirDelay/U.toMinutes));
+										write(files.get(currentFilePrefix+"weighted_delay_non_external_min"), ""+((2*f.atcAirDelay+f.atcGroundDelay)/U.toMinutes));
+									}
 								}
-								
+
 
 								arrivalAirportDelay += f.arrivalAirportDelay;
 								all++;
 							}
 						}
 						write(files.get(currentFilePrefix+columns[4]), ""+(arrivalAirportDelay/U.toHours));
-						
-						 /*
+
+						/*
 						groundDelayCFR /= (U.toMinutes*cfrs); 
 						airDelayCFR /= (U.toMinutes*cfrs);
 						groundDelayAll /= (U.toMinutes*all);
 						airDelayAll /= (U.toMinutes*all);
 						arrivalAirportDelay /= U.toHours;
-						*/
+						 */
 						//								[0]				[1]							[2]						[3]						[4]
 						//String[] columns = {"gournd delay cfr (min)","air delay cfr (min)", "ground delay all (min)", "air delay all (min)", "arrival airport delay (hr)"};
 						//U.e(cfrs + " " + minFt + " " + shorts + " " + tot);
@@ -617,20 +642,20 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		//			}
 		//		}
 		Integer[] fhk = (Integer[]) resultsFreezeSchedulinghorizonColumnCountmeanstd.keySet().toArray(new Integer[0]);  
-	    Arrays.sort(fhk);
-	    Integer[] shk = (Integer[]) resultsFreezeSchedulinghorizonColumnCountmeanstd.get(fhk[0]).keySet().toArray(new Integer[0]);  
-	    Arrays.sort(shk);
-	    
-	    String header = "freeze horizon(min),look ahead (min),variable name,mean,std,min,max,sample size";
-		
+		Arrays.sort(fhk);
+		Integer[] shk = (Integer[]) resultsFreezeSchedulinghorizonColumnCountmeanstd.get(fhk[0]).keySet().toArray(new Integer[0]);  
+		Arrays.sort(shk);
+
+		String header = "freeze horizon(min),look ahead (min),variable name,mean,std,min,max,sample size";
+
 		for (String col: files.keySet()){
 			close(files.get(col));
 		}
-		
+
 		for(String s: columns){
 			files.put(s, open(montecarlofolder+s+'_'+montecarlo+".csv"));
 		}
-		
+
 		for (String col: columns){
 			write(files.get(col), header);
 		}
@@ -639,10 +664,10 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		for (int fh: fhk){
 			for (int sh: shk){
 				for (String col: columns){
-					
+
 					String t = montecarlofolder+fh+'_'+sh+'_'+col+".csv";
 					Hashtable<String, Double> results = Stats.count_sum_mean_std_min_max(read(t));
-					
+
 					U.pf("%3d,%2d,%-40s%4.1f,%4.1f,%4.1f,%4.1f,%.0f\n",
 							fh,sh,col+',',
 							results.get("mean"),
@@ -651,7 +676,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 							results.get("max"),
 							results.get("count")
 							);
-					
+
 					String line = String.format("%d,%d,%s,%.1f,%.1f,%.1f,%.1f,%.0f",
 							fh,sh,col,
 							results.get("mean"),
@@ -660,12 +685,12 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 							results.get("max"),
 							results.get("count")
 							);
-					
+
 					write(files.get(col), line);
 				}
 			}
 		}
-		
+
 		for (String col: files.keySet()){
 			close(files.get(col));
 		}
@@ -674,8 +699,8 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		return new ArrayList<Flight>();
 
 	} //END SCHEDULE()
-	
-	
+
+
 	public ArrayList<Double> read(String path){
 		ArrayList<Double> t = new ArrayList<Double>();
 		try{
@@ -686,7 +711,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 			String line;
 			while ((line = br.readLine()) != null){
 				line = line.replaceAll("\\s","");//trim();
-				
+
 				if(line.length()>0) t.add(Double.parseDouble(line));
 			}
 			in.close();
@@ -697,38 +722,38 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		}
 		return t;
 	}
-	
+
 	public void write(BufferedWriter out, String s){
 		try{
-			  out.write(s+"\n");
-			  }catch (Exception e){//Catch exception if any
-				  System.err.println("Error: " + e.getMessage());
-			  }
+			out.write(s+"\n");
+		}catch (Exception e){//Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}
 	}	
-	
+
 	public void close(BufferedWriter out){
 		try{
-			  out.close();
-			  }catch (Exception e){//Catch exception if any
-				  System.err.println("Error: " + e.getMessage());
-			  }
+			out.close();
+		}catch (Exception e){//Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}
 	}
-	
+
 	public BufferedWriter open(String nameDir){
 		try{
-			  // Create file 
-			  FileWriter fstream = new FileWriter(nameDir);
-			  BufferedWriter out = new BufferedWriter(fstream);
-			  return out;
-			  }catch (Exception e){//Catch exception if any
-				  System.err.println("Error: " + e.getMessage());
-			  }
+			// Create file 
+			FileWriter fstream = new FileWriter(nameDir);
+			BufferedWriter out = new BufferedWriter(fstream);
+			return out;
+		}catch (Exception e){//Catch exception if any
+			System.err.println("Error: " + e.getMessage());
+		}
 		System.err.println("Error: " + "couldnt open file");
 		return null;
 	}
 
 	// /////////////////  //////////////// END OF FCFS
-/*
+	/*
  CFR
 At pushback (0 look ahead):
 Flights schedule arrival at 'scheduled departure time' (ASPM) for an arrival slot which is equal to 'scheduled arrival time' (scheduled departure time + unimpeded taxi time + nominal flight time).
@@ -746,7 +771,7 @@ A gate uncertainty is calculated using log normal and aditya's constant correlat
 The gate uncertainty is added to the atc delay which is added to the unimpeded taxi time and the taxi uncertainty (from the log normal) to determine the wheels off time.
 At wheels off, if the flight is leaving late and can't make up the time by speeding up, it's slot is freed and a new slot is assigned with additional delay being taken in the air.
 
- */
+	 */
 	int watching = -1;
 	//depart:
 	//schedule a departure meeting dep contraints
@@ -764,12 +789,12 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 		U.Assert(f.cfrEffected);
 		U.Assert(f.gateUncertainty >= 0);
 		U.Assert(currentTime == f.gate_perturbation + f.departureTimeACES - U.toMinutes*schedulingHorizon);
-		
+
 		int departureAdditives = + f.taxi_unimpeded_time + f.gate_perturbation; //gate perturbation??
 		f.departureTimeFinal = f.departureTimeACES + departureAdditives;
-		
+
 		schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.scheduleArrival, f));
-		
+
 	}
 
 	public void scheduleArrivalCFR(SchedulingEvent event){
@@ -794,7 +819,7 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 		//U.p((proposedArrivalTime-f.departureTimeFinal) / U.toMinutes);
 		if(!f.firstTimeBeingArrivalScheduled)U.Assert(currentTime == f.getDepartureTimeFinal());
 		airports.scheduleArrival(f, proposedArrivalTime, currentTime);
-		
+
 		if(f.firstTimeBeingArrivalScheduled){
 			//wheels off
 			U.Assert(f.departureTimeACES + f.gate_perturbation + f.taxi_unimpeded_time + f.atcGroundDelay == f.getDepartureTimeFinal(),
@@ -803,7 +828,7 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 
 			int wheelsOff = f.departureTimeACES + f.taxi_unimpeded_time + f.gate_perturbation  
 					+f.gateUncertainty+f.taxiUncertainty + f.atcGroundDelay;
-			
+
 			//CHECK f.gateUncertainty is non 0!! schedulingHorizon + " " +
 			//U.e( f.taxiUncertainty/U.toMinutes + " f.taxiUncertainty  f.gateUncertainty " +  f.gateUncertainty/U.toMinutes);
 			//if(f.taxiUncertainty/U.toMinutes > 1) U.e(""+f.taxiUncertainty/U.toMinutes);
@@ -811,8 +836,8 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 			schedulingQueue.add(new SchedulingEvent(wheelsOff, -8, ScheduleMode.WheelsOff, f));
 		}
 	}
-	
-	
+
+
 	//check if flight can make it by speeding up/slowing down,
 	public void WheelsOffCFR(SchedulingEvent event){
 		//should have ground delay? what to do with it??
@@ -828,7 +853,7 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 		int shortestDuration =   (int)(nominalDuration/(1+speedUp)); 
 		int longestDuration =  (int)(nominalDuration/(1-slowDown));
 		//U.p((nominalDuration-longestDuration)/U.toMinutes);
-		
+
 		U.Assert(currentTime > f.departureTimeACES+f.gate_perturbation+f.taxiUncertainty);
 
 		//TODO tabulation of ground delay
@@ -839,9 +864,9 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.removeFromArrivalQueue, f));
 			f.firstTimeBeingArrivalScheduled = false;
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.scheduleArrival, f));
-			
+
 			//tabs
-		//leaves too late.	
+			//leaves too late.	
 		}else if (currentTime > f.getDepartureTimeFinal() && currentTime + shortestDuration > f.arrivalTimeFinal){
 			f.departureTimeFinal = currentTime;
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.removeFromArrivalQueue, f));
@@ -849,13 +874,13 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 			f.firstTimeBeingArrivalScheduled = false;
 			//U.p("flights leaving late ");
 			//tabs
-			
+
 		} else {
 			f.departureTimeFinal = currentTime;
 			//U.p("Smoooooooth");
 		}
 	}
-	
+
 	//schedules departures at perturbed gate time.
 	//non cfr
 	//schedule at aspm gate
@@ -876,7 +901,7 @@ At freeze horizon:
 Flights are scheduled at freeze horizon amount subtracted from scheduled arrival time.
 Any atc delay from arrival scheduling is taken in the air.
 	 */
-	
+
 	public void scheduleDepartureNonCFR(SchedulingEvent event)
 	{
 		Flight f = event.flight;
@@ -896,7 +921,7 @@ Any atc delay from arrival scheduling is taken in the air.
 		//CFR flights will have been scheduled already
 		schedulingQueue.add(new SchedulingEvent(timeToScheduleArrival, proposedArrivalTime, ScheduleMode.scheduleArrival, f));
 	}
-	
+
 	//check if flight can make it by speeding up/slowing down,
 	public void WheelsOffNon(SchedulingEvent event){
 		//should have ground delay? what to do with it??
@@ -912,7 +937,7 @@ Any atc delay from arrival scheduling is taken in the air.
 		int shortestDuration = (int)(nominalDuration/(1+speedUp)); 
 		int longestDuration =  (int)(nominalDuration/(1-slowDown));
 		//U.p((nominalDuration-longestDuration)/U.toMinutes);
-		
+
 		//U.Assert(currentTime > f.departureTimeACES+f.gate_perturbation+f.taxiUncertainty);
 
 		//TODO tabulation of ground delay
@@ -923,9 +948,9 @@ Any atc delay from arrival scheduling is taken in the air.
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.removeFromArrivalQueue, f));
 			f.firstTimeBeingArrivalScheduled = false;
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.scheduleArrival, f));
-			
+
 			//tabs
-		//leaves too late.	
+			//leaves too late.	
 		}else if (currentTime > f.getDepartureTimeFinal() && currentTime + shortestDuration > f.arrivalTimeFinal){
 			f.departureTimeFinal = currentTime;
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.removeFromArrivalQueue, f));
@@ -962,13 +987,13 @@ Any atc delay from arrival scheduling is taken in the air.
 			airports.scheduleArrival(f, proposedArrivalTime, currentTime);
 			f.arrivalTimeFrozen = true;
 		}
-		
+
 		//check if internal flight
 		if(currentTime == f.departureTimeACES){
 			f.gateUncertainty = 0;
 			int wheelsOff = f.departureTimeACES + f.taxi_unimpeded_time + f.gate_perturbation  
 					+f.taxiUncertainty + f.atcGroundDelay;
-			
+
 			//non-uncertainty
 			//f.gateUncertainty
 			schedulingQueue.add(new SchedulingEvent(wheelsOff, -1, ScheduleMode.WheelsOff, f));
@@ -990,7 +1015,7 @@ Any atc delay from arrival scheduling is taken in the air.
 		if(f.id==watching){ U.p("removeFromArrivalQueue " + f.id ); }
 		airports.removeFlightFromArrivalQueue(f);
 	}
-	
+
 	public void summarize(Collection<Flight> flightList){
 		ArrayList<Double> timeDataE = new ArrayList<Double>();
 		//compares to baseline
@@ -1015,7 +1040,7 @@ Any atc delay from arrival scheduling is taken in the air.
 		return results;
 		//*/
 	}
-	
+
 	/*
 	public void scheduleDeparture(SchedulingEvent event)
 	{
