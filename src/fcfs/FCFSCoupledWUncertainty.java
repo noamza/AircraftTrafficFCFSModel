@@ -164,7 +164,10 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		freezeHorizon = fh;
 		return schedule();
 	}
-
+	
+	boolean limitedCFRUncertainty = true;
+	int montecarlo = 1;
+	
 	public ArrayList<Flight> schedule(){
 		flights = new Flights(); 
 		airports = new Airports();
@@ -175,10 +178,10 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		final boolean pertrubGate = true; //gate taxi pert on/off (true false)
 		final boolean pertrubTaxi = true; //used TRUE FOR 100000
 		int uncertaintyToggle = 1; //gate uncertainty on/off (0 1)
-		final int montecarlo = 10; //******************************************************************************************************//
+		 //******************************************************************************************************//
 		int counter = 0; // number of monte carlo runs
 		int defaultPertMills = 0;//1*60000;
-		boolean limitedCFRUncertainty = false;
+		
 
 		//java.util.Random random = new java.util.Random(98);//98);//rand);//9 85); //used 98 for 100000 //6 it goes up //11 goes up
 		//Start! 2013:12:08:23:40:52 monte carlo: 10000 estimated time 100 min FIN! 2013:12:09:01:57:37   
@@ -187,7 +190,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 		ScheduleMode modes[] = { ScheduleMode.IAHCFR };
 
-		U.p("monte carlo: " + montecarlo + " estimated time " + 1.6*montecarlo/100 + " min");
+		U.p("monte carlo: " + montecarlo + " estimated time " + 3*montecarlo/100 + " min");
 		U.p("limited uncertainty: " + limitedCFRUncertainty);
 
 		//INIT FILES
@@ -338,6 +341,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						if(counter == 1){
 							resultsFreezeSchedulinghorizonColumnCountmeanstd.get(freezeHorizon).put(
 									schedulingHorizon, new Hashtable<String, Hashtable<String, Double>>());
+							
 							for (String name: columns){
 								//resultsFreezeSchedulinghorizonColumnCountmeanstd.get(freezeHorizon)
 								//.get(schedulingHorizon).put(name, new Hashtable<String, Double>());
@@ -830,7 +834,7 @@ At wheels off, if the flight is leaving late and can't make up the time by speed
 					+f.gateUncertainty+f.taxiUncertainty + f.atcGroundDelay;
 
 			//CHECK f.gateUncertainty is non 0!! schedulingHorizon + " " +
-			//U.e( f.taxiUncertainty/U.toMinutes + " f.taxiUncertainty  f.gateUncertainty " +  f.gateUncertainty/U.toMinutes);
+			U.e( schedulingHorizon + " " +f.taxiUncertainty/U.toMinutes + " f.taxiUncertainty  f.gateUncertainty " +  f.gateUncertainty/U.toMinutes);
 			//if(f.taxiUncertainty/U.toMinutes > 1) U.e(""+f.taxiUncertainty/U.toMinutes);
 			//U.Assert(wheelsOff>=f.getDepartureTimeFinal());
 			schedulingQueue.add(new SchedulingEvent(wheelsOff, -8, ScheduleMode.WheelsOff, f));

@@ -155,13 +155,19 @@ public class Main
 		//FCFSArrival f = new FCFSArrival(); f.schedule(dateFormat.format(new java.util.Date()));
 		U.start();
 		//U.pf("freeze horizon(min),scheduling Horizon(min),arrival normaalized for total(min),arrival airport (min),ground(min),air(min)\n");
-		FCFSCoupledWUncertainty s = new FCFSCoupledWUncertainty(); s.schedule();
-		for(int sh = 0; sh <= 60; sh += 5){
-			for(int fh = 30; fh <= 120; fh += 5){
-				//FCFSCoupledWUncertainty s = new FCFSCoupledWUncertainty(); s.schedule(sh, fh);
-			}
-		}
+		FCFSCoupledWUncertainty s = new FCFSCoupledWUncertainty(); 
+		s.montecarlo = 1;
+		s.limitedCFRUncertainty = false;
+		s.schedule();
 		U.end();
+		
+		/*
+		U.start();
+		//U.pf("freeze horizon(min),scheduling Horizon(min),arrival normaalized for total(min),arrival airport (min),ground(min),air(min)\n");
+		s = new FCFSCoupledWUncertainty(); s.limitedCFRUncertainty = true; s.schedule();
+		U.end();
+		*/
+		
 		//new AirportTree("TESTING").test1();
 		
 		//173 different departure airports into IAH
