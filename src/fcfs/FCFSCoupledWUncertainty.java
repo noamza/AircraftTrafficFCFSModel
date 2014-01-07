@@ -936,7 +936,7 @@ Any atc delay from arrival scheduling is taken in the air.
 			f.departureTimeFinal = currentTime;
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.removeFromArrivalQueue, f));
 			schedulingQueue.add(new SchedulingEvent(currentTime, -8, ScheduleMode.scheduleArrival, f));
-
+			
 			//tabs
 			//leaves too late.	
 		}else if (currentTime > f.departureTimeFinal && currentTime + shortestDuration > f.arrivalTimeFinal){
