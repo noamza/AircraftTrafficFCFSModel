@@ -206,7 +206,16 @@ public class AirportTree {
 				
 			} else {
 				if(f.cfrEffected)U.Assert(!f.firstTimeBeingArrivalScheduled, ""+ f.id);
-				f.atcAirDelay += delayNeeded;
+				
+				//for speeding flights, delay in the air only beyond nominal flight time?
+				if(proposedArrivalTime < f.departureTimeFinal + (f.arrivalTimeACES - f.departureTimeACES)){
+					//int nominalArrivalTimeWhichIsLater = f.departureTimeFinal + (f.arrivalTimeACES - f.departureTimeACES);
+					//delayNeeded = Math.max(0, delayNeeded - (nominalArrivalTimeWhichIsLater-proposedArrivalTime)); //maybe add back in
+					f.atcAirDelay += delayNeeded;	
+				} else {
+					f.atcAirDelay += delayNeeded;
+					//U.p("scheduling regular slots");
+				}
 			}
 			
 			if(delayNeeded > 0 && f.cfrEffected){ 
