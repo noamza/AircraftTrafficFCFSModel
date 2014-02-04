@@ -50,7 +50,19 @@ public class NOTES {
 		
 	}
 	
+	/*
+	limited uncertainty:false all cfr:false none cfr:false
 	
+	limited uncertainty:false all cfr:true none cfr:false
+	
+	limited uncertainty:false all cfr:false none cfr:true
+	
+	limited uncertainty:true all cfr:false none cfr:false
+	
+	limited uncertainty:true all cfr:true none cfr:false
+	*/
+
+
 	
 	
 	

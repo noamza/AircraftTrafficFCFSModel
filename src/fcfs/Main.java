@@ -156,8 +156,21 @@ public class Main
 		U.start();
 		//U.pf("freeze horizon(min),scheduling Horizon(min),arrival normaalized for total(min),arrival airport (min),ground(min),air(min)\n");
 		FCFSCoupledWUncertainty s = new FCFSCoupledWUncertainty(); 
-		s.montecarlo = 1;
+		s.montecarlo = 10;
 		s.limitedCFRUncertainty = false;
+		s.schedule();
+		s.allCFR = true;
+		s.noneCFR = false;
+		s.schedule();
+		s.allCFR = false;
+		s.noneCFR = true;
+		s.schedule();
+		s.limitedCFRUncertainty = true;
+		s.allCFR = false;
+		s.noneCFR = false;
+		s.schedule();
+		s.allCFR = true;
+		s.noneCFR = false;
 		s.schedule();
 		U.end();
 		
@@ -175,6 +188,7 @@ public class Main
 		//16 flights DFW to IAH
 		//Sim day: 1/3/2011 length 33hrs
 		//slow down : 2.3 min speed 1.0 min
+		//minimum unimpeded taxi - 5 min
 		/*
 	CFR flight arrival times (DFW to IAH)
    ID  D  H  M  S

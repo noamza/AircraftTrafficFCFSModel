@@ -46,7 +46,7 @@ public class Stats {
 	{
 		final int n = data.length;
 		if(n==0){
-			System.err.println("warning this data array is empty, you sure about this?");
+			//System.err.println("warning this data array is empty, you sure about this?");
 			Hashtable<String, Double> temp = new Hashtable<String, Double>();
 			temp.put("count", n*1.);temp.put("sum", 0d);temp.put("mean", 0d);
 			temp.put("std", 0d);temp.put("min",0d);temp.put("max", 0d);

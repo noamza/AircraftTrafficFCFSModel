@@ -136,8 +136,8 @@ public class AirportTree {
 			if(departure){
 				previousFlight = queue.floor(Flight.dummyDeparture(candidateSlot)); 
 				nextFlight =     queue.higher(Flight.dummyDeparture(candidateSlot)); //or not ceiling so doesn't pick same flight for both
-				previousSlot =   previousFlight != null? previousFlight.getDepartureTimeFinal() : Integer.MIN_VALUE;
-				nextSlot =       nextFlight!=null? nextFlight.getDepartureTimeFinal() : Integer.MAX_VALUE;
+				previousSlot =   previousFlight != null? previousFlight.departureTimeFinal : Integer.MIN_VALUE;
+				nextSlot =       nextFlight!=null? nextFlight.departureTimeFinal : Integer.MAX_VALUE;
 			} else {
 				previousFlight = queue.floor(Flight.dummyArrival(candidateSlot));
 				nextFlight =     queue.higher(Flight.dummyArrival(candidateSlot));
@@ -185,13 +185,13 @@ public class AirportTree {
 			arrivalTrafficByFlight.add(f);
 			//calculate delay
 			int delayNeeded = f.arrivalTimeFinal - proposedArrivalTime;
-			if(currentTime < f.getDepartureTimeFinal()){ //should there be different cases for < and =
+			if(currentTime < f.departureTimeFinal){ //should there be different cases for < and =
 				U.Assert(f.firstTimeBeingArrivalScheduled);
-				if(currentTime < f.getDepartureTimeFinal()){
+				if(currentTime < f.departureTimeFinal){
 					//U.p("cfr arrivaled at " + (f.departureTimeFinal - currentTime)/U.toMinutes);
 				}
 				//code to make sure delay can be taken on the ground..
-				int delayThatCanBeAbsorbedOnTheGround = timeUntilNextSlot(f, f.getDepartureTimeFinal(), true);
+				int delayThatCanBeAbsorbedOnTheGround = timeUntilNextSlot(f, f.departureTimeFinal, true);
 				U.Assert(delayThatCanBeAbsorbedOnTheGround >= 0, 
 						delayThatCanBeAbsorbedOnTheGround+ " delayThatCanBeAbsorbedOnTheGround >= 0");
 				int groundDelayPortion = Math.min(delayThatCanBeAbsorbedOnTheGround, delayNeeded);
@@ -202,7 +202,7 @@ public class AirportTree {
 				f.atcAirDelay += airDelayPortion;
 				//if(groundDelayPortion > 0 && airDelayPortion > 0) U.p(groundDelayPortion+ " gp ap " + airDelayPortion);
 				//if(groundDelayPortion == delayNeeded) U.p("yesssiiir"); else U.p("no sir");
-				f.departureTimeFinal = f.getDepartureTimeFinal() + groundDelayPortion; //flight departs later.. //TODO
+				f.departureTimeFinal = f.departureTimeFinal + groundDelayPortion; //flight departs later.. //TODO
 				
 			} else {
 				if(f.cfrEffected)U.Assert(!f.firstTimeBeingArrivalScheduled, ""+ f.id);
@@ -235,7 +235,7 @@ public class AirportTree {
 		TreeSet<Flight> queue = departure? a.departureTrafficByFlight : a.arrivalTrafficByFlight;
 		if(departure){
 			nextFlight =     queue.higher(Flight.dummyDeparture(time)); //or not ceiling so doesn't pick same flight for both
-			nextSlot =       nextFlight!=null? nextFlight.getDepartureTimeFinal() : Integer.MAX_VALUE;	
+			nextSlot =       nextFlight!=null? nextFlight.departureTimeFinal : Integer.MAX_VALUE;	
 		} else {
 			nextFlight =     queue.higher(Flight.dummyArrival(time));
 			nextSlot =       nextFlight!=null? nextFlight.arrivalTimeFinal : Integer.MAX_VALUE;
@@ -279,7 +279,7 @@ public class AirportTree {
 					"DepartureTrafficByFlight.contains(flight) flight already in Departure tree id: " + f.id);
 			departureTrafficByFlight.add(f);
 			//calculate delay
-			int delayNeeded = f.getDepartureTimeFinal() - proposedDepartureTime;
+			int delayNeeded = f.departureTimeFinal - proposedDepartureTime;
 			f.atcGroundDelay += delayNeeded;
 			f.departureAirportDelay += delayNeeded;
 			return delayNeeded;
@@ -304,7 +304,7 @@ public class AirportTree {
 				previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot));
 			}
 			//previousDeparture = previousFlight.departureTimeFinal;
-			previousDeparture = (previousFlight == null)? Integer.MIN_VALUE : previousFlight.getDepartureTimeFinal();
+			previousDeparture = (previousFlight == null)? Integer.MIN_VALUE : previousFlight.departureTimeFinal;
 		}
 		//null check here
 		//previousDeparture = (previousFlight == null)? Integer.MIN_VALUE : previousFlight.departureTimeFinal;
@@ -317,7 +317,7 @@ public class AirportTree {
 				candidateDepartureSlot = previousDeparture + previousSpace;
 				int buffer = candidateDepartureSlot + getDepartureSpacing(candidateDepartureSlot);
 				previousFlight = departureTrafficByFlight.floor(Flight.dummyDeparture(buffer)); //use buffer?
-				previousDeparture = previousFlight.getDepartureTimeFinal();
+				previousDeparture = previousFlight.departureTimeFinal;
 				previousSpace = getDepartureSpacing(previousDeparture);	
 				//correct
 			}
@@ -341,7 +341,7 @@ public class AirportTree {
 			int candidateDepartureSlot = getSoonestPriorityDepartureSlot(f, proposedDepartureTime);
 			f.departureTimeFinal = candidateDepartureSlot;
 			//print("f.departureTimeFinal = candidateDepartureSlot " + f.departureTimeFinal + " " + candidateDepartureSlot ); 
-			int delayNeeded = f.getDepartureTimeFinal() - proposedDepartureTime;
+			int delayNeeded = f.departureTimeFinal - proposedDepartureTime;
 			f.atcGroundDelay += delayNeeded;
 			f.departureAirportDelay += delayNeeded;
 			
@@ -349,12 +349,12 @@ public class AirportTree {
 			
 			Flight previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot)); //so catches noncfr in slot
 			///CHECKING WRONG FLIGHT, NEED TO CHECK LOWER THAN PREV SLOT AS WELL<<<<<<<<<
-			int prevBuffer = previousFlight.getDepartureTimeFinal() + getDepartureSpacing(previousFlight.getDepartureTimeFinal());
+			int prevBuffer = previousFlight.departureTimeFinal + getDepartureSpacing(previousFlight.departureTimeFinal);
 			if(prevBuffer <= candidateDepartureSlot){
 				int necessaryBuffer = candidateDepartureSlot+getDepartureSpacing(candidateDepartureSlot);
 				previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(necessaryBuffer)); //so catches noncfr in slot
 				///CHECKING WRONG FLIGHT, NEED TO CHECK LOWER THAN PREV SLOT AS WELL<<<<<<<<<
-				prevBuffer = previousFlight.getDepartureTimeFinal() + getDepartureSpacing(previousFlight.getDepartureTimeFinal());
+				prevBuffer = previousFlight.departureTimeFinal + getDepartureSpacing(previousFlight.departureTimeFinal);
 			}
 
 			
@@ -364,10 +364,10 @@ public class AirportTree {
 			
 			//if prev flight buffer overlaps, and prev flights departs before, need to push forward.
 			//as long as prev flight departs after candidate, the gaps will be mended in mend()
-			if(previousFlight!= null &&  candidateDepartureSlot < prevBuffer && previousFlight.getDepartureTimeFinal() <= candidateDepartureSlot){ 
+			if(previousFlight!= null &&  candidateDepartureSlot < prevBuffer && previousFlight.departureTimeFinal <= candidateDepartureSlot){ 
 				//int offset = previousFlight.departureTimeFinal<=candidateDepartureSlot? 1 : 0;
 				int offset = 1; //so that previous flight gets mended up ahead
-				int prevDelayNeeded = candidateDepartureSlot - previousFlight.getDepartureTimeFinal() + offset;
+				int prevDelayNeeded = candidateDepartureSlot - previousFlight.departureTimeFinal + offset;
 				previousFlight.atcGroundDelay += prevDelayNeeded;
 				previousFlight.departureTimeFinal = candidateDepartureSlot + offset;
 				previousFlight.departureAirportDelay += prevDelayNeeded;
@@ -404,14 +404,14 @@ public class AirportTree {
 		Flight f2 = Flight.dummyDeparture(0); f2.cfrEffected = true;
 		Flight f3 = Flight.dummyDeparture(0);f3.cfrEffected = false;
 		Flight f4 = Flight.dummyDeparture(0);f4.cfrEffected = true;
-		print(f1.cfrEffected+" f1 "+f1.getDepartureTimeFinal());
-		print(f2.cfrEffected+" f2 "+f2.getDepartureTimeFinal());
-		print(f3.cfrEffected+" f3 "+f3.getDepartureTimeFinal());
-		print(f4.cfrEffected+" f4 "+f4.getDepartureTimeFinal());
-		scheduleDeparture(f1, f1.getDepartureTimeFinal(), 0);printDepTrafficByFlight();
-		scheduleDeparture(f2, f2.getDepartureTimeFinal(), 0);printDepTrafficByFlight();
-		scheduleDeparture(f3, f3.getDepartureTimeFinal(), 0);printDepTrafficByFlight();
-		scheduleDeparture(f4, f4.getDepartureTimeFinal(), 0);
+		print(f1.cfrEffected+" f1 "+f1.departureTimeFinal);
+		print(f2.cfrEffected+" f2 "+f2.departureTimeFinal);
+		print(f3.cfrEffected+" f3 "+f3.departureTimeFinal);
+		print(f4.cfrEffected+" f4 "+f4.departureTimeFinal);
+		scheduleDeparture(f1, f1.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f2, f2.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f3, f3.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f4, f4.departureTimeFinal, 0);
 //		print("f1"); f1.print();
 //		print("f2"); f2.print();
 //		print("f3"); f3.print();
@@ -441,17 +441,17 @@ public class AirportTree {
 		//pushes flights forward, filling in gaps as moves forward
 		while (iter.hasNext() && cont){
 			next = iter.next();
-			int currentSpacing = getDepartureSpacing(current.getDepartureTimeFinal());
+			int currentSpacing = getDepartureSpacing(current.departureTimeFinal);
 			
 			//if next flight is too close
-			if(current.getDepartureTimeFinal() + currentSpacing > next.getDepartureTimeFinal()){
+			if(current.departureTimeFinal + currentSpacing > next.departureTimeFinal){
 				
 				iter.remove(); // iter is on next so next is removed
 				if(current.id == 851) printDepTrafficByFlight();
-				Main.Assert(currentTime <= next.getDepartureTimeFinal(), airportName + " " + next.airline + " " +currentTime+ " " + next.departureTimeACES +
+				Main.Assert(currentTime <= next.departureTimeFinal, airportName + " " + next.airline + " " +currentTime+ " " + next.departureTimeACES +
 						" currentTime > f.DepartureTimeFinal scheduling after they have departed " +current.id+ " " + next.id);
 				//should have assured that flight has not departed yet(?)
-				int delayNeeded = current.getDepartureTimeFinal() + currentSpacing - next.getDepartureTimeFinal();
+				int delayNeeded = current.departureTimeFinal + currentSpacing - next.departureTimeFinal;
 				Main.Assert(delayNeeded >= 0, "delayNeeded >= 0 mend the gaps");
 				//add ground delay
 				next.atcGroundDelay += delayNeeded; 
@@ -484,10 +484,10 @@ public class AirportTree {
 					next.numberOfJiggles++;
 				}
 				*/
-				next.departureTimeFinal = current.getDepartureTimeFinal() + currentSpacing;
+				next.departureTimeFinal = current.departureTimeFinal + currentSpacing;
 				addBackIn.add(next);
 				current = next;
-				currentSpacing = getDepartureSpacing(current.getDepartureTimeFinal());
+				currentSpacing = getDepartureSpacing(current.departureTimeFinal);
 				//Main.p("next Departure time after" + next.DepartureTimeFinal);
 			} else {
 				cont = false;
@@ -654,7 +654,7 @@ public class AirportTree {
 			//asserts no flights in traffic twice
 			Main.Assert(!noRepeats.contains(f.id),"dup id's in departure traffic!!!! " + f.id);
 			noRepeats.add(f.id);
-			currentTime = f.getDepartureTimeFinal();
+			currentTime = f.departureTimeFinal;
 			int lastTimeSpace = currentTime-lastTime; //space between last arrival and this arrival
 			Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),
 					airportName + " lastTimeSpace >= getDepartureSpacing(lastTime) between " + prevId + " and "+ f.id 
