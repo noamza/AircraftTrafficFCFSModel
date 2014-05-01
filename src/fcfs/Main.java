@@ -30,6 +30,10 @@ import java.util.TreeSet;
 /**
  * @author nalmog
  */
+
+//check how Internals are handled?
+//taxi uncertainty for non CFR?
+
 public class Main
 {
 
@@ -103,14 +107,15 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
+		/*
 		File flightFile = new File(workingDirectory, sectorCrossingFileName);
 		File sectorFile = new File(workingDirectory, sectorFileName);
 		File airportFile = new File(workingDirectory, runwayFileName);
-
+		
 		Flights  flights  = loadFlightData(flightFile.getAbsolutePath());
 		Sectors  sectors  = loadSectorData(sectorFile.getAbsolutePath());
 		Airports airports = loadAirportData(airportFile.getAbsolutePath());
-	   
+	   */
 		//HUU'S WORK
 		//Scheduler scheduler = new DepartureArrivalFCFS_basic(flights, airports, sectors);
 		//ArrayList<Flight> flightList = scheduler.schedule();
@@ -144,19 +149,26 @@ public class Main
 		//Noam
         // display new properties
         //System.getProperties().list(System.out);
-		noamMain();
+		noamMain(args);
 		
 
 	}
 	
-	public static void noamMain()
+	public static void noamMain(String[] args)
 	{
+		//java -Xms3024M -Xmx3024M -jar FCFSDelaySensitivity.jar /Users/nalmog/Desktop/Scheduler/ 3
 		//java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDDHHmmss"); 
 		//FCFSArrival f = new FCFSArrival(); f.schedule(dateFormat.format(new java.util.Date()));
 		U.start();
 		//U.pf("freeze horizon(min),scheduling Horizon(min),arrival normaalized for total(min),arrival airport (min),ground(min),air(min)\n");
-		FCFSCoupledWUncertainty s = new FCFSCoupledWUncertainty(); 
-		s.montecarlo = 10;
+		FCFSCoupledWUncertainty s;
+		if(args!=null){
+			U.workingDirectory = args[0];
+			s = new FCFSCoupledWUncertainty(Integer.parseInt(args[1]));
+		} else {
+			s = new FCFSCoupledWUncertainty(); 
+			s.montecarlo = 2;
+		}
 		s.limitedCFRUncertainty = false;
 		s.schedule();
 		s.allCFR = true;

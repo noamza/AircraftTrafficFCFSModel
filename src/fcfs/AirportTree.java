@@ -184,22 +184,25 @@ public class AirportTree {
 				//	"DepartureTrafficByFlight.contains(flight) flight already in Departure tree id: " + f.id);
 			arrivalTrafficByFlight.add(f);
 			//calculate delay
+			//This code also checks for departure constraints to make sure delay can be taken on the ground
 			int delayNeeded = f.arrivalTimeFinal - proposedArrivalTime;
 			if(currentTime < f.departureTimeFinal){ //should there be different cases for < and =
 				U.Assert(f.firstTimeBeingArrivalScheduled);
-				if(currentTime < f.departureTimeFinal){
-					//U.p("cfr arrivaled at " + (f.departureTimeFinal - currentTime)/U.toMinutes);
-				}
-				//code to make sure delay can be taken on the ground..
+				//code to make sure delay can be taken on the ground..When there are departure constraints!
 				int delayThatCanBeAbsorbedOnTheGround = timeUntilNextSlot(f, f.departureTimeFinal, true);
 				U.Assert(delayThatCanBeAbsorbedOnTheGround >= 0, 
 						delayThatCanBeAbsorbedOnTheGround+ " delayThatCanBeAbsorbedOnTheGround >= 0");
 				int groundDelayPortion = Math.min(delayThatCanBeAbsorbedOnTheGround, delayNeeded);
 				int airDelayPortion = delayNeeded - groundDelayPortion;
+				
 				U.Assert(airDelayPortion >= 0 && groundDelayPortion >= 0, 
 						airDelayPortion+ " airDelayPortion > 0 && groundDelayPortion > 0," + groundDelayPortion);
+				//When there are departure constraints!
+				U.Assert(airDelayPortion == 0, "airDelayPortion == 0"); 
+				
 				f.atcGroundDelay += groundDelayPortion;
 				f.atcAirDelay += airDelayPortion;
+				
 				//if(groundDelayPortion > 0 && airDelayPortion > 0) U.p(groundDelayPortion+ " gp ap " + airDelayPortion);
 				//if(groundDelayPortion == delayNeeded) U.p("yesssiiir"); else U.p("no sir");
 				f.departureTimeFinal = f.departureTimeFinal + groundDelayPortion; //flight departs later.. //TODO
@@ -226,7 +229,7 @@ public class AirportTree {
 			return delayNeeded;
 		}
 	}
-
+	
 	public int timeUntilNextSlot(Flight f, int time, boolean departure){
 		//TODO
 		Flight nextFlight; 
