@@ -277,7 +277,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 				
 				if(departureAirport!=null){
 					double gateR = random.nextDouble(), taxiR = random.nextDouble();
-					//Main.p(gateR + " gate taxi " + taxiR + " " + departureAirport.taxiUnimpeded + " " + departureAirport.gateStd + " " + departureAirport.taxiMean);
+					//U.p(gateR + " gate taxi " + taxiR + " " + departureAirport.taxiUnimpeded + " " + departureAirport.gateStd + " " + departureAirport.taxiMean);
 					f.taxi_unimpeded_time = (int)(departureAirport.taxiUnimpeded)*60000;
 					f.gate_perturbation = 0; /////////////////GATE PERTURBATION SET TO 0 //////////////////////////
 					
@@ -300,16 +300,16 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 						f.taxiUncertainty = taxi_noise_seconds;
 						//ERROR OR NOT??
 						if(taxi_noise_minutes == 1){
-							Main.p(departureAirport.taxiZeroProbablity + " " /*c++*/ + " " + departureAirport.airportName);
+							U.p(departureAirport.taxiZeroProbablity + " " /*c++*/ + " " + departureAirport.airportName);
 							f.taxiUncertainty = defaultPertMills;
 						}
 						//						f.taxi_perturbation = 0;//taxi_noise_seconds; //CHANGE BACK
 					}
 					//for null airports on first run
-					//Main.p("error in perturbation?");
+					//U.p("error in perturbation?");
 
 				} else {
-					//Main.p("error in perturbation?");
+					//U.p("error in perturbation?");
 					/* need??
 					double gateR = random.nextDouble(), taxiR = random.nextDouble();
 					double gate_noise_minutes = Math.exp(random.nextGaussian()*0);
@@ -320,7 +320,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 					taxi_noise_seconds = (int)(taxi_noise_minutes*60000);
 					f.gate_perturbation = gate_noise_seconds;
 					f.taxi_perturbation = taxi_noise_seconds;
-					//Main.p(gate_noise_seconds + " else");
+					//U.p(gate_noise_seconds + " else");
 					//keep?
 					f.gate_perturbation = defaultPertMills;
 					f.taxi_perturbation = defaultPertMills;
@@ -469,7 +469,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 							default:
 							{
-								Main.p("error in switch1 should not be here");
+								U.p("error in switch1 should not be here");
 							}
 
 							} //END SWITCH
@@ -547,13 +547,13 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 							case undef:
 							{
-								Main.p("should not be here");
+								U.p("should not be here");
 								System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 							}
 							break;
 							default:
 							{
-								Main.p("should not be here");
+								U.p("should not be here");
 								System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 
 							}
@@ -631,7 +631,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		} // END Monte carlo
 		//		for(int s: delayedIntheAir.keySet()){
 		//			if(delayedIntheAir.get(s)!=2){
-		//				Main.p(s+" "+delayedIntheAir.get(s));
+		//				U.p(s+" "+delayedIntheAir.get(s));
 		//			}
 		//		}
 		Integer[] fhk = (Integer[]) resultsFreezeSchedulinghorizonColumnCountmeanstd.keySet().toArray(new Integer[0]);  
@@ -1000,16 +1000,16 @@ Any atc delay from arrival scheduling is taken in the air.
 	//schedules arrivals at perturbed arrivaltime - freeze horizon, or wheels off, whichever is later
 	public void scheduleArrivalNonCFR(SchedulingEvent event)
 	{
-		//Main.p(++ty);
-		Main.Assert(!event.flight.cfrEffected,"!event.flight.CFRaffected");
+		//U.p(++ty);
+		U.Assert(!event.flight.cfrEffected,"!event.flight.CFRaffected");
 		Flight f = event.flight;
 		int currentTime = event.eventTime;
 		if(f.id==watching){ U.p(f.id + " scheduleArrivalNonCFR at " + currentTime); }
 		int proposedArrivalTime = event.coEventTime;
-		Main.Assert(f.atcAirDelay == 0, "f.atcAirDelay == 0");
+		U.Assert(f.atcAirDelay == 0, "f.atcAirDelay == 0");
 		//there could be ground delay added from adjusting the arrival Queue, which would mean still more than 30min from arrival.
 		if(f.firstTimeBeingArrivalScheduled){
-			Main.Assert(f.atcGroundDelay == 0, "f.atcAirDelay == 0");
+			U.Assert(f.atcGroundDelay == 0, "f.atcAirDelay == 0");
 			airports.scheduleArrival(f, proposedArrivalTime, currentTime);
 			f.firstTimeBeingArrivalScheduled = false;
 			//schedulingQueue.add(new SchedulingEvent(currentTime+f.atcGroundDelay, proposedArrivalTime+f.atcGroundDelay, ScheduleMode.scheduleArrival, f));
@@ -1076,16 +1076,16 @@ Any atc delay from arrival scheduling is taken in the air.
 	/*
 	public void scheduleDeparture(SchedulingEvent event)
 	{
-		//Main.p(++sici);
+		//U.p(++sici);
 		//schedule priority or regular departure based on CFR
 		Flight f = event.flight;
 		//duration speeds
 		int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
 		int fastestDuration =  (int)(nominalDuration/(1+speedUp)); 
-		Main.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
+		U.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
 		int delayDelta = Math.max(f.gateUncertainty,f.atcGroundDelay); 
-		Main.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
-		Main.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
+		U.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
+		U.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
 		int departureAdditives = + f.taxi_unimpeded_time; //gate perturbation??
 		int proposedDepartureTime = f.departureTimeProposed + departureAdditives; 
 
@@ -1113,17 +1113,17 @@ Any atc delay from arrival scheduling is taken in the air.
 	/*
 	public void scheduleDeparture(SchedulingEvent event)
 	{
-		//Main.p(++sici);
+		//U.p(++sici);
 		//schedule priority or regular departure based on CFR
 		//schedule arrival if CFR
 		Flight f = event.flight;
 		//duration speeds
 		int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
 		int fastestDuration =  (int)(nominalDuration/(1+speedUp)); 
-		Main.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
+		U.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
 		int delayDelta = Math.max(f.gateUncertainty,f.atcGroundDelay); 
-		Main.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
-		Main.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
+		U.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
+		U.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
 		if(airports.getArrivalAirport(f).effectedByCFR(f.departureTimeProposed+f.taxi_unimpeded_time)){
 			f.cfrEffected = true;
 			//cfr_flights++;
@@ -1148,7 +1148,7 @@ Any atc delay from arrival scheduling is taken in the air.
 				int depDelay = 
 						airports.getSoonestPriorityDeparture(f, proposedDepartureTime + departureSchedulingDelay, event.eventTime);
 
-				if(depDelay > 0){Main.p(f.id + " wackness ");}
+				if(depDelay > 0){U.p(f.id + " wackness ");}
 				departureSchedulingDelay += depDelay;
 				f.departureAirportDelay += depDelay;
 				//ARRIVAL
@@ -1158,12 +1158,12 @@ Any atc delay from arrival scheduling is taken in the air.
 				diff = arrDelay;
 			}
 	 */
-	//if(f.id==-851)Main.p(f.departureTimeProposed + " main proposedDepartureTime + departureSchedulingDelay " + proposedDepartureTime + " "+ departureSchedulingDelay+"\n");
+	//if(f.id==-851)U.p(f.departureTimeProposed + " U.proposedDepartureTime + departureSchedulingDelay " + proposedDepartureTime + " "+ departureSchedulingDelay+"\n");
 	//int shouldBeZero = airports.schedulePriorityDeparture(f, proposedDepartureTime + departureSchedulingDelay, event.eventTime);
-	//Main.Assert(shouldBeZero==0, "shouldBeZero not 0");
+	//U.Assert(shouldBeZero==0, "shouldBeZero not 0");
 	//schedule arrival at time of departure scheduling;
 	//shouldBeZero = airports.scheduleArrival(f, proposedArrivalTime + departureSchedulingDelay, event.eventTime);
-	//Main.Assert(shouldBeZero==0, "shouldBeZero not 0");
+	//U.Assert(shouldBeZero==0, "shouldBeZero not 0");
 	//f.atcGroundDelay = departureSchedulingDelay; //OVER WRITES, OK????
 	//f.departureAirportDelay = f.departureTimeFinal - proposedDepartureTime;
 	//f.arrivalAirportDelay = f.arrivalTimeFinal - proposedArrivalTime;
@@ -1205,17 +1205,17 @@ Any atc delay from arrival scheduling is taken in the air.
 			//
 			//			for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 			//				String a = e.nextElement();
-			//				//Main.p(a+" " + dispensedAirportDelayHrs.get(a)/montecarlo);
+			//				//U.p(a+" " + dispensedAirportDelayHrs.get(a)/montecarlo);
 			//				out.write(a+"," + dispensedAirportDelayHrs.get(a)/montecarlo+"\n");
 			//				totalAirport+=dispensedAirportDelayHrs.get(a)/montecarlo;
 			//			}
 			//			out.close();
-			//Main.p("total arrivalAirport dispensed" + totalAirport);
+			//U.p("total arrivalAirport dispensed" + totalAirport);
 
 			if(writeNames){
 				for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 					String aName = e.nextElement();
-					//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+					//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 					out.write(aName+",");
 				} out.write("\n");
 
@@ -1223,7 +1223,7 @@ Any atc delay from arrival scheduling is taken in the air.
 
 			for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 				String aName = e.nextElement();
-				//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 				out.write(dispensedAirportDelayHrs.get(aName)+",");
 			} out.write("\n");
 			out.close();
@@ -1232,7 +1232,7 @@ Any atc delay from arrival scheduling is taken in the air.
 			System.err.println("Error: " + e.getMessage());
 		}
 
-		//Main.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
+		//U.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
 		totalAirport = 0;
 		//WRITE ABSORBED
 		try{
@@ -1243,7 +1243,7 @@ Any atc delay from arrival scheduling is taken in the air.
 			if(writeNames){
 				for (Enumeration<String> e = absorbedAirportDelayHrs.keys(); e.hasMoreElements();){
 					String aName = e.nextElement();
-					//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+					//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 					out.write(aName+",");
 				} out.write("\n");
 
@@ -1251,7 +1251,7 @@ Any atc delay from arrival scheduling is taken in the air.
 
 			for (Enumeration<String> e = absorbedAirportDelayHrs.keys(); e.hasMoreElements();){
 				String aName = e.nextElement();
-				//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 				out.write(absorbedAirportDelayHrs.get(aName)+",");
 			} out.write("\n");			
 			out.close();
@@ -1369,8 +1369,8 @@ Any atc delay from arrival scheduling is taken in the air.
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//Main.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
-		//Main.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
+		//U.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
+		//U.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
 		//		+ " hrs \nairborne delay: " + Math.round(totalAirDelaylAirDelay) + " hrs");
 
 	}

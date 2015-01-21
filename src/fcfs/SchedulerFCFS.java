@@ -87,7 +87,7 @@ public class SchedulerFCFS {
 				maxDelay = java.lang.Math.max(departureDelay,maxDelay);
 				//sector delay
 				for(SectorAirport s: path){	
-					//Main.p("delay " + delay);
+					//U.p("delay " + delay);
 					int sectorDelay = sectors.getSoonestSlot(s.name, s.entryTime+delay, s.entryTime+delay + s.transitTime)-(s.entryTime+delay);
 					maxDelay = java.lang.Math.max(sectorDelay,maxDelay);
 				}
@@ -111,14 +111,14 @@ public class SchedulerFCFS {
 					int shouldBeZero = 0;
 					int departureTimeFinal = f.departureTimeACES + delay; 
 					shouldBeZero = airports.scheduleDeparture(f.departureAirport, f.departureTimeACES+delay, f.departureTimeACES) - (f.departureTimeACES+delay);
-					Main.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
+					U.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
 					f.departureTimeFinal = departureTimeFinal;
 					for(SectorAirport s: path){	
 						shouldBeZero = sectors.schedule(s.name, s.entryTime + delay, s.entryTime + s.transitTime + delay) - (s.entryTime + delay);
-						Main.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
+						U.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
 					}
 					//shouldBeZero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
-					//Main.Assert(zero==0, "errror in scheduling, should be 0"); //should this be back in?
+					//U.Assert(zero==0, "errror in scheduling, should be 0"); //should this be back in?
 																				 //maybe it is taken out to account for slow down
 					int amountAbsorbedSlowingDown = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeACES+delay, f.arrivalTimeACES)-(f.arrivalTimeACES+delay);
 					int arrivalTimeFinal = f.arrivalTimeACES + delay + amountAbsorbedSlowingDown; //in this case should be zero 
@@ -153,15 +153,15 @@ public class SchedulerFCFS {
 			totalD += delay;
 		}
 		
-		Main.p("total ground delay in hours = " + " " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
-		Main.p("total ground delay per flight secs = " + td/(37000*1000));
-		Main.p("Total Delay = " + totalD/3600000 + " Hours, or " + totalD + " milliseconds");
+		U.p("total ground delay in hours = " + " " + td/3600000 + " number of flights " + flightList.size() + " flights w delay " + c);
+		U.p("total ground delay per flight secs = " + td/(37000*1000));
+		U.p("Total Delay = " + totalD/3600000 + " Hours, or " + totalD + " milliseconds");
 		System.out.printf("max mem %f total mem %f free mem %f\n", (double)r.maxMemory()/1048576.0, (double)r.totalMemory()/1048576.0, (double)r.freeMemory()/1048576.0);
 		//sectors.printSectors();
 		Collections.sort(flightList, new flightIDComparator());
 		int n = Integer.MAX_VALUE;
-		Main.p("maximum millisec-days in int "+n/(3600*1000*24.0));
-		Main.p("FIN!");
+		U.p("maximum millisec-days in int "+n/(3600*1000*24.0));
+		U.p("FIN!");
 		printAirportDelays(flightList,workingDirectory+fcfsdir);
 		printFlightDetails(flightList, workingDirectory+fcfsdir);
 	}

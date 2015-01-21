@@ -165,7 +165,7 @@ public class FCFSArrival {
 				//Get gate and taxi perturbations
 				if(departureAirport!=null){
 					double gateR = random.nextDouble(), taxiR = random.nextDouble();
-					//Main.p(gateR + " gate taxi " + taxiR + " " + departureAirport.taxiUnimpeded + " " + departureAirport.gateStd + " " + departureAirport.taxiMean);
+					//U.p(gateR + " gate taxi " + taxiR + " " + departureAirport.taxiUnimpeded + " " + departureAirport.gateStd + " " + departureAirport.taxiMean);
 					f.taxi_unimpeded_time = (int)(departureAirport.taxiUnimpeded)*60000;
 					if(pertrubGate && departureAirport.gateZeroProbablity < gateR){
 						double gate_noise_minutes = Math.exp(random.nextGaussian()*departureAirport.gateStd + departureAirport.gateMean);
@@ -175,7 +175,7 @@ public class FCFSArrival {
 						//ERROR OR NOT??
 						if(gate_noise_minutes == 1) f.gate_perturbation = defaultPertMills;
 						//f.gate_perturbation = 0;
-						//Main.p("random");
+						//U.p("random");
 					}
 					if(pertrubTaxi && departureAirport.taxiZeroProbablity < taxiR){
 						double taxi_noise_minutes = Math.exp(random.nextGaussian()*departureAirport.taxiStd + departureAirport.taxiMean);
@@ -184,7 +184,7 @@ public class FCFSArrival {
 						f.taxiUncertainty = taxi_noise_seconds;
 						//ERROR OR NOT??
 						if(taxi_noise_minutes == 1){
-							Main.p(departureAirport.taxiZeroProbablity + " " + c++ + " " + departureAirport.airportName);
+							U.p(departureAirport.taxiZeroProbablity + " " + c++ + " " + departureAirport.airportName);
 							f.taxiUncertainty = defaultPertMills;
 						}
 						//						f.taxi_perturbation = 0;//taxi_noise_seconds; //CHANGE BACK
@@ -194,7 +194,7 @@ public class FCFSArrival {
 					//TODO:add in airport cfr randomness
 					
 				} else {
-					//Main.p("error in perturbations?");
+					//U.p("error in perturbations?");
 					/* need??
 					double gateR = random.nextDouble(), taxiR = random.nextDouble();
 					double gate_noise_minutes = Math.exp(random.nextGaussian()*0);
@@ -205,7 +205,7 @@ public class FCFSArrival {
 					taxi_noise_seconds = (int)(taxi_noise_minutes*60000);
 					f.gate_perturbation = gate_noise_seconds;
 					f.taxi_perturbation = taxi_noise_seconds;
-					//Main.p(gate_noise_seconds + " else");
+					//U.p(gate_noise_seconds + " else");
 					//keep?
 					f.gate_perturbation = defaultPertMills;
 					f.taxi_perturbation = defaultPertMills;
@@ -215,13 +215,13 @@ public class FCFSArrival {
 
 
 			for(Action mode: modes){
-				Main.p("");
+				U.p("");
 				/*
-				if(counter == 1 && mode == Action.FCFS) Main.p("\nLookAheadCFR,TotalCostByWeightedDelay (hours),Scenario,# flights madeSlots,Average minutes missed per flight,# flights delayedGround, " +
+				if(counter == 1 && mode == Action.FCFS) U.p("\nLookAheadCFR,TotalCostByWeightedDelay (hours),Scenario,# flights madeSlots,Average minutes missed per flight,# flights delayedGround, " +
 				        "# flights delayedAir,MaxGroundDelay (min),MaxAirDelay (min),TotalGroundDelay (hours), " +
 						"TotalAirDelay (hours),TotalDelay (hours),avgnNumberOfJiggles, avgTotalJiggleAmountAfterLastScheduling (secs)");
 				 */
-				if(counter != 0)Main.p(mode + " c " + counter ); 
+				if(counter != 0)U.p(mode + " c " + counter ); 
 
 
 				for(int minsAhd = 0; minsAhd <= 0; minsAhd += 60){//: minutesAhead){afss++;										
@@ -263,12 +263,12 @@ public class FCFSArrival {
 									//Math.min(f.departureTimeProposed - airports.getArrivalAirport(f).CFRstart, 30*minToMillisec);
 							//CFRpriorityLookAhead = 0;
 							f.cfrEffected = true;
-							//Main.p(CFRpriorityLookAhead + " c l " + lookAheadMilliSec);
+							//U.p(CFRpriorityLookAhead + " c l " + lookAheadMilliSec);
 						}
 						
 						lookAheadMilliSec += (airlinePriorityLookAhead + CFRpriorityLookAhead);
 						if(CFRpriorityLookAhead!=0){
-							//Main.p(CFRpriorityLookAhead + " c l " + lookAheadMilliSec);
+							//U.p(CFRpriorityLookAhead + " c l " + lookAheadMilliSec);
 						}
 
 						
@@ -341,19 +341,19 @@ public class FCFSArrival {
 
 					} // end FLIGHT loop
 
-					//					Main.p(airline + " " + swa);
+					//					U.p(airline + " " + swa);
 
 					String name = mode+"_"+minsAhd+"_min_ahead_"+montecarlo+"_runs_"+".csv";//+dateId
 					//String ofolder = "output\\";
 
 					try{
-						//Main.p(name + " " + montecarlo);
+						//U.p(name + " " + montecarlo);
 						FileWriter fstream = new FileWriter(workingDirectory+ofolder+name,true);
 						BufferedWriter out = new BufferedWriter(fstream);
 						if(counter==1){
 							//calculateDelays(flightList, airline, false, out, true, minsAhd); //???????????????????????????????????
 						}
-						//Main.p("***************************************************************************");
+						//U.p("***************************************************************************");
 						int i2 = 0;
 						while(!rescheduleQueue.isEmpty()){ // while there are events to process (main loop)
 							i2++;
@@ -366,9 +366,9 @@ public class FCFSArrival {
 							
 							//if(f.id==67) f.printVariables(); 
  							if(i2<10){
- 								//Main.p(f.id);
- 								//Main.p(event.eventTime + " " + event.targetTime +" "+ f.id);
- 								//Main.p((f.departureTimeProposed + f.gate_perturbation - lookAheadMilliSec) 
+ 								//U.p(f.id);
+ 								//U.p(event.eventTime + " " + event.targetTime +" "+ f.id);
+ 								//U.p((f.departureTimeProposed + f.gate_perturbation - lookAheadMilliSec) 
  									//	+" (f.departureTimeProposed + f.gate_perturbation - lookAheadMilliSec)");
  								//f.printVariables();
  							}
@@ -397,14 +397,14 @@ public class FCFSArrival {
 									rescheduleQueue.add(new rescheduleEvent(lastOnTimeDeparturePoint, arrivalSlot, Action.remove, f));
 									rescheduleQueue.add(new rescheduleEvent(wheelsOffTime,-6, Action.scheduleInTheAir, f));// wheelsOffTime+nominalDuration
 									if(wheelsOffTime < f.departureTimeACES + f.gate_perturbation){
-										Main.p("error scheduling in past tense");
+										U.p("error scheduling in past tense");
 									}
 								} else {
 									//flight can arrive by speeding up
 
 									f.arrivalTimeFinal = arrivalSlot;
 								}
-								//if(f.id == 23672){ Main.p(mode + " " + minsAhd);f.printVariables();}
+								//if(f.id == 23672){ U.p(mode + " " + minsAhd);f.printVariables();}
 
 							}
 							break;
@@ -453,7 +453,7 @@ public class FCFSArrival {
 								int wheelsOffTime = pushback + f.taxi_unimpeded_time;// + f.taxi_perturbation; //add in taxi??
 								f.wheelsOffTime = wheelsOffTime;
 								int lastOnTimeDeparturePoint = f.arrivalFirstSlot - fastestDuration;
-								//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
+								//if(f.id == id)U.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
 								//f.departureDelayFromArrivalAirport = 
 								//Math.max(2*delayFromFirstScheduling - Math.max(f.gate_perturbation, delayFromFirstScheduling), 0);
 
@@ -597,14 +597,14 @@ public class FCFSArrival {
 
 							case undef:
 							{
-								Main.p("should not be here");
+								U.p("should not be here");
 								System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 							}
 							break;
 
 							default:
 							{
-								Main.p("should not be here");
+								U.p("should not be here");
 								System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 
 							}
@@ -615,9 +615,9 @@ public class FCFSArrival {
 
 						} //END WHILE OF EVENTS
 
-						//Main.p(airports.airportList.size() + " airports.airportList.size()");
-						//Main.p(absorbedAirportDelayHrs.size() + " absorbedAirportDelayHrs.size()");
-						//Main.p(dispensedAirportDelayHrs.size();
+						//U.p(airports.airportList.size() + " airports.airportList.size()");
+						//U.p(absorbedAirportDelayHrs.size() + " absorbedAirportDelayHrs.size()");
+						//U.p(dispensedAirportDelayHrs.size();
 						
 						calculateDelays(flightList, airline, true, out, false, minsAhd);
 						
@@ -651,7 +651,7 @@ public class FCFSArrival {
 		} // END Monte carlo;
 //		for(int s: delayedIntheAir.keySet()){
 //			if(delayedIntheAir.get(s)!=2){
-//				Main.p(s+" "+delayedIntheAir.get(s));
+//				U.p(s+" "+delayedIntheAir.get(s));
 //			}
 //		}
 		System.out.println("FIN! " + dateFormat.format(new Date()));
@@ -784,10 +784,10 @@ public class FCFSArrival {
 
 		/*
 		if(counter == 1){
-		Main.p("std ground " + standardDeviation(groundDelay.toArray(new Double[groundDelay.size()])) + " mean " + totalGroundDelay / flightList.size());
-		Main.p("std air " + standardDeviation(airDelay.toArray(new Double[airDelay.size()])) + " mean " + totalAirDelay / flightList.size());
-		Main.p("std slot " + standardDeviation(missedSlotMetric.toArray(new Double[missedSlotMetric.size()])) + " mean " + totalMissedSlotMetric / flightList.size());
-		Main.p("std jiggle " + standardDeviation(totalJiggleAmount.toArray(new Double[totalJiggleAmount.size()])) + " mean " + totalJiggles / flightList.size());
+		U.p("std ground " + standardDeviation(groundDelay.toArray(new Double[groundDelay.size()])) + " mean " + totalGroundDelay / flightList.size());
+		U.p("std air " + standardDeviation(airDelay.toArray(new Double[airDelay.size()])) + " mean " + totalAirDelay / flightList.size());
+		U.p("std slot " + standardDeviation(missedSlotMetric.toArray(new Double[missedSlotMetric.size()])) + " mean " + totalMissedSlotMetric / flightList.size());
+		U.p("std jiggle " + standardDeviation(totalJiggleAmount.toArray(new Double[totalJiggleAmount.size()])) + " mean " + totalJiggles / flightList.size());
 		}
 		 */
 
@@ -878,17 +878,17 @@ public class FCFSArrival {
 			//
 			//			for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 			//				String a = e.nextElement();
-			//				//Main.p(a+" " + dispensedAirportDelayHrs.get(a)/montecarlo);
+			//				//U.p(a+" " + dispensedAirportDelayHrs.get(a)/montecarlo);
 			//				out.write(a+"," + dispensedAirportDelayHrs.get(a)/montecarlo+"\n");
 			//				totalAirport+=dispensedAirportDelayHrs.get(a)/montecarlo;
 			//			}
 			//			out.close();
-			//Main.p("total arrivalAirport dispensed" + totalAirport);
+			//U.p("total arrivalAirport dispensed" + totalAirport);
 
 			if(writeNames){
 				for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 					String aName = e.nextElement();
-					//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+					//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 					out.write(aName+",");
 				} out.write("\n");
 
@@ -896,7 +896,7 @@ public class FCFSArrival {
 
 			for (Enumeration<String> e = dispensedAirportDelayHrs.keys(); e.hasMoreElements();){
 				String aName = e.nextElement();
-				//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 				out.write(dispensedAirportDelayHrs.get(aName)+",");
 			} out.write("\n");
 			out.close();
@@ -905,7 +905,7 @@ public class FCFSArrival {
 			System.err.println("Error: " + e.getMessage());
 		}
 
-		//Main.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
+		//U.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
 		totalAirport = 0;
 		//WRITE ABSORBED
 		try{
@@ -916,7 +916,7 @@ public class FCFSArrival {
 			if(writeNames){
 				for (Enumeration<String> e = absorbedAirportDelayHrs.keys(); e.hasMoreElements();){
 					String aName = e.nextElement();
-					//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+					//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 					out.write(aName+",");
 				} out.write("\n");
 
@@ -924,7 +924,7 @@ public class FCFSArrival {
 
 			for (Enumeration<String> e = absorbedAirportDelayHrs.keys(); e.hasMoreElements();){
 				String aName = e.nextElement();
-				//Main.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + absorbedAirportDelayHrs.get(a)/montecarlo);
 				out.write(absorbedAirportDelayHrs.get(aName)+",");
 			} out.write("\n");			
 			out.close();
@@ -1042,8 +1042,8 @@ public class FCFSArrival {
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//Main.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
-		//Main.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
+		//U.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
+		//U.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
 		//		+ " hrs \nairborne delay: " + Math.round(totalAirDelaylAirDelay) + " hrs");
 
 	}

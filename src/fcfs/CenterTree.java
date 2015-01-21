@@ -73,8 +73,8 @@ public class CenterTree {
 		FlightIntervalNode current = centerTraffic.floor(start);
 		Iterator<FlightIntervalNode> it = centerTraffic.tailSet(start,false).iterator();		
 		
-		Main.Assert(current.capacity == newCapacity,"current.capacity == newCapacity");
-		Main.Assert(current.capacity <= maxCapacity,"current.capacity <= maxCapacity");
+		U.Assert(current.capacity == newCapacity,"current.capacity == newCapacity");
+		U.Assert(current.capacity <= maxCapacity,"current.capacity <= maxCapacity");
 		
 		int lastCapacity = current.capacity;
 		
@@ -117,7 +117,7 @@ public class CenterTree {
 		//intervals
 		//open/close represent the window that is available, start/end represent the interval to block out.
 		while(it.hasNext()){
-			//Main.p(it.);
+			//U.p(it.);
 			//print();
 			AvailableWindowNode current = it.next();
 			if(current.open < end){
@@ -153,7 +153,7 @@ public class CenterTree {
 	}
 	
 	public void print(){
-		Main.p(centerName + ":" + maxCapacity);
+		U.p(centerName + ":" + maxCapacity);
 		printTraffic();
 		printWindows();	
 	}
@@ -219,11 +219,11 @@ public class CenterTree {
 			FlightIntervalNode cu = it.next();
 			max = (cu.capacity > max)? cu.capacity: max;
 		}
-		Main.p(sectorName + " cap: " + max + " | max cap: " + maxCapacity);
+		U.p(sectorName + " cap: " + max + " | max cap: " + maxCapacity);
 		if(max>maxCapacity){
-			Main.p("!!!!!!!!!!!!!!***********!!!!!!!ERROR MAX EXCEEDS CAPACITY");
+			U.p("!!!!!!!!!!!!!!***********!!!!!!!ERROR MAX EXCEEDS CAPACITY");
 			System.out.println(sectorName + " max cap: " + max + " : " + maxCapacity);
-			Main.Assert(max<=maxCapacity, sectorName + " max<=maxCapacity");
+			U.Assert(max<=maxCapacity, sectorName + " max<=maxCapacity");
 		}
 	}
 	*/
@@ -241,7 +241,7 @@ public class CenterTree {
 			time = e;
 		}
 		FlightIntervalNode(int e, int c){
-			Main.Assert(c<=maxCapacity, centerName + ": " + c + " c<=maxCapacity " + maxCapacity); 
+			U.Assert(c<=maxCapacity, centerName + ": " + c + " c<=maxCapacity " + maxCapacity); 
 			time = e; 
 			capacity = c;
 		}

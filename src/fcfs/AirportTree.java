@@ -180,7 +180,7 @@ public class AirportTree {
 			f.arrivalTimeFinal = candidateArrivalSlot;
 			//print("flight ID " + f.id);
 			//printDepTrafficByFlight();
-			//Main.Assert(!departureTrafficByFlight.contains(f), TODO CHECK THIS LATER IN VALIDATION<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			//U.Assert(!departureTrafficByFlight.contains(f), TODO CHECK THIS LATER IN VALIDATION<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 				//	"DepartureTrafficByFlight.contains(flight) flight already in Departure tree id: " + f.id);
 			arrivalTrafficByFlight.add(f);
 			//calculate delay
@@ -278,7 +278,7 @@ public class AirportTree {
 				print("candidateDepartureSlot" + candidateDepartureSlot);
 			}
 			f.departureTimeFinal = candidateDepartureSlot;
-			Main.Assert(!departureTrafficByFlight.contains(f),
+			U.Assert(!departureTrafficByFlight.contains(f),
 					"DepartureTrafficByFlight.contains(flight) flight already in Departure tree id: " + f.id);
 			departureTrafficByFlight.add(f);
 			//calculate delay
@@ -325,7 +325,7 @@ public class AirportTree {
 				//correct
 			}
 		} 
-		Main.Assert(proposedDepartureTime != -1, "proposedDepartureTime != -1");
+		U.Assert(proposedDepartureTime != -1, "proposedDepartureTime != -1");
 		//print("proposedDepartureTime candidateDepartureSlot "+proposedDepartureTime + " " + candidateDepartureSlot);
 		return candidateDepartureSlot;
 		
@@ -375,9 +375,9 @@ public class AirportTree {
 				previousFlight.departureTimeFinal = candidateDepartureSlot + offset;
 				previousFlight.departureAirportDelay += prevDelayNeeded;
 				//print(offset + " adding one to " + previousFlight.id);
-				Main.Assert(!previousFlight.cfrEffected, "should be no CFRs here");
+				U.Assert(!previousFlight.cfrEffected, "should be no CFRs here");
 			}
-			Main.Assert(!departureTrafficByFlight.contains(Flight.dummyDeparture(candidateDepartureSlot)),
+			U.Assert(!departureTrafficByFlight.contains(Flight.dummyDeparture(candidateDepartureSlot)),
 					"DepartureTrafficByFlight.contains(flight) deptime already in Departure tree id: " + candidateDepartureSlot);
 			departureTrafficByFlight.add(f); // should not bee added a secondtime
 			mendTheGapsGoingForwardDeparture(f, currentTime);
@@ -386,7 +386,7 @@ public class AirportTree {
 		
 		//code to fix everything going forward
 		
-		//Main.Assert(false, "should not be here insertPriorityDeparture");
+		//U.Assert(false, "should not be here insertPriorityDeparture");
 		
 	}
 	
@@ -451,11 +451,11 @@ public class AirportTree {
 				
 				iter.remove(); // iter is on next so next is removed
 				if(current.id == 851) printDepTrafficByFlight();
-				Main.Assert(currentTime <= next.departureTimeFinal, airportName + " " + next.airline + " " +currentTime+ " " + next.departureTimeACES +
+				U.Assert(currentTime <= next.departureTimeFinal, airportName + " " + next.airline + " " +currentTime+ " " + next.departureTimeACES +
 						" currentTime > f.DepartureTimeFinal scheduling after they have departed " +current.id+ " " + next.id);
 				//should have assured that flight has not departed yet(?)
 				int delayNeeded = current.departureTimeFinal + currentSpacing - next.departureTimeFinal;
-				Main.Assert(delayNeeded >= 0, "delayNeeded >= 0 mend the gaps");
+				U.Assert(delayNeeded >= 0, "delayNeeded >= 0 mend the gaps");
 				//add ground delay
 				next.atcGroundDelay += delayNeeded; 
 				next.departureAirportDelay += delayNeeded;
@@ -491,7 +491,7 @@ public class AirportTree {
 				addBackIn.add(next);
 				current = next;
 				currentSpacing = getDepartureSpacing(current.departureTimeFinal);
-				//Main.p("next Departure time after" + next.DepartureTimeFinal);
+				//U.p("next Departure time after" + next.DepartureTimeFinal);
 			} else {
 				cont = false;
 			}
@@ -532,7 +532,7 @@ public class AirportTree {
 					//first time being scheduled, all delay goes to ground
 					if(flight.arrivalFirstSlot == -1){
 						flight.arrivalFirstSlot = proposedSlotTime;
-						Main.Assert(flight.atcGroundDelay == 0, "flight.departureDelayFromArrivalAirport == 0 shouldn't be ground delay yet");
+						U.Assert(flight.atcGroundDelay == 0, "flight.departureDelayFromArrivalAirport == 0 shouldn't be ground delay yet");
 						flight.atcGroundDelay = additionalDelay; // add ground delay
 					} else {
 						//flight is being re-scheduled
@@ -556,7 +556,7 @@ public class AirportTree {
 						}
 					}
 					flight.arrivalTimeFinal = proposedSlotTime;
-					Main.Assert(!arrivalTrafficByFlight.contains(flight), "arrivalTrafficByFlight.contains(flight) flight not already in arrival tree");
+					U.Assert(!arrivalTrafficByFlight.contains(flight), "arrivalTrafficByFlight.contains(flight) flight not already in arrival tree");
 					arrivalTrafficByFlight.add(flight); // should not bee added a secondtime
 					
 					mendTheGapsGoingForward(flight, currentTime);
@@ -585,13 +585,13 @@ public class AirportTree {
 			next = iter.next();
 			int currentSpacing = getArrivalSpacing(current.arrivalTimeFinal);
 			
-			//Main.p("current arrival time " + current.arrivalTimeFinal);Main.p("current spacing " + currentSpacing);Main.p("next arrival time " + next.arrivalTimeFinal);
+			//U.p("current arrival time " + current.arrivalTimeFinal);U.p("current spacing " + currentSpacing);U.p("next arrival time " + next.arrivalTimeFinal);
 			
 			//if next flight is too close
 			if(current.arrivalTimeFinal + currentSpacing > next.arrivalTimeFinal){
 				
 				iter.remove(); // iter is on next so next is removed
-				Main.Assert(currentTime <= next.arrivalTimeFinal, next.airline + " " +currentTime+ " " + next.departureTimeACES +
+				U.Assert(currentTime <= next.arrivalTimeFinal, next.airline + " " +currentTime+ " " + next.departureTimeACES +
 						" currentTime >= f.arrivalTimeFinal not scheduling flights that have landed ");
 				//int arrivalDelay = getArrivalSpacing(current.arrivalTimeFinal);
 				int delayNeeded = current.arrivalTimeFinal + currentSpacing - next.arrivalTimeFinal;			
@@ -623,7 +623,7 @@ public class AirportTree {
 				addBackIn.add(next);
 				current = next;
 				currentSpacing = getArrivalSpacing(current.arrivalTimeFinal);
-				//Main.p("next arrival time after" + next.arrivalTimeFinal);
+				//U.p("next arrival time after" + next.arrivalTimeFinal);
 			} else {
 				cont = false;
 			}
@@ -655,11 +655,11 @@ public class AirportTree {
 		
 		for(Flight f: departureTrafficByFlight){
 			//asserts no flights in traffic twice
-			Main.Assert(!noRepeats.contains(f.id),"dup id's in departure traffic!!!! " + f.id);
+			U.Assert(!noRepeats.contains(f.id),"dup id's in departure traffic!!!! " + f.id);
 			noRepeats.add(f.id);
 			currentTime = f.departureTimeFinal;
 			int lastTimeSpace = currentTime-lastTime; //space between last arrival and this arrival
-			Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),
+			U.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),
 					airportName + " lastTimeSpace >= getDepartureSpacing(lastTime) between " + prevId + " and "+ f.id 
 					+ " pd "+lastTime+" cd "+ currentTime + " last space is " + lastTimeSpace + " should be " +  getDepartureSpacing(lastTime));
 			
@@ -674,7 +674,7 @@ public class AirportTree {
 		
 		if(minSpacing < getDepartureSpacing(timeOfMin)){
 			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), "min < getArrivalSpacing(time)");
+			U.Assert(minSpacing < getDepartureSpacing(timeOfMin), "min < getArrivalSpacing(time)");
 		}
 		
 		//////////////////ARRRIIIIVVVAAAALLLLLL
@@ -685,12 +685,12 @@ public class AirportTree {
 
 		for(Flight f: arrivalTrafficByFlight){
 			//asserts no flights in traffic twice
-			Main.Assert(!noRepeats.contains(f.id),airportName + " dup id's in arrival traffic!!!! " + f.id);
+			U.Assert(!noRepeats.contains(f.id),airportName + " dup id's in arrival traffic!!!! " + f.id);
 			noRepeats.add(f.id);
 			
 			currentTime = f.arrivalTimeFinal;
 			int lastTimeSpace = currentTime-lastTime; //space between last arrival and this arrival
-			Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime), "lastTimeSpace >= getArrivalSpacing(lastTime)");
+			U.Assert(lastTimeSpace >= getArrivalSpacing(lastTime), "lastTimeSpace >= getArrivalSpacing(lastTime)");
 			
 			if((currentTime-lastTime) < minSpacing){
 				minSpacing = currentTime-lastTime;
@@ -702,7 +702,7 @@ public class AirportTree {
 		
 		if(minSpacing < getArrivalSpacing(timeOfMin)){
 			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			Main.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
+			U.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
 		}
 		minSpacing = Integer.MAX_VALUE;
 		lastTime = Short.MIN_VALUE*10;
@@ -895,7 +895,7 @@ public class AirportTree {
 		io.println("***Start DEP(" + departureTrafficByFlight.size() + ")");
 		int i = 0;
 		for(Flight f: departureTrafficByFlight){
-			//Main.p(++i);
+			//U.p(++i);
 			f.print();
 		}
 		io.println("***End deps");
@@ -904,7 +904,7 @@ public class AirportTree {
 		io.println("***Start ARR(" + arrivalTrafficByFlight.size() + ")");
 		int i = 0;
 		for(Flight f: arrivalTrafficByFlight){
-			//Main.p(++i);
+			//U.p(++i);
 			U.pp(++i + " ");f.print();
 		}
 		io.println("***End deps");
@@ -914,7 +914,7 @@ public class AirportTree {
 		io.println("***Start ARR(" + arrivalTrafficByFlight.size() + ")");
 		int i = 0;
 		for(Flight f: arrivalTrafficByFlight){
-			//Main.p(++i);
+			//U.p(++i);
 			U.p(++i + " " +f.id);
 		}
 		io.println("***End deps");
@@ -1086,7 +1086,7 @@ public class AirportTree {
 			System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
 			printCaps();
 			printDepTraffic();
-			Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
+			U.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
 		}
 		if(minSpacing == getDepartureSpacing(timeOfMin))
 		System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
@@ -1108,7 +1108,7 @@ public class AirportTree {
 			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
 			printCaps();
 			printArrTraffic();
-			Main.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
+			U.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
 		}
 		if(minSpacing == getArrivalSpacing(timeOfMin))
 		System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
@@ -1129,7 +1129,7 @@ public class AirportTree {
 			//REAL VALIDATION
 			int lastTimeSpace = currentTime-lastTime;
 			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getDepartureSpacing(lastTime));
-			Main.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
+			U.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
 			
 			if((currentTime-lastTime) < minSpacing){
 				minSpacing = currentTime-lastTime;
@@ -1141,7 +1141,7 @@ public class AirportTree {
 			System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
 			printCaps();
 			printDepTraffic();
-			Main.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
+			U.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
 		}
 		if(minSpacing == getDepartureSpacing(timeOfMin)){
 		//System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
@@ -1157,7 +1157,7 @@ public class AirportTree {
 			//REAL VALIDATION
 			int lastTimeSpace = currentTime-lastTime;
 			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getArrivalSpacing(lastTime));
-			Main.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
+			U.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
 					" ARR lastTimeSpace >= getArrivalSpacing(lastTime) " + getArrivalSpacing(lastTime));
 			
 			if((currentTime-lastTime) < minSpacing){
@@ -1170,7 +1170,7 @@ public class AirportTree {
 			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
 			printCaps();
 			printArrTraffic();
-			Main.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
+			U.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
 		}
 		if(minSpacing == getArrivalSpacing(timeOfMin)){
 			//System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);

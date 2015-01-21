@@ -30,7 +30,7 @@ public class SectorTree {
 	SectorTree(String name){
 		sectorName = name;
 		if(sectorName.equals("Unknown") || sectorName.contains("TRACON")){
-			maxCapacity = 9999;//18; //Main.p(sectorName + " contains un tr");
+			maxCapacity = 9999;//18; //U.p(sectorName + " contains un tr");
 			//if(sectorName.contains("TRACON")) maxCapacity = 9999;
 		}
 		sectorAvailibilityBlocks.add(new AvailableWindowNode(0, Integer.MAX_VALUE));
@@ -88,8 +88,8 @@ public class SectorTree {
 		//SortedSet<FlightIntervalNode> temp = sectorTree.tailSet(start);
 		Iterator<FlightIntervalNode> it = sectorTraffic.tailSet(start,false).iterator();		
 		
-		Main.Assert(current.capacity == newCapacity,"current.capacity == newCapacity");
-		Main.Assert(current.capacity <= maxCapacity,"current.capacity <= maxCapacity");
+		U.Assert(current.capacity == newCapacity,"current.capacity == newCapacity");
+		U.Assert(current.capacity <= maxCapacity,"current.capacity <= maxCapacity");
 		
 		int lastCapacity = current.capacity;
 		
@@ -137,7 +137,7 @@ public class SectorTree {
 		//intervals
 		//open/close represent the window that is available, start/end represent the interval to block out.
 		while(it.hasNext()){
-			//Main.p(it.);
+			//U.p(it.);
 			//print();
 			AvailableWindowNode current = it.next();
 			if(current.open < end){
@@ -189,7 +189,7 @@ public class SectorTree {
 	}
 	
 	public void print(){
-		Main.p(sectorName + " cap: " + maxCapacity);
+		U.p(sectorName + " cap: " + maxCapacity);
 		printTraffic();
 		printWindows();
 		
@@ -221,11 +221,11 @@ public class SectorTree {
 			FlightIntervalNode cu = it.next();
 			max = (cu.capacity > max)? cu.capacity: max;
 		}
-		Main.p(sectorName + " cap: " + max + " | max cap: " + maxCapacity);
+		U.p(sectorName + " cap: " + max + " | max cap: " + maxCapacity);
 		if(max>maxCapacity){
-			Main.p("!!!!!!!!!!!!!!***********!!!!!!!ERROR MAX EXCEEDS CAPACITY");
+			U.p("!!!!!!!!!!!!!!***********!!!!!!!ERROR MAX EXCEEDS CAPACITY");
 			System.out.println(sectorName + " max cap: " + max + " : " + maxCapacity);
-			Main.Assert(max<=maxCapacity, sectorName + " max<=maxCapacity");
+			U.Assert(max<=maxCapacity, sectorName + " max<=maxCapacity");
 		}
 	}
 	
@@ -240,7 +240,7 @@ public class SectorTree {
 		int capacity = -999;
 		//String nameOfFlight; need?
 		FlightIntervalNode(int e){time = e;}
-		FlightIntervalNode(int e, int c){Main.Assert(c<=maxCapacity,sectorName + ": " + c + " c<=maxCapacity " + maxCapacity); time = e; capacity = c;}
+		FlightIntervalNode(int e, int c){U.Assert(c<=maxCapacity,sectorName + ": " + c + " c<=maxCapacity " + maxCapacity); time = e; capacity = c;}
 		void print(){ System.out.printf("%d:%d\n", time, capacity);}
 		//compares by entering time, if entering times are equals, returns -1(?)
 		public int compareTo(FlightIntervalNode o ){

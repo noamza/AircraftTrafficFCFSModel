@@ -227,7 +227,7 @@ public class Airports {
 	
 	public void printDelays(){ 
 		for (AirportTree a : airportList.values()){ //io.println("");
-			Main.p(a.airportName + "*");
+			U.p(a.airportName + "*");
 			a.printDelayVars();
 		}
 		io.println("TOTAL Airports: " + airportList.size());

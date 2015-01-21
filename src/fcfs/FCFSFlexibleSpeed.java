@@ -120,7 +120,7 @@ public class FCFSFlexibleSpeed {
 		if(schedulingMode == Action.scheduleAtPDT) name = "prior_pushback_avg_delays_" + montecarlo+"_runs"+mod;
 		if(schedulingMode == Action.scheduleByArrival) name = "at_arrival_avg_delays_" + montecarlo+"_runs"+mod;
 		
-		Main.p(schedulingMode+ " " + montecarlo);
+		U.p(schedulingMode+ " " + montecarlo);
 
 		try{
 			// Create file 
@@ -158,14 +158,14 @@ public class FCFSFlexibleSpeed {
 					//Get gate and taxi perturbations
 					if(da!=null){
 						double gateR = random.nextDouble(), taxiR = random.nextDouble();
-						//Main.p(gateR + " gate taxi " + taxiR + " " + da.taxiUnimpeded + " " + da.gateStd + " " + da.taxiMean);
+						//U.p(gateR + " gate taxi " + taxiR + " " + da.taxiUnimpeded + " " + da.gateStd + " " + da.taxiMean);
 						f.taxi_unimpeded_time = (int)(da.taxiUnimpeded)*60000;
 						if(pertrubGateAndTaxi && da.gateZeroProbablity < gateR){
 							double gate_noise_minutes = Math.exp(random.nextGaussian()*da.gateStd + da.gateMean);
 							gate_noise_minutes = gate_noise_minutes < 120? gate_noise_minutes: 120;
 							gate_noise_seconds = (int)(gate_noise_minutes*60000);
 							f.gate_perturbation = gate_noise_seconds;
-							//Main.p("random");
+							//U.p("random");
 						}
 						if(pertrubGateAndTaxi && da.taxiZeroProbablity < taxiR){
 							double taxi_noise_minutes = Math.exp(random.nextGaussian()*da.taxiStd + da.taxiMean);
@@ -196,7 +196,7 @@ public class FCFSFlexibleSpeed {
 					Flight f = event.flight;
 					int nominalDuration = f.arrivalTimeACES-f.departureTimeACES;
 					int fastestDuration =  (int)(nominalDuration/(1+speedUp));
-					//if(f.id == 15073)Main.p("n "+ nominalDuration /1000 + " f " + fastestDuration/1000);
+					//if(f.id == 15073)U.p("n "+ nominalDuration /1000 + " f " + fastestDuration/1000);
 
 					switch (event.mode) {
 					//schedulue by arrival
@@ -217,7 +217,7 @@ public class FCFSFlexibleSpeed {
 						int wheelsOffTime =  pushbackTime + f.taxiUncertainty;
 						f.wheelsOffTime = wheelsOffTime;
 						int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
-						//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
+						//if(f.id == id)U.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
 						//f.departureDelayFromArrivalAirport = 
 								Math.max(2*delayFromFirstScheduling - Math.max(f.gate_perturbation, delayFromFirstScheduling), 0);	
 						
@@ -269,7 +269,7 @@ public class FCFSFlexibleSpeed {
 						int wheelsOffTime =  pushbackTime + f.taxiUncertainty;
 						f.wheelsOffTime = wheelsOffTime;
 						int lastOnTimeDeparturePoint = arrivalSlot - fastestDuration;
-						//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
+						//if(f.id == id)U.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromFirstScheduling);
 						f.atcGroundDelay = 
 								Math.max(2*delayFromFirstScheduling - Math.max(f.gate_perturbation, delayFromFirstScheduling), 0);	
 						totalGroundDelay+=f.atcGroundDelay/60000.0;
@@ -318,14 +318,14 @@ public class FCFSFlexibleSpeed {
 						//slot should be more reachable since slot is further out.
 						//therefore more flights should make their slots
 						//therefore LESS airborne cases
-						//if(f.id == id)Main.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromCfrScheduling);
+						//if(f.id == id)U.p("l "+ lastOnTimeDeparturePoint /1000 + " w " + wheelsOffTime/1000 + " d " + delayFromCfrScheduling);
 
 						if(wheelsOffTime > lastOnTimeDeparturePoint){
 							rescheduleQueue.add(new rescheduleEvent(lastOnTimeDeparturePoint, cfrArrivalSlot, Action.remove, f));
 							rescheduleQueue.add(new rescheduleEvent(wheelsOffTime,-6, Action.scheduleInTheAir, f));// wheelsOffTime+nominalDuration
 							
 							if(wheelsOffTime < f.departureTimeACES + f.gate_perturbation){
-								Main.p("error scheduling in past tense");
+								U.p("error scheduling in past tense");
 							}
 
 						} else {
@@ -385,26 +385,26 @@ public class FCFSFlexibleSpeed {
 					}
 					case undef:
 					{
-						Main.p("should not be here");
+						U.p("should not be here");
 						System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 						break;
 					}
 					default:
 					{
-						Main.p("should not be here");
+						U.p("should not be here");
 						System.err.println("EVENT ERROR SHOULD NOT BE HERE");
 						break;
 					}
 					} //end switch statement
 
-					//if(f.departureDelayFromArrivalAirport/60000.0>210) Main.p(f.id + " delay more than 200 " + f.departureDelayFromArrivalAirport/60000.0);
+					//if(f.departureDelayFromArrivalAirport/60000.0>210) U.p(f.id + " delay more than 200 " + f.departureDelayFromArrivalAirport/60000.0);
 					maxGroundDelay = Math.max(f.atcGroundDelay/60000.0,maxGroundDelay);
 					maxAirDelay = Math.max(f.atcAirDelay/60000.0,maxAirDelay);
 
 				} //END WHILE OF EVENTS
 				
 				airports.validate();
-				//Main.p("mg " + maxGroundDelay); Main.p("ma " + maxAirDelay);
+				//U.p("mg " + maxGroundDelay); U.p("ma " + maxAirDelay);
 				flights.validate();
 				//flights.getFlightByID(18).printVariables();
 				flights.resetPerturbationAndSchedulingDependentVariables();
@@ -424,8 +424,8 @@ public class FCFSFlexibleSpeed {
 				System.out.printf("%d,",groundSlots+airSlots);
 				System.out.printf("%.1f\n",(totalGroundDelay+totalAirDelay)/60);
 				*/
-				//Main.p(totalMissedSlotMetric/flightList.size() + " slot \n");
-				//Main.p(tp/flightList.size() + " tp \n"); tp = 0;
+				//U.p(totalMissedSlotMetric/flightList.size() + " slot \n");
+				//U.p(tp/flightList.size() + " tp \n"); tp = 0;
 				
 				out.write(groundSlots + ",");
 				out.write(airSlots + ",");
@@ -468,7 +468,7 @@ public class FCFSFlexibleSpeed {
 
 			for (Enumeration<String> e = arrivalAirportDelayHrs.keys(); e.hasMoreElements();){
 				String a = e.nextElement();
-				//Main.p(a+" " + ArrivalAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + ArrivalAirportDelayHrs.get(a)/montecarlo);
 				out.write(a+"," + arrivalAirportDelayHrs.get(a)/montecarlo+"\n");
 				totalAirport+=arrivalAirportDelayHrs.get(a)/montecarlo;
 			}
@@ -477,7 +477,7 @@ public class FCFSFlexibleSpeed {
 			System.err.println("Error: " + e.getMessage());
 		}
 		
-		//Main.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
+		//U.p(totalAirport + " " + (avgDoubles[2]+avgDoubles[3]));
 		totalAirport = 0;
 				
 		try{
@@ -488,7 +488,7 @@ public class FCFSFlexibleSpeed {
 
 			for (Enumeration<String> e = departureAirportDelayHrs.keys(); e.hasMoreElements();){
 				String a = e.nextElement();
-				//Main.p(a+" " + ArrivalAirportDelayHrs.get(a)/montecarlo);
+				//U.p(a+" " + ArrivalAirportDelayHrs.get(a)/montecarlo);
 				out.write(a+"," + departureAirportDelayHrs.get(a)/montecarlo+"\n");
 				totalAirport+=departureAirportDelayHrs.get(a)/montecarlo;
 			}
@@ -496,7 +496,7 @@ public class FCFSFlexibleSpeed {
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//Main.p(totalAirport + " " + avgDoubles[2]);
+		//U.p(totalAirport + " " + avgDoubles[2]);
 		
 		airports.printMinSpacing();
 		//airports.printAirports();
@@ -613,8 +613,8 @@ totaL 2706 hrs
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//Main.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
-		//Main.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
+		//U.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
+		//U.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
 		//		+ " hrs \nairborne delay: " + Math.round(totalAirDelaylAirDelay) + " hrs");
 
 	}

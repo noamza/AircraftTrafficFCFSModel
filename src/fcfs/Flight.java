@@ -195,47 +195,47 @@ public 	class Flight implements Comparable<Flight>{
 	
 	public boolean validateFCFS(){
 		boolean valid = true;
-		if(id<0){Main.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
-		if(departureTimeACES<0){Main.p("ERROR " + id + " is invalid! departureTimeProposed<0"); printVariables(); valid =  false;}
-		//if(atcAirDelay<0){Main.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
-		if(atcGroundDelay<0){Main.p("ERROR " + id + " is invalid! airDelayFromArrivalAirport<0"); printVariables(); valid =  false;}		
-		if(departureTimeFinal<0){Main.p("ERROR " + id + " is invalid! taxi_unimpeded_time<0"); printVariables(); valid =  false;}
-		if(departureTimeACES>departureTimeFinal){Main.p("ERROR " + id + " is invalid! departureTimeProposed>departureTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeACES>arrivalTimeFinal){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed>arrivalTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeFinal<=departureTimeFinal){Main.p("ERROR " + id + " is invalid! arrivalTimeFinal<=departureTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeACES<=departureTimeACES){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
+		if(id<0){U.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
+		if(departureTimeACES<0){U.p("ERROR " + id + " is invalid! departureTimeProposed<0"); printVariables(); valid =  false;}
+		//if(atcAirDelay<0){U.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
+		if(atcGroundDelay<0){U.p("ERROR " + id + " is invalid! airDelayFromArrivalAirport<0"); printVariables(); valid =  false;}		
+		if(departureTimeFinal<0){U.p("ERROR " + id + " is invalid! taxi_unimpeded_time<0"); printVariables(); valid =  false;}
+		if(departureTimeACES>departureTimeFinal){U.p("ERROR " + id + " is invalid! departureTimeProposed>departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeACES>arrivalTimeFinal){U.p("ERROR " + id + " is invalid! arrivalTimeProposed>arrivalTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeFinal<=departureTimeFinal){U.p("ERROR " + id + " is invalid! arrivalTimeFinal<=departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeACES<=departureTimeACES){U.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
 		if(departureTimeACES+atcGroundDelay!=departureTimeFinal){
-			Main.p("ERROR " + id + " is invalid! departureTimeProposed+atcGroundDelay!=departureTimeFinal");printVariables(); valid =  false;}
+			U.p("ERROR " + id + " is invalid! departureTimeProposed+atcGroundDelay!=departureTimeFinal");printVariables(); valid =  false;}
 		//if(arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal){
-			//Main.p("ERROR " + id + " is invalid! arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal");printVariables(); valid =  false;}
-		//Main.p("here");
-		//if(arrivalTimeFinal - arrivalTimeProposed != atcGroundDelay){Main.p("good news");}
-		//if(id==36788){Main.p(arrivalTimeFinal - arrivalTimeProposed +" "+ atcGroundDelay);}
+			//U.p("ERROR " + id + " is invalid! arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal");printVariables(); valid =  false;}
+		//U.p("here");
+		//if(arrivalTimeFinal - arrivalTimeProposed != atcGroundDelay){U.p("good news");}
+		//if(id==36788){U.p(arrivalTimeFinal - arrivalTimeProposed +" "+ atcGroundDelay);}
 		
 		return valid;
 	}
 	
 	public boolean validate(){
 		boolean valid = true;
-		if(id<0){Main.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
-		if(departureTimeACES<0){Main.p("ERROR " + id + " is invalid! departureTimeProposed<0"); printVariables(); valid =  false;}
-		if(atcAirDelay<0){Main.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
-		if(atcGroundDelay<0){Main.p("ERROR " + id + " is invalid! airDelayFromArrivalAirport<0"); printVariables(); valid =  false;}
-		if(gate_perturbation<0){Main.p("ERROR " + id + " is invalid! gate_perturbation<0"); printVariables(); valid =  false;}
-		if(taxiUncertainty<0){Main.p("ERROR " + id + " is invalid! taxi_perturbation<0"); printVariables(); valid =  false;}
-		if(taxi_unimpeded_time<0){Main.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
-		if(wheelsOffTime<0){Main.p("ERROR " + id + " is invalid! taxi_unimpeded_time<0"); printVariables(); valid =  false;}
-		if(departureTimeACES>wheelsOffTime){Main.p("ERROR " + id + " is invalid! departureTimeProposed>departureTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeACES>arrivalTimeFinal){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed>arrivalTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeFinal<=wheelsOffTime){Main.p("ERROR " + id + " is invalid! arrivalTimeFinal<=departureTimeFinal"); printVariables(); valid =  false;}
-		if(arrivalTimeACES<=departureTimeACES){Main.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
+		if(id<0){U.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
+		if(departureTimeACES<0){U.p("ERROR " + id + " is invalid! departureTimeProposed<0"); printVariables(); valid =  false;}
+		if(atcAirDelay<0){U.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
+		if(atcGroundDelay<0){U.p("ERROR " + id + " is invalid! airDelayFromArrivalAirport<0"); printVariables(); valid =  false;}
+		if(gate_perturbation<0){U.p("ERROR " + id + " is invalid! gate_perturbation<0"); printVariables(); valid =  false;}
+		if(taxiUncertainty<0){U.p("ERROR " + id + " is invalid! taxi_perturbation<0"); printVariables(); valid =  false;}
+		if(taxi_unimpeded_time<0){U.p("ERROR " + id + " is invalid! "); printVariables(); valid =  false;}
+		if(wheelsOffTime<0){U.p("ERROR " + id + " is invalid! taxi_unimpeded_time<0"); printVariables(); valid =  false;}
+		if(departureTimeACES>wheelsOffTime){U.p("ERROR " + id + " is invalid! departureTimeProposed>departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeACES>arrivalTimeFinal){U.p("ERROR " + id + " is invalid! arrivalTimeProposed>arrivalTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeFinal<=wheelsOffTime){U.p("ERROR " + id + " is invalid! arrivalTimeFinal<=departureTimeFinal"); printVariables(); valid =  false;}
+		if(arrivalTimeACES<=departureTimeACES){U.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
 		if(wheelsOffTime<departureTimeACES+taxi_unimpeded_time+gate_perturbation){ //taxi_perturbation
-			Main.p("ERROR " + id + " is invalid! wheelsOffTime<departureTimeProposed+taxi_perturbation+taxi_unimpeded_time+gate_perturbation"); printVariables(); valid =  false;
+			U.p("ERROR " + id + " is invalid! wheelsOffTime<departureTimeProposed+taxi_perturbation+taxi_unimpeded_time+gate_perturbation"); printVariables(); valid =  false;
 		}
 		if(arrivalFirstSlot<=0){
-			Main.p("ERROR " + id + " arrivalFirstSlot is invalid! arrivalFirstSlot<=0"); printVariables(); valid =  false;}
+			U.p("ERROR " + id + " arrivalFirstSlot is invalid! arrivalFirstSlot<=0"); printVariables(); valid =  false;}
 		if(arrivalFirstSlot>arrivalTimeFinal){
-			Main.p("ERROR " + id + " arrivalFirstSlot is invalid! arrivalFirstSlot>arrivalTimeFinal"); printVariables(); valid =  false;}
+			U.p("ERROR " + id + " arrivalFirstSlot is invalid! arrivalFirstSlot>arrivalTimeFinal"); printVariables(); valid =  false;}
 		int uncertaintyMinusGroundDelay = gateUncertainty - atcGroundDelay;
 		//3 different possible outcomes for wheels on - first slot 
 		if(arrivalTimeFinal-arrivalFirstSlot !=  totalJiggleAmount // makes it on first time schedule
@@ -250,7 +250,7 @@ public 	class Flight implements Comparable<Flight>{
 //		&& arrivalTimeFinal-arrivalFirstSlot !=  					taxi_perturbation + gateUncertainty - atcGroundDelay + 2*originalJiggle + totalJiggleAmount + additionalGDfromReschedule
 //		&& arrivalTimeFinal-arrivalFirstSlot != atcAirDelay
 				){
-			Main.p("ERROR " + id + " wheels on - arrivalFirstSlot = " + (arrivalTimeFinal-arrivalFirstSlot)/toMinutes); printVariables(); valid =  false;}
+			U.p("ERROR " + id + " wheels on - arrivalFirstSlot = " + (arrivalTimeFinal-arrivalFirstSlot)/toMinutes); printVariables(); valid =  false;}
 		
 		return valid;
 	}
@@ -712,7 +712,7 @@ class flightFinalArrTimeComparator implements Comparator<Flight>{
 
 class flightIDComparator implements Comparator<Flight>{
 	public int compare(Flight f1, Flight f2){
-		Main.Assert(f1.id != f2.id, "flightIDComparator: comparing flights with same ID!");
+		U.Assert(f1.id != f2.id, "flightIDComparator: comparing flights with same ID!");
 		return f1.id - f2.id;
 	}
 }

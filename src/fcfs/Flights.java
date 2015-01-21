@@ -59,7 +59,7 @@ public class Flights {
 				subs = line.split(",");
 				flightId = Integer.parseInt(subs[0]);
 				airline = subs[1].substring(0, 3);
-				//Main.p(airline + " " + flightId);
+				//U.p(airline + " " + flightId);
 				if(flightList.get(flightId) != null){
 					flightList.get(flightId).airline = airline;
 				}
@@ -90,7 +90,7 @@ public class Flights {
 				subs = line.split(",");
 				airportName = subs[0];
 				os = subs[1].split(":");
-				//Main.p("os " + os[0]);
+				//U.p("os " + os[0]);
 				taxiOffSet = Integer.parseInt(os[1])*60000 + Integer.parseInt(os[2])*1000;
 				//System.out.printf("test os    %s %d\n", airportName,taxiOffSet);
 				taxiOffset.put(airportName, taxiOffSet);
@@ -103,21 +103,21 @@ public class Flights {
 		}
 		
 		for (Flight f: flightList.values()){
-			//Main.p("be " + f.departureTimeProposed + " " + f.arrivalTimeProposed );
+			//U.p("be " + f.departureTimeProposed + " " + f.arrivalTimeProposed );
 			int a = f.departureTimeACES, b = f.arrivalTimeACES;
 			if(taxiOffset.get(f.departureAirport)!=null){
 					f.correctForTaxiOffset(taxiOffset.get(f.departureAirport));
 					//check for correctness
-					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeACES ){Main.p("ERROR in to");}
-					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeACES ){Main.p("ERROR in to");}
+					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeACES ){U.p("ERROR in to");}
+					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeACES ){U.p("ERROR in to");}
 			} else {
 				//corrects default of 10 minutes
 				f.correctForTaxiOffset(600000);
 				//check for correctness
-				if(a - 600000 + 540000 != f.departureTimeACES ){Main.p("ERROR in to d");}
-				if(b - 600000 + 540000 != f.arrivalTimeACES){Main.p("ERROR in to d");}
+				if(a - 600000 + 540000 != f.departureTimeACES ){U.p("ERROR in to d");}
+				if(b - 600000 + 540000 != f.arrivalTimeACES){U.p("ERROR in to d");}
 			}
-			//Main.p("a " + f.departureTimeProposed + " " + f.arrivalTimeProposed + " " + );
+			//U.p("a " + f.departureTimeProposed + " " + f.arrivalTimeProposed + " " + );
 			
 		}
 	}
@@ -158,7 +158,7 @@ public class Flights {
 					  String facilityName = subs[5];
 					  writeSector = true;
 					  
-					  //Main.Assert(entryTime < 2000000000);
+					  //U.Assert(entryTime < 2000000000);
 					  //check for large times? can't handle times longer than 24 days.
 					  
 					  if(subs[4].equals("XXXX")){
