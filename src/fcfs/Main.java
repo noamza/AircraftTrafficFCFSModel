@@ -4,33 +4,15 @@
 
 package fcfs;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.TreeSet;
 
 /**
  * @author Noam Almog
+ * This is the entry point to the program. 
+ * All of the configuration, directory/file names, are found in the U.java class. 
  * 
- * @precondition Specify the environment variable -Dworking.directory=location. The working directory
- * 				  must exist and must contain the input data file paths (see below).
- * @precondition Specify the environment variable -Doutput.directory=location. The output directory
- * 				  must exist. It will be used to print the results of FCFS.
- * @precondition Specify -Dsector.crossing.file=pathname (relative to working directory). This is the
- *               flight sector crossing and transit time data.
- * @precondition Specify -Dsector.file=pathname relative to working directory. This is the sector name
- *               and capacity file.
- * @precondition Specify -Drunway.file=pathname relative to working directory. This is the runway name
- *               and acceptance rate file. The rates can be time dependent.
+ * @precondition 
+ * - The directory and file names are correct in the U class.				  
  */
-
-
-/**
- * @todo get inputs from command line
- */
-/**
- * @author nalmog
- */
-
 
 public class Main
 {
@@ -80,9 +62,9 @@ public class Main
 	
 	public static void noamMain(String[] args)
 	{
+		//sample command line run:
 		//java -Xms3024M -Xmx3024M -jar FCFSDelaySensitivity.jar /Users/nalmog/Desktop/Scheduler/ 3
-		//java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDDHHmmss"); 
-		//FCFSArrival f = new FCFSArrival(); f.schedule(dateFormat.format(new java.util.Date()));
+		
 		U.start();
 
 		FCFSCoupledWUncertainty s;
@@ -96,18 +78,8 @@ public class Main
 		s.limitedCFRUncertainty = false;
 		s.schedule();
 		/*
-		s.allCFR = true;
-		s.noneCFR = false;
-		s.schedule();
-		s.allCFR = false;
-		s.noneCFR = true;
-		s.schedule();
-		s.limitedCFRUncertainty = true;
-		s.allCFR = false;
-		s.noneCFR = false;
-		s.schedule();
-		s.allCFR = true;
-		s.noneCFR = false;
+		s.allCFR = true; s.limitedCFRUncertainty = true; s.noneCFR = false;
+		s.schedule();;
 		s.schedule();
 		*/
 		U.end();

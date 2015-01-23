@@ -1,8 +1,14 @@
 package fcfs;
 
-import java.util.Comparator;
 import java.util.*;
 
+/*
+ * This is the utilities class (U)
+ * It also contains global values and settings, as well as utility methods.
+ * 
+ */
+
+//Utility Class
 public class U{	
 	static java.io.PrintStream io = System.out;
 	static boolean debug = false;

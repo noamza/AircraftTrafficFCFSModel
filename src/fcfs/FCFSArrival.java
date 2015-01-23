@@ -1,7 +1,6 @@
 package fcfs;
 
 import java.util.*;
-import java.awt.Event;
 import java.io.*;
 
 enum Action {
@@ -27,7 +26,7 @@ enum Action {
 
 }
 
-class rescheduleEvent implements Comparable{
+class rescheduleEvent implements Comparable<rescheduleEvent>{
 	int eventTime = 0;
 	int targetTime = 0;
 	Action mode = Action.undef;
@@ -36,7 +35,7 @@ class rescheduleEvent implements Comparable{
 		eventTime= et; targetTime = st; mode = m; flight = f;}	
 	public rescheduleEvent(int et, int st){eventTime=et; targetTime=st;}
 	void print(){ System.out.printf("r time: %d s time: %d\n", eventTime, targetTime);}
-	public int compareTo(Object o) { //orders priorityqueue by least time
+	public int compareTo(rescheduleEvent o) { //orders priorityqueue by least time
 		if(eventTime == ((rescheduleEvent)o).eventTime){
 			return flight.id - ((rescheduleEvent)o).flight.id;
 		}
@@ -383,7 +382,7 @@ public class FCFSArrival {
 								f.arrivalFirstSlot = arrivalSlot;
 								int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime;
 								f.atcGroundDelay = delayFromFirstScheduling; 
-								int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0); 
+								//int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0); 
 								//delayFromFirstScheduling = 0; //TAKE THIS OUT
 								int wheelsOffTime = f.departureTimeACES+f.gate_perturbation + f.taxi_unimpeded_time + delayFromFirstScheduling;// + f.taxi_perturbation; 
 								f.wheelsOffTime = wheelsOffTime;
@@ -513,7 +512,7 @@ public class FCFSArrival {
 								int arrivalSlot = airports.scheduleArrival(f.arrivalAirport, proposedArrivalTime); //Make Slot
 								f.arrivalFirstSlot = arrivalSlot;
 								int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime;
-								int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0);
+								//int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0);
 								f.atcGroundDelay = delayFromFirstScheduling; 
 								//f.departureDelayFromArrivalAirport = delayDelta;
 								int addons = f.taxiUncertainty + f.gate_perturbation + f.taxi_unimpeded_time;

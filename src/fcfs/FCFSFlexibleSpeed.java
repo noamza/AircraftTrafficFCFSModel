@@ -107,8 +107,8 @@ public class FCFSFlexibleSpeed {
 		//double avgGround, avgAir;
 
 		//mean median max #delayed #made slots X air, ground, Delay by airport.. 
-		int groundSlots = 0, airSlots = 0, id = 85, delayedOnGround = 0, delayedInAir = 0; 
-		double totalAirDelay = 0, totalGroundDelay = 0, maxGroundDelay = 0, maxAirDelay = 0, totalMissedSlotMetric = 0, tp =0;;
+		int groundSlots = 0, airSlots = 0, delayedOnGround = 0, delayedInAir = 0; 
+		double totalAirDelay = 0, totalGroundDelay = 0, maxGroundDelay = 0, maxAirDelay = 0, totalMissedSlotMetric = 0;
 		int avgInts[] = new int[4];
 		double avgDoubles[] = new double [4];
 		
@@ -368,7 +368,7 @@ public class FCFSFlexibleSpeed {
 						totalAirDelay += airDelay/60000.0;
 						f.arrivalTimeFinal = finalArrivalSlot;
 						totalMissedSlotMetric += (finalArrivalSlot- f.arrivalFirstSlot)/toMinutes;
-						tp += (finalArrivalSlot - f.arrivalTimeACES)/toMinutes;
+						//tp += (finalArrivalSlot - f.arrivalTimeACES)/toMinutes;
 						
 						//delay by airport
 						if(airDelay!=0){

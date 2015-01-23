@@ -3,8 +3,8 @@ package fcfs;
 import java.io.PrintStream;
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 
 
@@ -309,9 +309,7 @@ public 	class Flight implements Comparable<Flight>{
 				arrivalAirport
 				
 				);
-		for(SectorAirport s: path){
-			//io.print(" " + s.name);
-		}
+		//for(SectorAirport s: path){io.print(" " + s.name);}
 		io.println(" " + arrivalAirport);
 	}
 	
