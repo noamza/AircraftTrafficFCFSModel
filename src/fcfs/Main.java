@@ -113,7 +113,7 @@ public class Main
 	public static Airports loadAirportData(String file)
 	{
 		Airports airports = new Airports();
-		airports.loadFromAces(file);
+		airports.loadCapacitiesFromAces(file);
 
 		return airports;
 	}

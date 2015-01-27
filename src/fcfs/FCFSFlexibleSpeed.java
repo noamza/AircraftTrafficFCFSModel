@@ -94,7 +94,7 @@ public class FCFSFlexibleSpeed {
 		//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
 		String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
 		flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",false);
-		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		airports.loadDelays(workingDirectory+"gate_delay.csv", "gate");	
 		airports.loadDelays(workingDirectory+"taxi_delay.csv", "taxi");
 		airports.loadDelays(workingDirectory+"taxi_u.csv", "taxi");

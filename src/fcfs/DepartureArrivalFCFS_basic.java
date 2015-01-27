@@ -1,11 +1,9 @@
-/*
- * @author hvhuynh
- * 
- * */
-
 package fcfs;
 import java.util.*;
 import java.io.*;
+
+//@author Huu Huynh
+
 
 /**
  * @todo Deprecate the {@link #scheduleFCFS()} method and use externally initialized data
@@ -191,7 +189,7 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 		
 		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
-		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 	}
 		
 

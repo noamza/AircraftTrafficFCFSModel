@@ -57,12 +57,9 @@ public class FCFSArrival {
 	Hashtable<String, Double> dispensedAirportDelayHrs;
 	Hashtable<String, Double> absorbedAirportDelayHrs;
 	static java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS");
-	String ofolder = "output/";
-	String infolder = "inputs/";
-	//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
-	//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
-	//			String workingDirectory = "/Users/kpalopo/Desktop/scheduler/atl_data/";
-	String workingDirectory = "/Users/nalmog/Desktop/scheduler/";
+	String ofolder = U.outFolder;
+	String infolder = U.inputFolder;
+	String workingDirectory = U.workingDirectory;
 	public FCFSArrival(){
 		rand = Math.abs(new java.util.Random().nextInt());
 
@@ -90,15 +87,14 @@ public class FCFSArrival {
 
 	void load(String inputs, Flights flights, Airports airports){
 		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",false);
-		airports.loadFromAces(inputs+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(inputs+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		airports.loadDelays(inputs+"gate_delay.csv", "gate");	
 		airports.loadDelays(inputs+"taxi_delay.csv", "taxi");
 		airports.loadDelays(inputs+"taxi_u.csv", "taxi");
 		flights.loadTaxiOffset(inputs+"AirportTaxi.csv");
 		flights.loadCallSigns(inputs + "job_611_airline_flightid_map.csv");
-		//System.out.println("		loaded " + dateFormat.format(new Date()));
-		flights.pushFlightsForwardBy1hr(10*60*60*1000); // CHANGE //10
-		airports.offsetCapacities(10*60*60*1000); //CHANGE //10 
+		flights.pushFlightsForwardInTime(10*(int)U.toHours); //pushes simulation forward in time so no negative values CHANGE //10 
+		airports.offsetCapacities(10*(int)U.toHours);  //pushes simulation forward in time so no negative values //CHANGE //10  
 		//TODO: airports.loadCFRdata();
 	} //END LOAD()
 

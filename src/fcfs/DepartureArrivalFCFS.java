@@ -1,11 +1,8 @@
-/*
- * @author hvhuynh
- * 
- * */
-
 package fcfs;
 import java.util.*;
 import java.io.*;
+
+//@author Huu Huynh
 
 public class DepartureArrivalFCFS {
 
@@ -43,7 +40,7 @@ public class DepartureArrivalFCFS {
 		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		centers.loadFromAces(workingDirectory+"centerList_2007_may_9999.csv");
-		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		
 		//job 29 is an unconstrained ACES run used to gather center transit data
 		flights.loadCenterTransitFromAces(workingDirectory + "centerCrossingV2_job_29_ldc_20130418_160504_20130418_deftfm_j611fid_uncons_5fts.csv");

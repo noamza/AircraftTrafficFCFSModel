@@ -10,6 +10,7 @@ import java.io.*;
  * search from departure->sectors->arrival, adding delay for each one, until it
  * finds the amount of delay where it can take off and pass through each node
  * without violating any constraints.
+ * Some speeding up and slowing down is allowed to meet constraints.
 */
 public class SchedulerFCFS {
 
@@ -44,7 +45,7 @@ public class SchedulerFCFS {
 		//sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May.csv");
 		sectors.loadFromAces(workingDirectory+"SectorList_YZ2007May_MAP9999.csv");
 		//sectors.printSectors();
-		airports.loadFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(workingDirectory+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		//airports.printAirports();
 		date = new Date();
 		System.out.println("loaded " + dateFormat.format(date));

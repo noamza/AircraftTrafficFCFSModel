@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 /**
  * @author Mohamad Refai
+ * 
+ * good idea, should be expanded.
  */
 public interface Scheduler
 {

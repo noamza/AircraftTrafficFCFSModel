@@ -104,12 +104,9 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 	Hashtable<String, Double> dispensedAirportDelayHrs;
 	Hashtable<String, Double> absorbedAirportDelayHrs;
 	//static java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS");
-	String ofolder = "output/";
-	String infolder = "inputs/";
-	//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
-	//String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
-	//			String workingDirectory = "/Users/kpalopo/Desktop/scheduler/atl_data/";
-	String workingDirectory = "/Users/nalmog/Desktop/scheduler/";
+	String ofolder = U.outFolder;
+	String infolder = U.inputFolder;
+	String workingDirectory = U.workingDirectory;
 	java.util.Random random = new java.util.Random(1);//98);//98);//rand);//9 85); //used 98 for 100000 //6 it goes up //11 goes up
 
 	Hashtable<Integer, Hashtable<Integer, Hashtable<String, Hashtable<String,Double>>>> 
@@ -148,15 +145,15 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 
 	void load(String inputs, Flights flights, Airports airports){
 		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",false);
-		airports.loadFromAces(inputs+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
+		airports.loadCapacitiesFromAces(inputs+"AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv");
 		airports.loadDelays(inputs+"gate_delay.csv", "gate");	
 		airports.loadDelays(inputs+"taxi_delay.csv", "taxi");
 		airports.loadDelays(inputs+"taxi_u.csv", "taxi");
 		flights.loadTaxiOffset(inputs+"AirportTaxi.csv");
 		flights.loadCallSigns(inputs + "job_611_airline_flightid_map.csv");
 		//System.out.println("		loaded " + dateFormat.format(new Date()));
-		flights.pushFlightsForwardBy1hr(10*60*60*1000); // CHANGE //10
-		airports.offsetCapacities(10*60*60*1000); //CHANGE //10 
+		flights.pushFlightsForwardInTime(10*(int)U.toHours); // CHANGE //10
+		airports.offsetCapacities(10*(int)U.toHours); //CHANGE //10 
 		//TODO: airports.loadCFRdata();
 	} //END LOAD()
 
@@ -660,16 +657,12 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 					
 					String t = montecarlofolder+fh+'_'+sh+'_'+col+".csv";
 					Hashtable<String, Double> results = Stats.count_sum_mean_std_min_max(read(t));
-					/*
+					
+					//*
 					U.pf("%3d,%2d,%-40s%4.1f,%4.1f,%4.1f,%4.1f,%.0f\n",
-							fh,sh,col+',',
-							results.get("mean"),
-							results.get("std"),
-							results.get("min"),
-							results.get("max"),
-							results.get("count")
-							);
-					*/
+							fh,sh,col+',', results.get("mean"),results.get("std"),
+							results.get("min"),results.get("max"),results.get("count"));//*/
+					
 					String line = String.format("%d,%d,%s,%.1f,%.1f,%.1f,%.1f,%.0f",
 							fh,sh,col,
 							results.get("mean"),
@@ -677,7 +670,9 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 							results.get("min"),
 							results.get("max"),
 							results.get("count")
-							);
+							);	
+					
+					//U.p(line);
 					
 					write(files.get(col), line);
 				}
@@ -691,17 +686,14 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 		}
 		//CLOSE FILES
 		
-		//*
+		/*
 		//clear files
 		for (String fname: files.keySet()){
-			//String n = currentFilePrefix+col;
-			//File file = new File(mcpath+n+".csv");
-			//files.put(n, open(file.getPath()));
 			for(String col: columns){
 				if(!col.equals(fname)){
 					File file = new File(mcpath+fname+".csv");
 					files.put(fname, open(file.getPath()));
-					write(files.get(fname),"empty");
+					write(files.get(fname),"empty to save space");
 					close(files.get(fname));
 				}
 			}
@@ -736,7 +728,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 	
 	public void writeOver(BufferedWriter out){
 		try{
-			out.write("empty \n");
+			out.write("empty to save more space\n");
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
@@ -947,7 +939,7 @@ Any atc delay from arrival scheduling is taken in the air.
 		int gateDeparture = f.departureTimeACES + f.gate_perturbation;
 		int proposedArrivalTime = f.arrivalTimeACES + departureAdditives;
 		//flight will schedule arrival the amount of the freeze horizon before arrival
-		int freezeHorizonMil = freezeHorizon*(int) Flight.toMinutes;
+		int freezeHorizonMil = freezeHorizon*(int) U.toMinutes;
 		//so that don't schedule arrival before departure, otherwise schedule x minutes before arrival
 		//int timeToScheduleArrival = Math.max(proposedArrivalTime - freezeHorizonMil, f.getDepartureTimeFinal());
 		//SCHEDULES AT FREEZE HORIZON AMOUNT AWAY FROM ARRIVAL OR GATE DEPARTURE DEPENDS ON WHICH IS BIGGER
@@ -1072,127 +1064,6 @@ Any atc delay from arrival scheduling is taken in the air.
 		return results;
 		//*/
 	}
-
-	/*
-	public void scheduleDeparture(SchedulingEvent event)
-	{
-		//U.p(++sici);
-		//schedule priority or regular departure based on CFR
-		Flight f = event.flight;
-		//duration speeds
-		int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
-		int fastestDuration =  (int)(nominalDuration/(1+speedUp)); 
-		U.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
-		int delayDelta = Math.max(f.gateUncertainty,f.atcGroundDelay); 
-		U.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
-		U.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
-		int departureAdditives = + f.taxi_unimpeded_time; //gate perturbation??
-		int proposedDepartureTime = f.departureTimeProposed + departureAdditives; 
-
-		if(airports.getArrivalAirport(f).effectedByCFR(f.arrivalTimeProposed+departureAdditives) 
-				&& f.departureAirport.equals("KDFW")
-				){
-			f.cfrEffected = true;
-			//f.airline = "cfr";
-		}
-
-		airports.scheduleDeparture(f, proposedDepartureTime, event.eventTime);	
-		int proposedArrivalTime = f.arrivalTimeProposed + departureAdditives + f.atcGroundDelay;
-		//flight will schedule arrival 30min before
-		int minBeforeArrival = freezeHorizon*(int) Flight.toMinutes;
-		//so that don't schedule arrival before departure, otherwise schedule x minutes before arrival
-		int timeToScheduleArrival = Math.max(proposedArrivalTime - minBeforeArrival, f.departureTimeFinal); //use current or departure time?
-		//schedule arrivals at departure time for cfrs;
-		if(f.cfrEffected){
-			//if(f.cfrEffected){
-			timeToScheduleArrival = f.departureTimeFinal;
-		}
-		schedulingQueue.add(new SchedulingEvent(timeToScheduleArrival, proposedArrivalTime, ScheduleMode.scheduleArrival, f));
-	}
-	 */
-	/*
-	public void scheduleDeparture(SchedulingEvent event)
-	{
-		//U.p(++sici);
-		//schedule priority or regular departure based on CFR
-		//schedule arrival if CFR
-		Flight f = event.flight;
-		//duration speeds
-		int nominalDuration = f.arrivalTimeProposed-f.departureTimeProposed;
-		int fastestDuration =  (int)(nominalDuration/(1+speedUp)); 
-		U.Assert(f.gateUncertainty<=0, "err uncertainty is '-' " + f.gateUncertainty); //????
-		int delayDelta = Math.max(f.gateUncertainty,f.atcGroundDelay); 
-		U.Assert(f.atcAirDelay == 0, "f.atcAirDelay==0");
-		U.Assert(f.atcGroundDelay == 0, "f.atcGroundDelay==0");
-		if(airports.getArrivalAirport(f).effectedByCFR(f.departureTimeProposed+f.taxi_unimpeded_time)){
-			f.cfrEffected = true;
-			//cfr_flights++;
-		}
-		int departureAdditives = + f.taxi_unimpeded_time; //gate perturbation??
-		int proposedDepartureTime = f.departureTimeProposed + departureAdditives; 
-		int proposedArrivalTime = f.arrivalTimeProposed + departureAdditives;
-		f.cfrEffected = airports.effectedByCFR(f);
-		//f.CFRaffected
-		if(f.cfrEffected){
-		  /*int diff = -1;
-			int departureSchedulingDelay = 0;
-			int i = 0;
-
-			while (diff != 0){
-//				departureSchedulingDelay += 
-//						airports.getSoonestPriorityDeparture(f, proposedDepartureTime + departureSchedulingDelay, event.eventTime);
-//				diff = airports.getSoonestArrival(f, proposedArrivalTime + departureSchedulingDelay, event.eventTime);
-//				departureSchedulingDelay += diff;
-
-				//DEPARTURE
-				int depDelay = 
-						airports.getSoonestPriorityDeparture(f, proposedDepartureTime + departureSchedulingDelay, event.eventTime);
-
-				if(depDelay > 0){U.p(f.id + " wackness ");}
-				departureSchedulingDelay += depDelay;
-				f.departureAirportDelay += depDelay;
-				//ARRIVAL
-				int arrDelay = airports.getSoonestArrival(f, proposedArrivalTime + departureSchedulingDelay, event.eventTime);
-				departureSchedulingDelay += arrDelay;
-				f.arrivalAirportDelay += arrDelay;
-				diff = arrDelay;
-			}
-	 */
-	//if(f.id==-851)U.p(f.departureTimeProposed + " U.proposedDepartureTime + departureSchedulingDelay " + proposedDepartureTime + " "+ departureSchedulingDelay+"\n");
-	//int shouldBeZero = airports.schedulePriorityDeparture(f, proposedDepartureTime + departureSchedulingDelay, event.eventTime);
-	//U.Assert(shouldBeZero==0, "shouldBeZero not 0");
-	//schedule arrival at time of departure scheduling;
-	//shouldBeZero = airports.scheduleArrival(f, proposedArrivalTime + departureSchedulingDelay, event.eventTime);
-	//U.Assert(shouldBeZero==0, "shouldBeZero not 0");
-	//f.atcGroundDelay = departureSchedulingDelay; //OVER WRITES, OK????
-	//f.departureAirportDelay = f.departureTimeFinal - proposedDepartureTime;
-	//f.arrivalAirportDelay = f.arrivalTimeFinal - proposedArrivalTime;
-	/*
-			airports.schedulePriorityDeparture(f, proposedDepartureTime, event.eventTime);	
-		} else {
-			airports.scheduleNonPriorityDeparture(f, proposedDepartureTime, event.eventTime);
-			//schedule 30min in before arrival.
-			//
-		}
-		proposedArrivalTime += f.atcGroundDelay;
-		schedulingQueue.add(new SchedulingEvent((proposedArrivalTime - 30*(int) Flight.toMinutes), proposedArrivalTime, ScheduleMode.scheduleArrival, f));
-		//if(f.departureAirport.equals("KCLT"));airports.getDepartureAirport(f).printDepTrafficByFlight();
-		////////////////////nevermind this junk, add in code for event to schedule arrival 30min from landing
-
-		int pushback = f.departureTimeProposed + f.gate_perturbation + delayDelta;
-		int wheelsOffTime = pushback + f.taxi_unimpeded_time + f.taxi_perturbation; //add in taxi??
-		f.wheelsOffTime = wheelsOffTime;
-		int lastOnTimeDeparturePoint = f.arrivalFirstSlot - fastestDuration; 
-		//totalGroundDelay+=f.departureDelayFromArrivalAirport/60000.0;
-		if (wheelsOffTime > lastOnTimeDeparturePoint){
-			//flight leaves too late.
-			/////////schedulingQueue.add(new SchedulingEvent(lastOnTimeDeparturePoint, -8, ScheduleMode.removeByFlight, f));// -8 dummy value
-			///////////schedulingQueue.add(new SchedulingEvent(wheelsOffTime, -4, ScheduleMode.scheduleInTheAirByFlight, f));
-		}
-
-	}
-	 */
-
 
 	public void writeToAirports(String workingDirectory, String name, int montecarlo, boolean writeNames){ 
 		//write by airport

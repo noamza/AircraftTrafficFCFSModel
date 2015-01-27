@@ -42,6 +42,7 @@ public class Flights {
 		return flightList.get(id);
 	}
 	
+	//read call signs in from ACES to match fligh ID's useful for identifying flight's airline
 	public void loadCallSigns(String path){
 		try{
 			//Read callsigns in
@@ -72,6 +73,7 @@ public class Flights {
 		}
 	}
 	
+	//Corrects for taxiOffsets that are added in by ACES so that they are not added in again by scheduler.
 	public void loadTaxiOffset(String path){
 		try{
 			//Read ACES Transit Time File Line by Line
@@ -86,13 +88,10 @@ public class Flights {
 			br.readLine();
 			while ((line = br.readLine()) != null){
 				line = line.replaceAll("\\s","");//trim();
-				// location(0), sim day(1), hour(2), quarter(3), rates(4)
 				subs = line.split(",");
 				airportName = subs[0];
 				os = subs[1].split(":");
-				//U.p("os " + os[0]);
 				taxiOffSet = Integer.parseInt(os[1])*60000 + Integer.parseInt(os[2])*1000;
-				//System.out.printf("test os    %s %d\n", airportName,taxiOffSet);
 				taxiOffset.put(airportName, taxiOffSet);
 			}
 			in.close();
@@ -108,10 +107,12 @@ public class Flights {
 			if(taxiOffset.get(f.departureAirport)!=null){
 					f.correctForTaxiOffset(taxiOffset.get(f.departureAirport));
 					//check for correctness
-					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeACES ){U.p("ERROR in to");}
-					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeACES ){U.p("ERROR in to");}
+					//540000 is the biggest offset, this ensures we don't have negative starting value
+					//(it is specific to this dataset only) and should be changed from being a magic number
+					if(a - taxiOffset.get(f.departureAirport)+ 540000 != f.departureTimeACES ){U.p("ERROR in t.o.");}
+					if(b - taxiOffset.get(f.departureAirport)+ 540000 != f.arrivalTimeACES ){U.p("ERROR in t.o.");}
 			} else {
-				//corrects default of 10 minutes
+				//corrects default of 10 minutes taxi out from ACES
 				f.correctForTaxiOffset(600000);
 				//check for correctness
 				if(a - 600000 + 540000 != f.departureTimeACES ){U.p("ERROR in to d");}
@@ -122,12 +123,14 @@ public class Flights {
 		}
 	}
 	
-	public void pushFlightsForwardBy1hr(int maxoffset){
+	public void pushFlightsForwardInTime(int offset){
 		for (Flight f: flightList.values()){
-			f.pushFlightForwardInTime(maxoffset);
+			f.pushFlightForwardInTime(offset);
 		}
 	}
 	 
+	
+	//Loads flights from ACES flight track file. Built to be robust but may run into issues if tracks are incomplete for example if a flight track is missing an arrival airport.
 	public void loadFlightsFromAces(String filePath, boolean loadSectors){
 		//Hashtable<Integer, Integer> test = new Hashtable<Integer, Integer>();
 		String[] subs = new String[1];
@@ -139,27 +142,25 @@ public class Flights {
 			  BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			  String line;
 			  Flight f = new Flight(-1);
-			  boolean correctTransitSequence = false;
-			  boolean writeSector = true;
+			  boolean correctTransitSequence = false; //Should skip over sequences missing departure or arrival airports
 			  
 			  //skip past comment line
 			  br.readLine();
 			  while ((line = br.readLine()) != null){
+				  //The values in the csv are as follows:
 				  // flightid(0), entryTime(1),exitTime(2),transitTime(3),
 				  //upperStreamSector(4),currentSector(5),downStreamSector(6)
 				  subs = line.split(",");
 				  if( subs.length == 7){ //&& !line.startsWith("*")){
 					  //inputCount++;
-					  //test.put(Integer.parseInt(subs[0]),0);
 					  int entryTime = Integer.parseInt(subs[1]) + ACES_FDS_OFFSET;
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[2]));
 					  //max = java.lang.Math.max(max, Integer.parseInt(subs[1]));
 					  int transitTime = Integer.parseInt(subs[3]);
 					  String facilityName = subs[5];
-					  writeSector = true;
 					  
-					  //U.Assert(entryTime < 2000000000);
 					  //check for large times? can't handle times longer than 24 days.
+					  //U.Assert(entryTime < 2000000000);
 					  
 					  if(subs[4].equals("XXXX")){
 						  inputCount++;
@@ -171,7 +172,6 @@ public class Flights {
 						  f.departureAirport = facilityName;
 						  //add tracons to list;
 						  facilityName = subs[6];
-						  //writeSector = false;
 					  }
 
 					  if(subs[6].equals("XXXX")){
@@ -182,14 +182,12 @@ public class Flights {
 						  f.arrivalAirport = facilityName;
 						  //add tracons to list
 						  facilityName = subs[4];
-						  //f.path.add(new SectorAirport(facilityName, entryTime, transitTime));
 						  f.path.add(new SectorAirport(facilityName, entryTime, transitTime, subs[4]+","+subs[5]+","+subs[6]));
 						  flightList.put(Integer.parseInt(subs[0]), f);
 						  f = null;
 					  }
 					  
 					  if(correctTransitSequence){ 
-						  //f.path.add(new SectorAirport(facilityName, entryTime, transitTime));
 						  if(loadSectors)f.path.add(new SectorAirport(facilityName, entryTime, transitTime, subs[4]+","+subs[5]+","+subs[6]));
 					  } // bad entry else {io.println("bad flightId entry " + subs[0]); }
 					  
@@ -206,13 +204,13 @@ public class Flights {
 			 e.printStackTrace();
 		}
 		//io.println(inputCount + " input output " + flightList.size());
-		//io.println("maxxx "+max);
+		//io.println("max "+max);
 		//io.println(test.size() + " total, usable " + flightList.size());
 		//io.println(inputCount + " total, usable " + flightList.size());
 		//flightList.get(36440).fullPrint();
 	}
 	
-	
+	//Huu
 	public void loadCenterTransitFromAces(String filePath){
 		String[] subs = new String[1];
 		try{
@@ -256,6 +254,7 @@ public class Flights {
 		}
 	}
 	
+	//For methods below see documantation in Flight.java
 	Flight getFlightByID(int id){
 		return flightList.get(id);
 	}

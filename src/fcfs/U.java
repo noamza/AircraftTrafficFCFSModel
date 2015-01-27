@@ -20,17 +20,16 @@ public class U{
 	static final double simulationStart = (double)(new GregorianCalendar(2011,1-1,3).getTimeInMillis());
 	
 	static final java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("yyyy:M:dd:HH:mm:ss");
-	static final double toMinutes = 60*1000.0;
-	static final double toHours   = 60*toMinutes;
+	static final double toMinutes = 60*1000.0; //convert minutes to milliseconds
+	static final double toHours   = 60*toMinutes; //convert hours to milliseconds
 
 	//FOLDER FILE NAMES
 	static String workingDirectory = "/Users/nalmog/Desktop/Scheduler/";
-	static final String csv = "ACES_input_04192012_CrossTimes_v2_wSpeedConstraint.csv";
 	static final String inputFolder = "input/";
 	static final String plotFolder = "plots/";
 	static final String monteCarloFolder = "monte carlo/";
 	static final String outFolder = "output/";
-	static final String CSV_Name = inputFolder + csv;
+	static final String ACESflightTrackData = inputFolder + "job_40_sector_transitTime_takeoffLanding_35h_1.csv"; //clean_job.csv
 	static final String airportCapacity = inputFolder + "AdvancedState_Hourly_Runways_AllCapacities_20120418_20120420.csv";
 	
 	public static String timeToDate(int time){
@@ -54,10 +53,6 @@ public class U{
 	public static String timeToString(int time){
 		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 		return new java.text.SimpleDateFormat("yyyy:M:DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
-	}
-
-	public static String CSVfileName(String mainAirline){ 
-		return ".csv";
 	}
 	
 	public static boolean Assert(boolean a, String expression){ 

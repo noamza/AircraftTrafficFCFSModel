@@ -71,6 +71,7 @@ public class AirportTree {
 	TreeSet<Integer> scheduledAirportDepartureTraffic = new TreeSet<Integer>();
 	
 	//latest implementation, store flight objects which include delay data
+	//change name
 	TreeSet<Flight> arrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
 	TreeSet<Flight> departureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator());
 
@@ -462,6 +463,7 @@ public class AirportTree {
 	//'previous' and 'next' assume model of times on a number line (previous = earlier)
 	// No freeze horizon consideration in this version; i.e., for example, 
 	//flight within a second of touchdown can still be delayed further in the air (still true)
+	//Jiggling refers to flights arrival time being modified after it has been set. This happens when flights are scheduled not in the order they arrive and flights' arrival slots are pushed forward to make room for flights inserted at earlier slots after scheduling.
 	public void insertAtSoonestArrivalWithForwardGapsRemoved(Flight flight, int proposedArrivalTime, int currentTime){ 
 		//this being empty does mean flight has not already been scheduled
 		if(arrivalTrafficByFlight.isEmpty()){

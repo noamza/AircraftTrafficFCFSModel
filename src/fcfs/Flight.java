@@ -9,9 +9,16 @@ import java.util.*;
 
 
 /**
- * To initialize a flight add the transit times in sequence starting from departure
- * airport and ending at arrival airport.
- * @author nalmog
+ * 
+ * This class contains all the data associated with a single flight.
+ * Different variables are associated with different experiments run on different schedulers. However, from the way that most of the functions in the AirportTree class are written, following variables are used in scheduling as follows:
+ * 
+ * departureTimeACES, arrivalTimeACES = raw input departure/arrival times.
+ * departureTimeScheduled, arrivalTimeScheduled = same as departureTimeACES, arrivalTimeACES, used by Huu in his code.
+ * departureTimeFinal, arrivalTimeFinal = the final state of scheduling at any given point in time in the scheduling. When scheduling of all flights is completed, check this value for the final scheduled departure/arrival time.
+ * 
+ * The rest of the values are described below:
+ * 
  */
 
 
@@ -19,59 +26,59 @@ public 	class Flight implements Comparable<Flight>{
 	//private final static Logger logger = LoggerFactory.getLogger(Flight.class);
 
 	public final static String NONE = "XXXX";
-
-	static double toMinutes = 60*1000.0;
 	
-	ArrayList<SectorAirport> path = new ArrayList<SectorAirport>();
-	ArrayList<CenterTransit> centerPath = new ArrayList<CenterTransit>();
-	ArrayList<String> centersTravelled = new ArrayList<String>();
+	ArrayList<SectorAirport> path = new ArrayList<SectorAirport>(); //path of the flight starting with departure airport and consecutive sectors. 
+	ArrayList<CenterTransit> centerPath = new ArrayList<CenterTransit>(); //Huu
+	ArrayList<String> centersTravelled = new ArrayList<String>(); //Huu
 	
 	
 	static PrintStream io = System.out;
 	
-	final int id;
-	int departureTimeACES = -1;//proposed times loaded by ACES/ASDI //TODO: refactor dpartureTimeProposed name
-	int arrivalTimeACES = -1;//proposed times loaded by ACES/ASDI
+	final int id; //flight id from ACES
+	int departureTimeACES = -1;//raw input time loaded from ACES/ASDI
+	int arrivalTimeACES = -1;//raw input time loaded from ACES/ASDI
 	int taxi_unimpeded_time = AirportTree.DEFAULT_UNIMPEDED_TAXI_TIME*60000; //from gano
 	String arrivalAirport = "undef_arr";
 	String departureAirport  = "undef_dep";
 	
-	int gate_perturbation = 0; // based on ASPM data, always positive
-	int taxiUncertainty = 0; // based on ASPM data, always positive
+	int gate_perturbation = 0; // this was a value from FCFSArrival, it was used to modify ACES departure times so that we could effectively simulate different days' departures randomly, it is based on ASPM data, always positive
+	int taxiUncertainty = 0; //the amount of taxi uncertainty in departure // based on ASPM data, always positive
 	
-	//change each run.
+	//values that change each time the schedule is re-run
 	int atcAirDelay = 0;//air delay
 	int atcGroundDelay = 0;//ground delay	
-	int wheelsOffTime = -1; //wheels off time
+	int wheelsOffTime = -1; //wheels off time, same as departureTimeFinal in FCFSCoupledWUncertainty.java etc  
 	int arrivalFirstSlot = -1; //original slot, if flight misses this slot, we want to know how much it misses it by
-	int departureTimeFinal = -1; //with uncertainty etcetera (departure from the gate?) //private
-	int departureTimeScheduled = -1; 
+	int departureTimeFinal = -1; //time when flight departed. 
+	int departureTimeScheduled = -1; //Huu
 	int arrivalTimeScheduled = -1; //by scheduler
 	int arrivalTimeFinal = -1; //wheels on time
-	int arrivalAirportDelay = 0;
-	int departureAirportDelay =0;
-	int centerDelay = 0;
-	int centerBoundaryDelay = 0;
+	int arrivalAirportDelay = 0;//delay assigned by arrivalAirport
+	int departureAirportDelay =0;//delay assigned by departureAirport
+	int centerDelay = 0;//Huu
+	int centerBoundaryDelay = 0;//Huu
 	
-	//for debugging
+	//Jiggling refers to flights arrival time being modified after it has been set. This happens when flights are scheduled not in the order they arrive and flights' arrival slots are pushed forward to make room for flights inserted at earlier slots after scheduling. see AirportTree, values used for debugging.
 	int numberOfJiggles = 0; //number of times a flights departure and or arrival times are modified
 	int totalJiggleAmount = 0;// in millisecs
-	int gateUncertainty = 0; //uncertaainty in when flight actually leaves as opposed to scheduled
-	int additionalGDfromReschedule = 0;
-	boolean rescheduled = false;
 	int originalJiggle = 0;
-	//int uncertaintyMinusGroundDelay = 0; //uncertaintyMinusGroundDelay + atcAirDelay
+	
+	//
+	int gateUncertainty = 0; //uncertainty in when flight actually leaves as opposed to scheduled. Different from gate perturbation which is used to randomize ACES data to simulate different days in monte-carlo simulation as input to the scheduler.
+	int additionalGDfromReschedule = 0; //GD=ground delay
+	boolean rescheduled = false;
+	
 	
 	String airline = "unknown";
-	String centersTravelledPath = null;
+	String centersTravelledPath = null;//Huu
 	
-	boolean cfrEffected = false;
+	boolean cfrEffected = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
 	double gateUncertaintyConstant = 0; //gaussian random number used to generate gateUncertainty
 	boolean firstTimeBeingArrivalScheduled = true;
-	boolean arrivalTimeFrozen = false;
+	boolean arrivalTimeFrozen = false; //boolean saying that arrival time cannot be modified
 	boolean scheduled = false;
-	int numberOfevents = 0;
-	boolean nonCFRInternal = false;
+	int numberOfevents = 0; //used for debugging, number of scheduling events flight uses
+	boolean nonCFRInternal = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
 	/*
 	public void setDepartureTimeFinal(int s){
 		departureTimeFinal = s;
@@ -79,6 +86,8 @@ public 	class Flight implements Comparable<Flight>{
 			//U.p("");
 		}
 	}*/
+	
+	//values that are reset in monte-carlo simulation
 	public void resetSchedulingDependentVariables(){
 		 departureTimeScheduled = -1; 
 		 arrivalTimeScheduled = -1; //by scheduler
@@ -206,15 +215,11 @@ public 	class Flight implements Comparable<Flight>{
 		if(arrivalTimeACES<=departureTimeACES){U.p("ERROR " + id + " is invalid! arrivalTimeProposed<=departureTimeProposed"); printVariables(); valid =  false;}
 		if(departureTimeACES+atcGroundDelay!=departureTimeFinal){
 			U.p("ERROR " + id + " is invalid! departureTimeProposed+atcGroundDelay!=departureTimeFinal");printVariables(); valid =  false;}
-		//if(arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal){
-			//U.p("ERROR " + id + " is invalid! arrivalTimeProposed+atcGroundDelay!=arrivalTimeFinal");printVariables(); valid =  false;}
-		//U.p("here");
-		//if(arrivalTimeFinal - arrivalTimeProposed != atcGroundDelay){U.p("good news");}
-		//if(id==36788){U.p(arrivalTimeFinal - arrivalTimeProposed +" "+ atcGroundDelay);}
 		
 		return valid;
 	}
 	
+	//Validation for FCFSArrival and FCFSFlexibleSpeed
 	public boolean validate(){
 		boolean valid = true;
 		if(id<0){U.p("ERROR " + id + " is invalid! id<0"); printVariables(); valid =  false;}
@@ -245,16 +250,11 @@ public 	class Flight implements Comparable<Flight>{
 		&& arrivalTimeFinal-arrivalFirstSlot !=  totalJiggleAmount + taxiUncertainty + originalJiggle + additionalGDfromReschedule +                               atcAirDelay
 		&& arrivalTimeFinal-arrivalFirstSlot !=   					 taxiUncertainty +											   uncertaintyMinusGroundDelay + atcAirDelay //contract jiggle uncertainty
 		&& arrivalTimeFinal-arrivalFirstSlot !=                      taxiUncertainty +         																	 atcAirDelay //contract
-
-//		&& arrivalTimeFinal-arrivalFirstSlot !=  					 taxi_perturbation + gateUncertainty - atcGroundDelay + 2*additionalGDfromReschedule + totalJiggleAmount + originalJiggle 
-//		&& arrivalTimeFinal-arrivalFirstSlot !=  					taxi_perturbation + gateUncertainty - atcGroundDelay + 2*originalJiggle + totalJiggleAmount + additionalGDfromReschedule
-//		&& arrivalTimeFinal-arrivalFirstSlot != atcAirDelay
 				){
-			U.p("ERROR " + id + " wheels on - arrivalFirstSlot = " + (arrivalTimeFinal-arrivalFirstSlot)/toMinutes); printVariables(); valid =  false;}
+			U.p("ERROR " + id + " wheels on - arrivalFirstSlot = " + (arrivalTimeFinal-arrivalFirstSlot)/U.toMinutes); printVariables(); valid =  false;}
 		
 		return valid;
 	}
-	
 	
 	public Flight(int i){
 		this.id = i;
@@ -264,18 +264,13 @@ public 	class Flight implements Comparable<Flight>{
 		atcGroundDelay = d;
 		departureTimeACES += d;
 		arrivalTimeACES += d;
-		
 		for(SectorAirport s: path){
 			s.entryTime += d;
-		}
-		
+		}	
 	}
 	
-	//changes all variables back to their values
-	//before simulation
-	
-	
-	
+	//ACES discrepancies see Flights.java
+	//Corrects for taxiOffsets that are added in by ACES so that they are not added in again by scheduler.
 	public void correctForTaxiOffset(int d){
 		//540000 is the biggest offset, this ensures we don't have negative starting value
 		//(it is specific to this dataset only)
@@ -287,7 +282,7 @@ public 	class Flight implements Comparable<Flight>{
 		}
 	}
 	
-	//millisec
+	//in millisec
 	public void pushFlightForwardInTime(int d){
 		departureTimeACES += d;
 		arrivalTimeACES += d;
@@ -318,23 +313,23 @@ public 	class Flight implements Comparable<Flight>{
 		int uncertaintyMinusGroundDelay = gateUncertainty - atcGroundDelay;
 		o.println("[] ");
 		o.println("id " + id + " " + arrivalAirport + " to " + departureAirport);
-		o.println("departureTimeProposed " + departureTimeACES/toMinutes);
-		o.println("departureTimeFinal " + departureTimeFinal/toMinutes);
-		o.println("arrivalTimeProposed " + arrivalTimeACES/toMinutes);
-		o.println("wheelsOffTime " + wheelsOffTime/toMinutes);
-		o.println("arrivalTimeFinal " + arrivalTimeFinal/toMinutes);
-		o.println("arrivalFirstSlot " + arrivalFirstSlot/toMinutes);
-		o.println("gate_perturbation " + gate_perturbation/toMinutes);
-		o.println("taxi_unimpeded_time " + taxi_unimpeded_time/toMinutes);
-		o.println("taxi_perturbation " + taxiUncertainty/toMinutes);
-		o.println("gateUncertainty " + gateUncertainty/toMinutes);
-		o.println("uncertaintyMinusGroundDelay " + uncertaintyMinusGroundDelay/toMinutes);
-		o.println("atcAirDelay " + atcAirDelay/toMinutes);
-		o.println("atcGroundDelay " + atcGroundDelay/toMinutes);
+		o.println("departureTimeProposed " + departureTimeACES/U.toMinutes);
+		o.println("departureTimeFinal " + departureTimeFinal/U.toMinutes);
+		o.println("arrivalTimeProposed " + arrivalTimeACES/U.toMinutes);
+		o.println("wheelsOffTime " + wheelsOffTime/U.toMinutes);
+		o.println("arrivalTimeFinal " + arrivalTimeFinal/U.toMinutes);
+		o.println("arrivalFirstSlot " + arrivalFirstSlot/U.toMinutes);
+		o.println("gate_perturbation " + gate_perturbation/U.toMinutes);
+		o.println("taxi_unimpeded_time " + taxi_unimpeded_time/U.toMinutes);
+		o.println("taxi_perturbation " + taxiUncertainty/U.toMinutes);
+		o.println("gateUncertainty " + gateUncertainty/U.toMinutes);
+		o.println("uncertaintyMinusGroundDelay " + uncertaintyMinusGroundDelay/U.toMinutes);
+		o.println("atcAirDelay " + atcAirDelay/U.toMinutes);
+		o.println("atcGroundDelay " + atcGroundDelay/U.toMinutes);
 		o.println("numberOfJiggles " + numberOfJiggles);
-		o.println("totalJiggleAmount " + totalJiggleAmount/toMinutes);
-		o.println("additionalGDfromReschedule " + additionalGDfromReschedule/toMinutes);
-		o.println("originalJiggle " + originalJiggle/toMinutes);
+		o.println("totalJiggleAmount " + totalJiggleAmount/U.toMinutes);
+		o.println("additionalGDfromReschedule " + additionalGDfromReschedule/U.toMinutes);
+		o.println("originalJiggle " + originalJiggle/U.toMinutes);
 		o.println("rescheduled " + rescheduled);
 		o.println("[][][][]");
 	}
@@ -404,7 +399,7 @@ public 	class Flight implements Comparable<Flight>{
 	 */
 	public static double getToMinutes()
 	{
-		return toMinutes;
+		return U.toMinutes;
 	}
 
 	/**
@@ -693,8 +688,6 @@ public 	class Flight implements Comparable<Flight>{
 
 class flightFinalDepTimeComparator implements Comparator<Flight>{
 	public int compare(Flight f1, Flight f2){
-		//if(f1.departureTimeFinal == f2.departureTimeFinal){return f1.id - f2.id;}
-		//System.out.println("comp: " + f1.id + " " + f1.departureTimeFinal + " " + f2.id + " " + f2.departureTimeFinal + " : " + (f1.departureTimeFinal - f2.departureTimeFinal));
 		return f1.getDepartureTimeFinal() - f2.getDepartureTimeFinal();
 	}
 }
@@ -702,7 +695,6 @@ class flightFinalDepTimeComparator implements Comparator<Flight>{
 
 class flightFinalArrTimeComparator implements Comparator<Flight>{
 	public int compare(Flight f1, Flight f2){
-		//if(f1.arrivalTimeFinal == f2.arrivalTimeFinal){return f1.id - f2.id;}
 		return f1.arrivalTimeFinal - f2.arrivalTimeFinal;
 	}
 }
@@ -742,18 +734,17 @@ class flightGateTaxiUnimDepComparator implements Comparator<Flight>{
 
 class centerBoundaryEntryTimeComparator implements Comparator<CenterTransit>{
 	public int compare(CenterTransit ct1, CenterTransit ct2) {
-		//if(ct1.entryTime == ct2.entryTime){return ct1.facilityName.compareTo(ct1.facilityName);}
 		return (ct1.entryTime - ct2.entryTime);
 	}
 }
 
 class centerBoundaryFinalEntryTimeComparator implements Comparator<CenterTransit>{
 	public int compare(CenterTransit ct1, CenterTransit ct2) {
-		//if(ct1.finalEntryTime == ct2.finalEntryTime){return ct1.facilityName.compareTo(ct1.facilityName);}
 		return (ct1.finalEntryTime - ct2.finalEntryTime);
 	}
 }
 
+//Huu's
 class CenterTransit{
 	String facilityName;
 	String prevFacilityName;
@@ -774,12 +765,17 @@ class CenterTransit{
 	}
 }
 
+/*older class
+ * represents sector or airport in a flight's route to the airport. 
+ */
 class SectorAirport{
-	String raw;
-	String name;
-	int entryTime;
-	int transitTime;
-	//int scheduledEntryTime;
+	String raw; //raw input
+	String name; 
+	int entryTime; //time enters sector/airport
+	int transitTime; //the amount of time spent in the sector/airport
+	//add entryTime + transitTime to get exitTime
+	//for airports entry time is departure, and arrival time exit time
+	//constructors
 	SectorAirport(String n, int e, int s){
 		name = n; entryTime = e; transitTime = s;
 	}
