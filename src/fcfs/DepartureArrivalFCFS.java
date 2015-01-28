@@ -55,10 +55,10 @@ public class DepartureArrivalFCFS {
 		for (Flight flight: flightList) {
 			
 			//get soonest time slot the flight can depart
-			int departureTimeProposed = airports.getSoonestDeparture(flight.departureAirport, flight.departureTimeScheduled);
+			int departureTimeProposed = airports.getSoonestDepartureInt(flight.departureAirport, flight.departureTimeScheduled);
 			
 			//schedule the flight
-			int departureTimeFinal = airports.scheduleDeparture(flight.departureAirport, departureTimeProposed, flight.departureTimeScheduled);
+			int departureTimeFinal = airports.scheduleDepartureInt(flight.departureAirport, departureTimeProposed, flight.departureTimeScheduled);
 			int groundDelay = departureTimeFinal - flight.departureTimeACES;
 			totalGroundDelay += groundDelay;
 			flight.atcGroundDelay = groundDelay;
@@ -169,7 +169,7 @@ public class DepartureArrivalFCFS {
 		for (Flight flight: arrivingFlightList) {
 			
 			//get soonest time slot the flight can land
-			int arrivalTimeProposed = airports.getSoonestArrival(flight.arrivalAirport, flight.arrivalTimeACES + flight.centerBoundaryDelay);
+			int arrivalTimeProposed = airports.getSoonestArrivalInt(flight.arrivalAirport, flight.arrivalTimeACES + flight.centerBoundaryDelay);
 			//schedule the flight
 			int airDelay = arrivalTimeProposed - flight.arrivalTimeACES;
 			
@@ -177,7 +177,7 @@ public class DepartureArrivalFCFS {
 			
 			//absorb delay in air
 			if (flight.centerPath.size() == 1) {
-				int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled);
+				int arrivalTimeFinal = airports.scheduleArrivalInt(flight.arrivalAirport, arrivalTimeProposed, flight.arrivalTimeScheduled);
 				flight.arrivalTimeFinal = arrivalTimeFinal;
 				airDelay = arrivalTimeFinal - flight.arrivalTimeACES;
 				flight.atcAirDelay = airDelay;
@@ -235,12 +235,12 @@ public class DepartureArrivalFCFS {
 				}
 				//if (delayPassedBack > 0) System.out.println(delayPassedBack);
 				//re-check for arrival time with new center boundary delays
-				int arrivalTimeProposed_new = airports.getSoonestArrival(flight.arrivalAirport ,flight.arrivalTimeACES + leftOverDelay);
+				int arrivalTimeProposed_new = airports.getSoonestArrivalInt(flight.arrivalAirport ,flight.arrivalTimeACES + leftOverDelay);
 				
 				int newAirDelay = arrivalTimeProposed_new - (flight.arrivalTimeACES + leftOverDelay);
 				//System.out.println(newAirDelay);
 				newTotalAirDelay+=newAirDelay;
-				int arrivalTimeFinal = airports.scheduleArrival(flight.arrivalAirport, arrivalTimeProposed_new, flight.arrivalTimeScheduled, flight);
+				int arrivalTimeFinal = airports.scheduleArrivalDepricated(flight.arrivalAirport, arrivalTimeProposed_new, flight.arrivalTimeScheduled, flight);
 				flight.arrivalTimeFinal = arrivalTimeFinal;
 				totalAllDelay += (flight.arrivalTimeFinal - flight.arrivalTimeScheduled);
 				//flight.atcAirDelay = airDelay;

@@ -398,6 +398,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 										&& f.departureAirport.equals("KDFW")
 										){
 									f.cfrEffected = true;
+									f.priority = true;
 								}
 								if(allCFR)f.cfrEffected = true;
 								if(noneCFR)f.cfrEffected = false;
@@ -585,7 +586,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 									cfrs++;
 									groundDelayCFR+= f.atcGroundDelay;
 									airDelayCFR += f.atcAirDelay;
-									U.Assert(f.atcGroundDelay + f.atcAirDelay == f.arrivalAirportDelay);
+									U.Assert(f.atcGroundDelay + f.atcAirDelay == f.arrivalAirportAssignedDelay);
 
 									write(files.get(currentFilePrefix+columns[0]), ""+(f.atcGroundDelay/U.toMinutes));
 									write(files.get(currentFilePrefix+columns[1]), ""+(f.atcAirDelay/U.toMinutes));
@@ -615,7 +616,7 @@ public class FCFSCoupledWUncertainty implements Scheduler {
 								}
 
 
-								arrivalAirportDelay += f.arrivalAirportDelay;
+								arrivalAirportDelay += f.arrivalAirportAssignedDelay;
 								all++;
 							}
 						}

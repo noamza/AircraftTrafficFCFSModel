@@ -29,8 +29,8 @@ public class U{
 	static final String plotFolder = "plots/";
 	static final String monteCarloFolder = "monte carlo/";
 	static final String outFolder = "output/";
-	static final String ACESflightTrackData = inputFolder + "job_40_sector_transitTime_takeoffLanding_35h_1.csv"; //clean_job.csv
-	static final String airportCapacity = inputFolder + "AdvancedState_Hourly_Runways_AllCapacities_20120418_20120420.csv";
+	static final String ACESflightTrackData = "job_40_sector_transitTime_takeoffLanding_35h_1.csv"; //clean_job.csv
+	static final String airportCapacity = "AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv";
 	
 	public static String timeToDate(int time){
 		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));

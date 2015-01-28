@@ -204,7 +204,7 @@ public class FCFSFlexibleSpeed {
 					{ //more flights have to be scheduled twice with ground since slot arrival time estimate is bad,
 						//so more totalAirDelayl delay per pdt run.
 						int proposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time;
-						int arrivalSlot = airports.scheduleArrival(f.arrivalAirport, proposedArrivalTime); //Make Slot
+						int arrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, proposedArrivalTime); //Make Slot
 						f.arrivalFirstSlot = arrivalSlot;
 						int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime; 
 						if(delayFromFirstScheduling != 0){ delayedOnGround++; }
@@ -258,7 +258,7 @@ public class FCFSFlexibleSpeed {
 					{ //more flights have to be scheduled twice with ground since slot arrival time estimate is bad,
 						//so more totalAirDelayl delay per pdt run.
 						int proposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time;
-						int arrivalSlot = airports.scheduleArrival(f.arrivalAirport, proposedArrivalTime); //Make Slot
+						int arrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, proposedArrivalTime); //Make Slot
 						f.arrivalFirstSlot = arrivalSlot;
 						int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime; 
 						if(delayFromFirstScheduling != 0){ delayedOnGround++; }
@@ -306,7 +306,7 @@ public class FCFSFlexibleSpeed {
 					{
 						//calling at CFR
 						int cfrProposedArrivalTime = f.arrivalTimeACES + f.taxi_unimpeded_time + f.gate_perturbation; 
-						int cfrArrivalSlot = airports.scheduleArrival(f.arrivalAirport, cfrProposedArrivalTime); //Make Slot including perturbation
+						int cfrArrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, cfrProposedArrivalTime); //Make Slot including perturbation
 						f.arrivalFirstSlot = cfrArrivalSlot;
 						int delayFromCfrScheduling = cfrArrivalSlot - cfrProposedArrivalTime; 
 						if(delayFromCfrScheduling!= 0){ delayedOnGround++; }
@@ -361,7 +361,7 @@ public class FCFSFlexibleSpeed {
 					{
 						airSlots++;
 						int targetArrival = f.wheelsOffTime + nominalDuration;
-						int finalArrivalSlot = airports.scheduleArrival(f.arrivalAirport, targetArrival);// event.targetTime);
+						int finalArrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, targetArrival);// event.targetTime);
 						int airDelay = finalArrivalSlot - targetArrival;
 						f.atcAirDelay = airDelay;				
 						if(airDelay != 0){ delayedInAir++; }

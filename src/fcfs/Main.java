@@ -67,21 +67,24 @@ public class Main
 		
 		U.start();
 
-		FCFSCoupledWUncertainty s;
-		if(args !=null && args.length > 0){
-			U.workingDirectory = args[0];
-			s = new FCFSCoupledWUncertainty(Integer.parseInt(args[1]));
-		} else {
-			s = new FCFSCoupledWUncertainty(); 
-			s.montecarlo = 2;
-		}
-		s.limitedCFRUncertainty = false;
-		s.schedule();
+//		FCFSCoupledWUncertainty s;
+//		if(args !=null && args.length > 0){
+//			U.workingDirectory = args[0];
+//			s = new FCFSCoupledWUncertainty(Integer.parseInt(args[1]));
+//		} else {
+//			s = new FCFSCoupledWUncertainty(); 
+//			s.montecarlo = 2;
+//		}
+//		s.limitedCFRUncertainty = false;
+//		s.schedule();
 		/*
 		s.allCFR = true; s.limitedCFRUncertainty = true; s.noneCFR = false;
 		s.schedule();;
 		s.schedule();
 		*/
+		Scheduler s = new SchedulerExample();
+		s.schedule();
+		
 		U.end();
 	}
 

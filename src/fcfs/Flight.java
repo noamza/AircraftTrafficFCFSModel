@@ -31,61 +31,67 @@ public 	class Flight implements Comparable<Flight>{
 	ArrayList<CenterTransit> centerPath = new ArrayList<CenterTransit>(); //Huu
 	ArrayList<String> centersTravelled = new ArrayList<String>(); //Huu
 	
-	
 	static PrintStream io = System.out;
 	
+	//values that stay the same across montecarlo
 	final int id; //flight id from ACES
 	int departureTimeACES = -1;//raw input time loaded from ACES/ASDI
 	int arrivalTimeACES = -1;//raw input time loaded from ACES/ASDI
 	int taxi_unimpeded_time = AirportTree.DEFAULT_UNIMPEDED_TAXI_TIME*60000; //from gano
 	String arrivalAirport = "undef_arr";
 	String departureAirport  = "undef_dep";
-	
-	int gate_perturbation = 0; // this was a value from FCFSArrival, it was used to modify ACES departure times so that we could effectively simulate different days' departures randomly, it is based on ASPM data, always positive
-	int taxiUncertainty = 0; //the amount of taxi uncertainty in departure // based on ASPM data, always positive
+	String airline = "unknown";
 	
 	//values that change each time the schedule is re-run
-	int atcAirDelay = 0;//air delay
-	int atcGroundDelay = 0;//ground delay	
+	
+	//scheduling times
+	int departureTimeFinal = -1; //time when flight departed. 
+	int arrivalTimeFinal = -1; //wheels on time
 	int wheelsOffTime = -1; //wheels off time, same as departureTimeFinal in FCFSCoupledWUncertainty.java etc  
 	int arrivalFirstSlot = -1; //original slot, if flight misses this slot, we want to know how much it misses it by
-	int departureTimeFinal = -1; //time when flight departed. 
 	int departureTimeScheduled = -1; //Huu
-	int arrivalTimeScheduled = -1; //by scheduler
-	int arrivalTimeFinal = -1; //wheels on time
-	int arrivalAirportDelay = 0;//delay assigned by arrivalAirport
-	int departureAirportDelay =0;//delay assigned by departureAirport
+	int arrivalTimeScheduled = -1; //Huu
+
+	//delay
+	//note: if flights are scheduled multiple time (AKA jiggling) it is important to make delay is summed correctly
+	//to get total delay, you can subtract (arrivalTimeFinal-arrivalTimeACES) after scheduling is complete, etc
+	int arrivalAirportAssignedDelay = 0;//delay assigned by arrivalAirport
+	int departureAirportAssignedDelay =0;//delay assigned by departureAirport
+	int atcAirDelay = 0;//air delay
+	int atcGroundDelay = 0;//ground delay
 	int centerDelay = 0;//Huu
 	int centerBoundaryDelay = 0;//Huu
+	int additionalGDfromReschedule = 0; //GD=ground delay
 	
+	
+	//scheduling events
+	boolean scheduled = false;
+	boolean rescheduled = false;
+	boolean arrivalScheduled = false;
+	boolean departureScheduled = false;
+	boolean firstTimeBeingArrivalScheduled = true;
+	
+	//priority
+	boolean priority = false; //receives priority scheduling 
+	boolean cfrEffected = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
+	boolean arrivalTimeFrozen = false; //boolean saying that arrival time cannot be modified
+	
+	//uncertainty variables
+	int gateUncertainty = 0; //uncertainty in when flight actually leaves as opposed to scheduled. Different from gate perturbation which is used to randomize ACES data to simulate different days in monte-carlo simulation as input to the scheduler.
+	int gate_perturbation = 0; // this was a value from FCFSArrival, it was used to modify ACES departure times so that we could effectively simulate different days' departures randomly, it is based on ASPM data, always positive
+	int taxiUncertainty = 0; //the amount of taxi uncertainty in departure // based on ASPM data, always positive
+	double gateUncertaintyConstant = 0; //gaussian random number used to generate gateUncertainty
+	
+	//misc 
+	
+	int numberOfevents = 0; //used for debugging, number of scheduling events flight uses
+	boolean nonCFRInternal = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
+	String centersTravelledPath = null;//Huu
 	//Jiggling refers to flights arrival time being modified after it has been set. This happens when flights are scheduled not in the order they arrive and flights' arrival slots are pushed forward to make room for flights inserted at earlier slots after scheduling. see AirportTree, values used for debugging.
 	int numberOfJiggles = 0; //number of times a flights departure and or arrival times are modified
 	int totalJiggleAmount = 0;// in millisecs
 	int originalJiggle = 0;
-	
-	//
-	int gateUncertainty = 0; //uncertainty in when flight actually leaves as opposed to scheduled. Different from gate perturbation which is used to randomize ACES data to simulate different days in monte-carlo simulation as input to the scheduler.
-	int additionalGDfromReschedule = 0; //GD=ground delay
-	boolean rescheduled = false;
-	
-	
-	String airline = "unknown";
-	String centersTravelledPath = null;//Huu
-	
-	boolean cfrEffected = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
-	double gateUncertaintyConstant = 0; //gaussian random number used to generate gateUncertainty
-	boolean firstTimeBeingArrivalScheduled = true;
-	boolean arrivalTimeFrozen = false; //boolean saying that arrival time cannot be modified
-	boolean scheduled = false;
-	int numberOfevents = 0; //used for debugging, number of scheduling events flight uses
-	boolean nonCFRInternal = false; //CFR (call for release) from Delay Sensitivity study (see Readme)
-	/*
-	public void setDepartureTimeFinal(int s){
-		departureTimeFinal = s;
-		if(id == 33722){
-			//U.p("");
-		}
-	}*/
+
 	
 	//values that are reset in monte-carlo simulation
 	public void resetSchedulingDependentVariables(){
@@ -103,13 +109,16 @@ public 	class Flight implements Comparable<Flight>{
 		 originalJiggle = 0;
 		 rescheduled = false;
 		 cfrEffected = false;
+		 priority = false;
 		 //gateUncertaintyConstant = 0; //gaussian random number used to generate gateUncertainty
 		 firstTimeBeingArrivalScheduled = true;
 		 arrivalTimeFrozen = false;
 		 departureTimeFinal = -1;
-		 departureAirportDelay = 0;
-		 arrivalAirportDelay = 0;
+		 departureAirportAssignedDelay = 0;
+		 arrivalAirportAssignedDelay = 0;
 		 scheduled = false;
+		 arrivalScheduled = false;
+		 departureScheduled=false;
 		 numberOfevents = 0;
 		 nonCFRInternal = false;
 		 
@@ -567,15 +576,15 @@ public 	class Flight implements Comparable<Flight>{
 	 */
 	public int getArrivalAirportDelay()
 	{
-		return arrivalAirportDelay;
+		return arrivalAirportAssignedDelay;
 	}
 
 	/**
 	 * @return departureAirportDelay
 	 */
-	public int getDepartureAirportDelay()
+	public int getDepartureAirportAssignedDelay()
 	{
-		return departureAirportDelay;
+		return departureAirportAssignedDelay;
 	}
 
 	/**

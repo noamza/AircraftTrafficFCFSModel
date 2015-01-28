@@ -52,6 +52,7 @@ class arrivalTrafficCMPcomparator implements Comparator<TreeSet<Integer>> {
  * 
  *  NOTE: CFR stands for 'call for release'. This value was used in prioritizing scheduling for CFR fligHts over non-CFR flights in some of the scenarios of the Delay Sensitivity study. 
  * 
+ * TODO: the way that delay distribution is done should really be refactored
  */
 public class AirportTree {
 	final static int DEFAULT_ARR_DEP_RATE = 30;
@@ -62,18 +63,12 @@ public class AirportTree {
 	String airportName;
 	PrintStream io = System.out;
 	
-	//Earlier implementation storing arrivals/departures as ints representing time.
-	TreeSet<Integer> airportArrivalTraffic = new TreeSet<Integer>();
-	TreeSet<Integer> airportDepartureTraffic = new TreeSet<Integer>();
-	
-	//Huu's implementation
-	TreeSet<Integer> scheduledAirportArrivalTraffic = new TreeSet<Integer>(); 
-	TreeSet<Integer> scheduledAirportDepartureTraffic = new TreeSet<Integer>();
+
 	
 	//latest implementation, store flight objects which include delay data
 	//change name
-	TreeSet<Flight> arrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
-	TreeSet<Flight> departureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator());
+	TreeSet<Flight> scheduledArrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
+	TreeSet<Flight> scheduledDepartureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator());
 
 	private boolean departureContract = true; //this boolean is for determining whether a flight has a fixed departure time, or a mutable departure time that can be changed to the modify the schedule as it is being generated to be more efficient. (used in 'jiggeling')
 	
@@ -115,8 +110,8 @@ public class AirportTree {
 	public void resetToStart(){
 		airportArrivalTraffic = new TreeSet<Integer>();	
 		airportDepartureTraffic = new TreeSet<Integer>();
-		arrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
-		departureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator()); 
+		scheduledArrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
+		scheduledDepartureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator()); 
 		departureContract = true;
 		
 		//Might be necessary
@@ -128,40 +123,49 @@ public class AirportTree {
 		return CFRstart <= time && time < CFRend; 
 	}
 	
-	//Throws exception if this Flight was not in list
-	public boolean freeDepartureSlot(Flight f){
-		if(departureTrafficByFlight.remove(f)){
-			return true;
-		} else {
-			throw new java.lang.Error("FAILED: flight not removed, not found in arrival queue");
-			
-		}
-		
-	}
 	
 	//returning spacing based on capacity constraints at a given time
 	int getSpacing(int time, boolean departure){
 		return departure? getDepartureSpacing(time) : getArrivalSpacing(time);
 	}
 	
+	//Schedules all departures first come first served ensuring capacity constraints
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling, always positive
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and might need to be modified.
 	public int scheduleDeparture(Flight f, int proposedDepartureTime, int currentTime){
-		if(f.cfrEffected) return insertPriorityDeparture(f, proposedDepartureTime, currentTime);
-		else			  return insertNonPriorityDeparture(f, proposedDepartureTime, currentTime);
+		//schedules a priority slot at current time (fcfs only to other priority flights)
+		if(f.priority) return insertPriorityDeparture(f, proposedDepartureTime, currentTime);
+		//Schedules a regular, first come first serve slot
+		return insertFirstComeFirstServedDeparture(f, proposedDepartureTime, currentTime);
 	}
+	
+	//schedules a priority slot at current time (fcfs only to other priority flights)
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling, always positive
+		//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and might need to be modified.
+	public int schedulePriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		return insertPriorityDeparture(f, proposedDepartureTime, currentTime);
+	}
+	
+	//Schedules all arrivals first come first served ensuring capacity constraints
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling, always positive
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and might need to be modified.
+	//NOTE: WHEN CALLED BEFORE FLIGHT HAS DEPARTED (currentTime < f.departureTimeFinal) WILL MODIFY f.departureTimeFinal AND DISTRIBUTE DELAY IN CUSTOM WAY maybe should be modified.
 	public int scheduleArrival(Flight f, int proposedDepartureTime, int currentTime){
-		if(f.cfrEffected) return insertNonPriorityArrival(f, proposedDepartureTime, currentTime);
-		else			  return insertNonPriorityArrival(f, proposedDepartureTime, currentTime);
+		return insertFirstComeFirstServedArrival(f, proposedDepartureTime, currentTime);
 	}
 	
 	//returns the soonest available slot on a First-Come-First-Served principle
-	public int getSoonestNonPrioritySlot(Flight f, int time, boolean departure){
+	public int getSoonestFirstComeFirstServedSlot(Flight f, int time, boolean departure){
 		int candidateSlotTime = time;
 		Flight previousFlight, nextFlight; 
 		int previousSlot, //previous slot time in queue 
 			previousSpace, //capacity time spacing for previous slot time
 			currentSpace, //same as previous
 			nextSlot; //same as previous
-		TreeSet<Flight> queue = departure? departureTrafficByFlight : arrivalTrafficByFlight;
+		TreeSet<Flight> queue = departure? scheduledDepartureTrafficByFlight : scheduledArrivalTrafficByFlight;
 		int flightsPassed = -1; 
 		//this loop finds the nearest scheduled slots before and after a given candidate slot time, and checks if for spacing capacity violations at that time. If the constraints aren't met, a new slot is attempted to be found either after the previous flight's, or the next flight's spacing constraints. 
 		while(true){ flightsPassed++;
@@ -195,24 +199,29 @@ public class AirportTree {
 		}
 	}
 	
-	//This method uses getSoonestNonPrioritySlot, to find the next available arrival slot, and inserts a flight to the arrival queue at that time. 
+	//This method uses getSoonestNonPrioritySlot, to find the next available arrival slot, and inserts a flight to the arrival queue at that time.
+	//does NOT insert slots at desired times and push other flights forward (does not do Priority scheduling)
 	//This also keeps track of the types of delay needed to absorb the delay generated by arrival scheduling.
-	public int insertNonPriorityArrival(Flight f, int proposedArrivalTime, int currentTime){
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and should possibly be modified.	
+	//NOTE: WHEN CALLED BEFORE FLIGHT HAS DEPARTED (currentTime < f.departureTimeFinal) WILL MODIFY f.departureTimeFinal AND DISTRIBUTE DELAY IN CUSTOM WAY
+	public int insertFirstComeFirstServedArrival(Flight f, int proposedArrivalTime, int currentTime){
 		//no flights
-		if(arrivalTrafficByFlight.isEmpty()){
+		if(scheduledArrivalTrafficByFlight.isEmpty()){
 			f.arrivalTimeFinal = proposedArrivalTime;
-			arrivalTrafficByFlight.add(f);			
+			scheduledArrivalTrafficByFlight.add(f);			
 			return 0;
 		//there are flights already in the arrival queue
 		} else {
-			int candidateArrivalSlot = getSoonestNonPrioritySlot(f, proposedArrivalTime, false);
+			int candidateArrivalSlot = getSoonestFirstComeFirstServedSlot(f, proposedArrivalTime, false);
 			f.arrivalTimeFinal = candidateArrivalSlot;
-			arrivalTrafficByFlight.add(f);
+			scheduledArrivalTrafficByFlight.add(f);
 			//calculate delay
 			//This code also checks for departure constraints to make sure delay can be taken on the ground
 			int delayNeeded = f.arrivalTimeFinal - proposedArrivalTime;
-			if(currentTime < f.departureTimeFinal){ //should there be different cases for < and =
-				U.Assert(f.firstTimeBeingArrivalScheduled);
+			
+			//MODIFIES DEPARTURE TIME IF BEING SCHEDULED BEFORE DEPARTURE TIME
+			//This section should be refactored. 
+			if(currentTime < f.departureTimeFinal){
 				//code to make sure delay can be taken on the ground..When there are departure constraints!
 				int delayThatCanBeAbsorbedOnTheGround = timeUntilNextSlot(f, f.departureTimeFinal, true);
 				U.Assert(delayThatCanBeAbsorbedOnTheGround >= 0, 
@@ -227,11 +236,12 @@ public class AirportTree {
 				
 				f.atcGroundDelay += groundDelayPortion;
 				f.atcAirDelay += airDelayPortion;
-				f.departureTimeFinal = f.departureTimeFinal + groundDelayPortion; //flight departs later.. //TODO
+				//MODIFIES DEPARTURE TIME IF FLIGHT HAS NOT TAKEN OFF AT TIME OF SCHEDULING
+				f.departureTimeFinal = f.departureTimeFinal + groundDelayPortion; 
 				
 			} else {
 				//has to do with CFR ground delay scenario, see Delay Sensitivity TM.
-				if(f.cfrEffected)U.Assert(!f.firstTimeBeingArrivalScheduled, ""+ f.id);
+				if(f.priority)U.Assert(!f.firstTimeBeingArrivalScheduled, ""+ f.id);
 				
 				//for speeding flights, delay in the air only beyond nominal flight time?
 				if(proposedArrivalTime < f.departureTimeFinal + (f.arrivalTimeACES - f.departureTimeACES)){
@@ -242,11 +252,8 @@ public class AirportTree {
 				}
 			}
 			
-			if(delayNeeded > 0 && f.cfrEffected){ 
-				//print("should not be delay here delay needed here??"); //relevant??
-			}
-			
-			f.arrivalAirportDelay += delayNeeded;
+			f.arrivalAirportAssignedDelay += delayNeeded;
+			f.arrivalScheduled = true;
 			return delayNeeded;
 		}
 	}
@@ -257,7 +264,7 @@ public class AirportTree {
 		Flight nextFlight; 
 		int currentSpace, nextSlot;
 		AirportTree a = departure? airports.getAirport(f.departureAirport) : airports.getAirport(f.arrivalAirport);
-		TreeSet<Flight> queue = departure? a.departureTrafficByFlight : a.arrivalTrafficByFlight;
+		TreeSet<Flight> queue = departure? a.scheduledDepartureTrafficByFlight : a.scheduledArrivalTrafficByFlight;
 		if(departure){
 			nextFlight =     queue.higher(Flight.dummyDeparture(time)); 
 			nextSlot =       nextFlight!=null? nextFlight.departureTimeFinal : Integer.MAX_VALUE;	
@@ -282,26 +289,28 @@ public class AirportTree {
 
 	//This method uses getSoonestNonPrioritySlot, to find the next available departure slot, and inserts a flight to the departure queue at that time. 
 		//This also keeps track of the types of delay needed to absorb the delay generated by departure scheduling.
-	public int insertNonPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom.
+	public int insertFirstComeFirstServedDeparture(Flight f, int proposedDepartureTime, int currentTime){
 		//departure queue empty
-		if(departureTrafficByFlight.isEmpty()){
+		if(scheduledDepartureTrafficByFlight.isEmpty()){
 			f.departureTimeFinal = proposedDepartureTime;
-			departureTrafficByFlight.add(f);
+			scheduledDepartureTrafficByFlight.add(f);
 			return 0;
 			//other flights already in the departure queue
 		} else {
-			int candidateDepartureSlot = getSoonestNonPrioritySlot(f, proposedDepartureTime, true);
+			int candidateDepartureSlot = getSoonestFirstComeFirstServedSlot(f, proposedDepartureTime, true);
 			if(f.id==3){
 				U.p("candidateDepartureSlot" + candidateDepartureSlot);
 			}
 			f.departureTimeFinal = candidateDepartureSlot;
-			U.Assert(!departureTrafficByFlight.contains(f),
+			U.Assert(!scheduledDepartureTrafficByFlight.contains(f),
 					"DepartureTrafficByFlight.contains(flight) flight already in Departure tree id: " + f.id);
-			departureTrafficByFlight.add(f);
+			scheduledDepartureTrafficByFlight.add(f);
 			//calculate delay
 			int delayNeeded = f.departureTimeFinal - proposedDepartureTime;
 			f.atcGroundDelay += delayNeeded;
-			f.departureAirportDelay += delayNeeded;
+			f.departureAirportAssignedDelay += delayNeeded;
+			f.departureScheduled = true;
 			return delayNeeded;
 		}
 	}
@@ -314,12 +323,12 @@ public class AirportTree {
 		int previousDeparture;//Departure time in ms 
 		int previousSpace; //time spacing for particular Departure time (in ms) (to prevent tail gating)
 		int necessaryBuffer = candidateDepartureSlot+getDepartureSpacing(candidateDepartureSlot);
-		previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(necessaryBuffer));
+		previousFlight = scheduledDepartureTrafficByFlight.lower(Flight.dummyDeparture(necessaryBuffer));
 		if(previousFlight == null){
 			previousDeparture = Integer.MIN_VALUE;
 		} else {
-			if(!previousFlight.cfrEffected){ 
-				previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot));
+			if(!previousFlight.priority){ 
+				previousFlight = scheduledDepartureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot));
 			}
 			//previousDeparture = previousFlight.departureTimeFinal;
 			previousDeparture = (previousFlight == null)? Integer.MIN_VALUE : previousFlight.departureTimeFinal;
@@ -330,11 +339,11 @@ public class AirportTree {
 		//add in all good case
 		if(previousDeparture + previousSpace <= candidateDepartureSlot){
 			//do nothing //correct
-		}else if(previousFlight.cfrEffected ){
-			while(previousFlight.cfrEffected && candidateDepartureSlot < previousDeparture + previousSpace){ 
+		}else if(previousFlight.priority ){
+			while(previousFlight.priority && candidateDepartureSlot < previousDeparture + previousSpace){ 
 				candidateDepartureSlot = previousDeparture + previousSpace;
 				int buffer = candidateDepartureSlot + getDepartureSpacing(candidateDepartureSlot);
-				previousFlight = departureTrafficByFlight.floor(Flight.dummyDeparture(buffer)); //use buffer?
+				previousFlight = scheduledDepartureTrafficByFlight.floor(Flight.dummyDeparture(buffer)); //use buffer?
 				previousDeparture = previousFlight.departureTimeFinal;
 				previousSpace = getDepartureSpacing(previousDeparture);	
 				//correct
@@ -349,11 +358,12 @@ public class AirportTree {
 	//will prioritize CFR, inserting at this time will push other flights forward in queue.
 	//If a flight departing before a CFR flight overlaps, it is pushed forward in queue.
 	//returns delay needed for this departure if any
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom.
 	public int insertPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
-		if(departureTrafficByFlight.isEmpty()){
+		if(scheduledDepartureTrafficByFlight.isEmpty()){
 			//no delay, because no other Departures at this point
 			f.departureTimeFinal = proposedDepartureTime;
-			departureTrafficByFlight.add(f);
+			scheduledDepartureTrafficByFlight.add(f);
 			return 0;
 		//other flights already in the Departure queue
 		} else {
@@ -362,16 +372,16 @@ public class AirportTree {
 			f.departureTimeFinal = candidateDepartureSlot;
 			int delayNeeded = f.departureTimeFinal - proposedDepartureTime;
 			f.atcGroundDelay += delayNeeded;
-			f.departureAirportDelay += delayNeeded;
+			f.departureAirportAssignedDelay += delayNeeded;
 			
-			Flight previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot)); 
+			Flight previousFlight = scheduledDepartureTrafficByFlight.lower(Flight.dummyDeparture(candidateDepartureSlot)); 
 			
 			//checks for non-cfr flights scheduled before slot that overlap in constraints
 			int prevBufferedSlotTime = previousFlight.departureTimeFinal + getDepartureSpacing(previousFlight.departureTimeFinal);
 			if(prevBufferedSlotTime <= candidateDepartureSlot){ //true means previous flight does not interfere.
 				//otherwise check for flights between candidate slot and its capacity buffer
 				int necessaryBuffer = candidateDepartureSlot+getDepartureSpacing(candidateDepartureSlot);
-				previousFlight = departureTrafficByFlight.lower(Flight.dummyDeparture(necessaryBuffer)); //catches non-cfr in slot
+				previousFlight = scheduledDepartureTrafficByFlight.lower(Flight.dummyDeparture(necessaryBuffer)); //catches non-cfr in slot
 				prevBufferedSlotTime = previousFlight.departureTimeFinal + getDepartureSpacing(previousFlight.departureTimeFinal);
 			}
 
@@ -384,26 +394,26 @@ public class AirportTree {
 				int prevDelayNeeded = candidateDepartureSlot - previousFlight.departureTimeFinal + offset;
 				previousFlight.atcGroundDelay += prevDelayNeeded;
 				previousFlight.departureTimeFinal = candidateDepartureSlot + offset;
-				previousFlight.departureAirportDelay += prevDelayNeeded;
+				previousFlight.departureAirportAssignedDelay += prevDelayNeeded;
 				//print(offset + " adding one to " + previousFlight.id);
-				U.Assert(!previousFlight.cfrEffected, "should be no CFRs here");
+				U.Assert(!previousFlight.priority, "should be no CFRs here");
 			}
-			U.Assert(!departureTrafficByFlight.contains(Flight.dummyDeparture(candidateDepartureSlot)),
+			U.Assert(!scheduledDepartureTrafficByFlight.contains(Flight.dummyDeparture(candidateDepartureSlot)),
 					"DepartureTrafficByFlight.contains(flight) deptime already in Departure tree id: " + candidateDepartureSlot);
-			departureTrafficByFlight.add(f);
+			scheduledDepartureTrafficByFlight.add(f);
 			//makes sure flights are spaced out correctly
 			mendTheGapsGoingForwardDeparture(f, currentTime);
+			f.departureScheduled = true;
 			return delayNeeded;
 		}
 	}
 	
 	//mends departure queue for correct capacity time spacing after priority departure insertion in the queue.
-	//pushes all flights later than f forward to make room for for current flight
+	//pushes all flights later than f forward (delays them) to make room for for current flight
 	//only pushes forward if necessary
-	//change mend so CFR are fixed?
 	public void mendTheGapsGoingForwardDeparture(Flight f, int currentTime){
 		//includes flight just added above
-		Iterator<Flight> iter = departureTrafficByFlight.tailSet(f).iterator();
+		Iterator<Flight> iter = scheduledDepartureTrafficByFlight.tailSet(f).iterator();
 		//starts on flight just added
 		Flight current = iter.next();
 		boolean cont = true;
@@ -425,8 +435,8 @@ public class AirportTree {
 				U.Assert(delayNeeded >= 0, "delayNeeded >= 0 mend the gaps");
 				//add ground delay
 				next.atcGroundDelay += delayNeeded; 
-				next.departureAirportDelay += delayNeeded;
-				if(next.cfrEffected){U.p("pushing ahead cfr effected");};
+				next.departureAirportAssignedDelay += delayNeeded;
+				if(next.priority){U.p("pushing ahead cfr effected");};
 				next.departureTimeFinal = current.departureTimeFinal + currentSpacing;
 				addBackIn.add(next);
 				current = next;
@@ -436,41 +446,24 @@ public class AirportTree {
 				cont = false;
 			}
 		}
-		departureTrafficByFlight.addAll(addBackIn); //Sort by ground or air??
+		scheduledDepartureTrafficByFlight.addAll(addBackIn); //Sort by ground or air??
 	}
 	
-	public void test1(){ //check delays<<<<<<<<
-		Flight f1 = Flight.dummyDeparture(0); f1.cfrEffected = false; 
-		Flight f2 = Flight.dummyDeparture(0); f2.cfrEffected = true;
-		Flight f3 = Flight.dummyDeparture(0);f3.cfrEffected = false;
-		Flight f4 = Flight.dummyDeparture(0);f4.cfrEffected = true;
-		U.p(f1.cfrEffected+" f1 "+f1.departureTimeFinal);
-		U.p(f2.cfrEffected+" f2 "+f2.departureTimeFinal);
-		U.p(f3.cfrEffected+" f3 "+f3.departureTimeFinal);
-		U.p(f4.cfrEffected+" f4 "+f4.departureTimeFinal);
-		scheduleDeparture(f1, f1.departureTimeFinal, 0);printDepTrafficByFlight();
-		scheduleDeparture(f2, f2.departureTimeFinal, 0);printDepTrafficByFlight();
-		scheduleDeparture(f3, f3.departureTimeFinal, 0);printDepTrafficByFlight();
-		scheduleDeparture(f4, f4.departureTimeFinal, 0);
-		U.p("###after");
-		printDepTrafficByFlight();
-	}
 	
 	//older method:
-	//finds first available slots and inserts slot 
-	//then push all following flights forward with minimal spacing
-	//until the next flight's spacing won't be effected.
-	//'previous' and 'next' assume model of times on a number line (previous = earlier)
+	//finds first available gap between slots, and inserts slot, then push all later slots back the minimum capacity spacing until the next flight's spacing won't be effected.
+	//this makes for a schedule without gaps
+	//'previous' and 'next' assume model of times on a number line (previous = earlier in time)
 	// No freeze horizon consideration in this version; i.e., for example, 
 	//flight within a second of touchdown can still be delayed further in the air (still true)
-	//Jiggling refers to flights arrival time being modified after it has been set. This happens when flights are scheduled not in the order they arrive and flights' arrival slots are pushed forward to make room for flights inserted at earlier slots after scheduling.
-	public void insertAtSoonestArrivalWithForwardGapsRemoved(Flight flight, int proposedArrivalTime, int currentTime){ 
+	//Jiggling refers to flights arrival time being modified after it has been set. This happens when flights are scheduled not in the order they arrive and flights' arrival slots are pushed forward in time (delayed) to make room for flights inserted at earlier slots after the fact.
+	public void insertAtSoonestGapArrival(Flight flight, int proposedArrivalTime, int currentTime){ 
 		//this being empty does mean flight has not already been scheduled
-		if(arrivalTrafficByFlight.isEmpty()){
+		if(scheduledArrivalTrafficByFlight.isEmpty()){
 			//no delay, because no other arrivals at this point
 			if(flight.arrivalFirstSlot == -1)flight.arrivalFirstSlot = proposedArrivalTime;
 			flight.arrivalTimeFinal = proposedArrivalTime;
-			arrivalTrafficByFlight.add(flight);			
+			scheduledArrivalTrafficByFlight.add(flight);			
 		//other flights already in the arrival queue
 		} else {
 			int proposedSlotTime = proposedArrivalTime;
@@ -479,7 +472,7 @@ public class AirportTree {
 			Integer previousSpace; //time spacing for particular arrival time (in ms) (to prevent tail gating)
 			boolean cont = true;
 			while(cont){
-				previousFlight = arrivalTrafficByFlight.floor(Flight.dummyArrival(proposedSlotTime));
+				previousFlight = scheduledArrivalTrafficByFlight.floor(Flight.dummyArrival(proposedSlotTime));
 				previousArrival = previousFlight != null? previousFlight.arrivalTimeFinal : Integer.MIN_VALUE;
 				//nextFlight = arrivalTrafficByFlight.higher(Flight.dummyArrival(proposedArrivalTime));
 				//nextArrival = nextFlight!=null? nextFlight.arrivalTimeFinal : Integer.MAX_VALUE;
@@ -514,8 +507,8 @@ public class AirportTree {
 						}
 					}
 					flight.arrivalTimeFinal = proposedSlotTime;
-					U.Assert(!arrivalTrafficByFlight.contains(flight), "arrivalTrafficByFlight.contains(flight) flight not already in arrival tree");
-					arrivalTrafficByFlight.add(flight); // should not bee added a secondtime
+					U.Assert(!scheduledArrivalTrafficByFlight.contains(flight), "arrivalTrafficByFlight.contains(flight) flight not already in arrival tree");
+					scheduledArrivalTrafficByFlight.add(flight); // should not bee added a secondtime
 					
 					mendTheGapsGoingForward(flight, currentTime);
 					// mend the gaps!
@@ -527,11 +520,12 @@ public class AirportTree {
 		}
 	}
 	
-	//pushes all flights later than f forward in arrival queue to make room for f
-	//only pushes forward if necessary
+	//pushes all flights later than f forward in arrival queue (delays them) to make room for f
+	//only pushes flights forward if necessary
+	//this process is called 'jiggling' see coupled scheduling paper.
 	public void mendTheGapsGoingForward(Flight f, int currentTime){
 		//includes flight just added above
-		Iterator<Flight> iter = arrivalTrafficByFlight.tailSet(f).iterator();
+		Iterator<Flight> iter = scheduledArrivalTrafficByFlight.tailSet(f).iterator();
 		//starts on flight just added
 		Flight current = iter.next();
 		boolean cont = true;
@@ -586,12 +580,13 @@ public class AirportTree {
 				cont = false;
 			}
 		}
-		arrivalTrafficByFlight.addAll(addBackIn); //Sort by ground or air??
+		scheduledArrivalTrafficByFlight.addAll(addBackIn); //Sort by ground or air??
 	}
 	
 	//throws exception if this flight was not in arrival queue
+	//Huu
 	public boolean freeArrivalSlot(Flight f){
-		if(arrivalTrafficByFlight.remove(f)){
+		if(scheduledArrivalTrafficByFlight.remove(f)){
 			return true;
 		} else {
 			throw new java.lang.Error("FAILED: flight not removed, not found in arrival queue");
@@ -600,6 +595,24 @@ public class AirportTree {
 		
 	}
 	
+	//Throws exception if this Flight was not in list
+	//Huu
+	public boolean freeDepartureSlot(Flight f){
+		if(scheduledDepartureTrafficByFlight.remove(f)){
+			return true;
+		} else {
+			throw new java.lang.Error("FAILED: flight not removed, not found in arrival queue");
+			
+		}
+		
+	}
+	
+	//validates that all flights meet capacity constraint spacing and no repeat flight ID's in schedule
+	public void validate(){
+		validateDepartureTraffic(); //older int based
+		validateArrivalTraffic(); //older int based
+		validateByFlight();
+	}
 	
 	//Validate the departure/arrival queues that store Flights.
 	//checks capacity constraint spacing and that no flight is in queue twice
@@ -613,7 +626,7 @@ public class AirportTree {
 		int prevId = -1;
 		
 		//departure validation
-		for(Flight f: departureTrafficByFlight){
+		for(Flight f: scheduledDepartureTrafficByFlight){
 			//asserts no flights in traffic twice
 			U.Assert(!noRepeats.contains(f.id),"dup id's in departure traffic!!!! " + f.id);
 			noRepeats.add(f.id);
@@ -643,7 +656,7 @@ public class AirportTree {
 		timeOfMin = 0;
 		noRepeats = new TreeSet<Integer>();
 
-		for(Flight f: arrivalTrafficByFlight){
+		for(Flight f: scheduledArrivalTrafficByFlight){
 			//asserts no flights in traffic twice
 			U.Assert(!noRepeats.contains(f.id),airportName + " dup id's in arrival traffic!!!! " + f.id);
 			noRepeats.add(f.id);
@@ -670,28 +683,7 @@ public class AirportTree {
 		// need this??
 	}
 	
-	//Testing that flights are spaced correctly
-	public void testGaps(){
-		airportCapacities.add(new CapacityByTime(0, -1, 30*60*1000));
-		airportCapacities.add(new CapacityByTime(8, -1, 10*60*1000));
-		System.out.println("getArrivalCapacity(1): " + getArrivalSpacing(1));
-		System.out.println("getArrivalCapacity(8): " + getArrivalSpacing(8));
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),1,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),6,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),14,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),4,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),12,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),8,1);
-		printArrTrafficGapless();
-		insertAtSoonestArrivalWithForwardGapsRemoved(Flight.dummyArrival(-1),3,1);
-		printArrTrafficGapless();
-	}	
-	
+
 	//returns spacing in milleseconds i.e AAR 120 / hr = 30000 ms / arrival
 	public int getArrivalSpacing(int time){
 		CapacityByTime c = airportCapacities.floor(new CapacityByTime(time));
@@ -759,30 +751,7 @@ public class AirportTree {
 		}
 	}
 	
-	//older method for integer based queue
-	public int getSoonestArrivalSlot(int arrivalTime, int minArrivalTime, int maxArrivalTime){
-		Integer before, previousSpace, currentSpace, after; 
-		while(true){
-			before = airportArrivalTraffic.floor(arrivalTime);
-			before = before != null? before : Integer.MIN_VALUE;
-			after = airportArrivalTraffic.ceiling(arrivalTime);
-			after = after!=null? after : Integer.MAX_VALUE;
-			currentSpace = getArrivalSpacing(arrivalTime);
-			previousSpace = getArrivalSpacing(before);
-			if( before + previousSpace <= arrivalTime && arrivalTime + currentSpace <= after){
-				//System.out.printf(" before: %d after: %d ",before, after);
-				return arrivalTime;
-			}
-			if(before + previousSpace > arrivalTime){
-				arrivalTime = before + previousSpace; 
-				
-				//System.out.println("arrivalTime " + arrivalTime);
-			} 
-			else {
-				arrivalTime = after + getArrivalSpacing(after); 
-			}
-		}
-	}
+
 	
 	//older method for integer based queue
 	//schedules flight at soonest time on or later than input parameter, returns time
@@ -801,15 +770,6 @@ public class AirportTree {
 	}
 	
 	//older method for integer based queue
-	public int insertAtSoonestArrival(int arrival, int scheduledArrival, Flight f) {
-		int soonest = getSoonestArrivalSlot(arrival);
-		airportArrivalTraffic.add(soonest);
-		scheduledAirportArrivalTraffic.add(scheduledArrival);
-		arrivalTrafficByFlight.add(f);
-		return soonest;
-	}
-	
-	//older method for integer based queue
 	//returns false if this arrival time was not in list
 	public boolean freeArrivalSlot(int arrivalTimeToRemove){
 		int closest = airportArrivalTraffic.floor(arrivalTimeToRemove);
@@ -820,8 +780,8 @@ public class AirportTree {
 			throw new java.lang.Error("FAILED: flight not removed, not found in arrival queue");
 			
 		}
-		
 	}
+	
 	
 	//older method for integer based queue
 	public int insertAtSoonestDeparture(int departure, int scheduledDeparture){
@@ -830,6 +790,16 @@ public class AirportTree {
 		scheduledAirportDepartureTraffic.add(scheduledDeparture + (int)(Math.random()*1000));
 		return soonest;
 	}
+	
+	//older method for integer based queue
+		public int insertAtSoonestArrivalDepricated(int arrival, int scheduledArrival, Flight f) {
+			int soonest = getSoonestArrivalSlot(arrival);
+			airportArrivalTraffic.add(soonest);
+			scheduledAirportArrivalTraffic.add(scheduledArrival);
+			scheduledArrivalTrafficByFlight.add(f);
+			return soonest;
+		}
+	
 	
 	public void insertCapacity(CapacityByTime c){
 		airportCapacities.add(c);
@@ -844,17 +814,17 @@ public class AirportTree {
 	}
 	
 	public void printDepTrafficByFlight(){
-		io.println("***Start DEP(" + departureTrafficByFlight.size() + ")");
-		for(Flight f: departureTrafficByFlight){
+		io.println("***Start DEP(" + scheduledDepartureTrafficByFlight.size() + ")");
+		for(Flight f: scheduledDepartureTrafficByFlight){
 			//U.p(++i);
 			f.print();
 		}
 		io.println("***End deps");
 	}
 	public void printArrTrafficByFlight(){
-		io.println("***Start ARR(" + arrivalTrafficByFlight.size() + ")");
+		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
 		int i = 0;
-		for(Flight f: arrivalTrafficByFlight){
+		for(Flight f: scheduledArrivalTrafficByFlight){
 			//U.p(++i);
 			U.pp(++i + " ");f.print();
 		}
@@ -862,9 +832,9 @@ public class AirportTree {
 	}
 	
 	public void printArrTrafficOrdering(){
-		io.println("***Start ARR(" + arrivalTrafficByFlight.size() + ")");
+		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
 		int i = 0;
-		for(Flight f: arrivalTrafficByFlight){
+		for(Flight f: scheduledArrivalTrafficByFlight){
 			//U.p(++i);
 			U.p(++i + " " +f.id);
 		}
@@ -899,8 +869,8 @@ public class AirportTree {
 	}
 	
 	public void printArrTrafficGapless(){
-		io.println("***Start ARR(" + arrivalTrafficByFlight.size() + ")");
-		for(Flight c: arrivalTrafficByFlight){
+		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
+		for(Flight c: scheduledArrivalTrafficByFlight){
 			System.out.println(c.arrivalTimeFinal);
 		}
 		io.println("***End arrs");
@@ -983,8 +953,8 @@ public class AirportTree {
 		io.println("Arr Traffic (Integer): " + airportArrivalTraffic.size());
 		printArrTraffic();
 		printDepTraffic();
-		io.println("Dep Traffic (Flight): " + arrivalTrafficByFlight.size());
-		io.println("Arr Traffic (Flight): " + departureTrafficByFlight.size());
+		io.println("Dep Traffic (Flight): " + scheduledArrivalTrafficByFlight.size());
+		io.println("Arr Traffic (Flight): " + scheduledDepartureTrafficByFlight.size());
 		printDepTrafficByFlight();
 		printArrTrafficByFlight();
 		io.println("");
@@ -1115,11 +1085,23 @@ public class AirportTree {
 		}
 	}
 	
-	//older method for integer based queue
-	public void validate(){
-		validateDepartureTraffic();
-		validateArrivalTraffic();
-		validateByFlight();
+
+	
+	public void test1(){ //check delays<<<<<<<<
+		Flight f1 = Flight.dummyDeparture(0); f1.priority = false; 
+		Flight f2 = Flight.dummyDeparture(0); f2.priority = true;
+		Flight f3 = Flight.dummyDeparture(0);f3.priority = false;
+		Flight f4 = Flight.dummyDeparture(0);f4.priority = true;
+		U.p(f1.priority+" f1 "+f1.departureTimeFinal);
+		U.p(f2.priority+" f2 "+f2.departureTimeFinal);
+		U.p(f3.priority+" f3 "+f3.departureTimeFinal);
+		U.p(f4.priority+" f4 "+f4.departureTimeFinal);
+		scheduleDeparture(f1, f1.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f2, f2.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f3, f3.departureTimeFinal, 0);printDepTrafficByFlight();
+		scheduleDeparture(f4, f4.departureTimeFinal, 0);
+		U.p("###after");
+		printDepTrafficByFlight();
 	}
 }
 

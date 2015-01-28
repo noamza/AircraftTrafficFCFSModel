@@ -116,16 +116,79 @@ public class Airports {
 	
 	//NOTE: the documentation for the following methods can be found in the AirportTree class.
 	
-	//See airportTree class
-	public int scheduleArrival(Flight f, int proposedArrivalTime, int currentTime){
-		//return getAirport(f.arrivalAirport).insertNonPriorityArrival(f, proposedArrivalTime, currentTime);
-		return getAirport(f.arrivalAirport).scheduleArrival(f, proposedArrivalTime, currentTime);
-	}
-	//See airportTree class
+	//Schedules all departures first come first served ensuring capacity constraints
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and might need to be modified.
 	public int scheduleDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		//returns delay from proposedDepartureTime, millisec always positive
 		return getAirport(f.departureAirport).scheduleDeparture(f, proposedDepartureTime, currentTime);
 	}
 	
+	//schedules a priority slot at current time (fcfs only to other priority flights)
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling
+	//NOTE:this handles delay in a custom way: delayNeeded is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom and might need to be modified.
+	public int schedulePriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
+		//returns delay from proposedDepartureTime, millisec always positive
+		return getAirport(f.departureAirport).schedulePriorityDeparture(f, proposedDepartureTime, currentTime);
+	}
+	
+	//Schedules all arrivals first come first served ensuring capacity constraints
+	//current time refers to the time this scheduling is taking place in simulation time (can be before/after departure etc..)
+	//returns delay assigned by scheduling
+	//NOTE:method handles delay distribution in a custom way. delay returned is always the amount of delay required for scheduling into current queue but how that delay is distributed is custom in AirportTree and might need to be modified.
+	//NOTE: WHEN CALLED BEFORE FLIGHT HAS DEPARTED (currentTime < f.departureTimeFinal) WILL MODIFY f.departureTimeFinal AND DISTRIBUTE DELAY IN CUSTOM WAY
+	public int scheduleArrival(Flight f, int proposedArrivalTime, int currentTime){
+		//returns delay from proposedDepartureTime, millisec always positive
+		return getAirport(f.arrivalAirport).scheduleArrival(f, proposedArrivalTime, currentTime);
+	}
+	
+	//older method of scheduling with Jiggling, see coupled scheduling paper.
+	//finds first gap between slots and inserts slot, adjusting later slots, makes a more compact schedule.
+	//See airport tree
+	//see coupled sensitivity paper
+	public void scheduleArrivalCompact(Flight flight, int proposedArrivalTime, int currentTime){
+		AirportTree a = getAirport(flight.arrivalAirport);
+		a.insertAtSoonestGapArrival(flight, proposedArrivalTime, currentTime);
+	}
+	
+	
+	//See airportTree class
+	//returns soonest available slot on a first come first served basis
+	public int getSoonestDepartureSlot(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).getSoonestFirstComeFirstServedSlot(f, proposedDepartureTime, true);
+	}
+	//See airportTree class
+	//returns soonest available slot that's not occupied by a priority flight.
+	public int getSoonestPriorityDepartureSlot(Flight f, int proposedDepartureTime, int currentTime){
+		return getAirport(f.departureAirport).getSoonestPriorityDepartureSlot(f, proposedDepartureTime);
+	}
+	
+	//See airportTree class
+	//Huu
+	public boolean removeFlightFromArrivalQueue(Flight f){
+		AirportTree a = getAirport(f.arrivalAirport);
+		return a.freeArrivalSlot(f);
+	}
+	
+	//See airportTree class
+	//Huu
+	public boolean removeFlightFromDepartureQueue(Flight f){
+			AirportTree a = getAirport(f.departureAirport);
+			return a.freeDepartureSlot(f);
+	}
+	
+	//See airportTree class
+	//Empties schedule of all slots but retains loaded capacity information.
+	public void resetToStart(){ 
+		for (AirportTree a : airportList.values()){
+			a.resetToStart();
+		}
+	}
+	
+	
+	/* older methods
 	public int scheduleArrival(String airportName, int arrTime){
 		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestArrival(arrTime);
@@ -135,9 +198,6 @@ public class Airports {
 		AirportTree a = getAirport(airportName);
 		return a.insertAtSoonestDeparture(depTime, schDepTime);
 	}
-	
-	
-	///
 	//See airportTree class
 	public int scheduleArrival(String airportName, int arrTime, int schArrTime){
 		AirportTree a = getAirport(airportName);
@@ -154,55 +214,57 @@ public class Airports {
 		return a.getSoonestDepartureSlot(departureTime);
 	}
 	
-	//See airportTree class
-	public void schedulePackedArrival(Flight flight, int proposedArrivalTime, int currentTime){
-		AirportTree a = getAirport(flight.arrivalAirport);
-		a.insertAtSoonestArrivalWithForwardGapsRemoved(flight, proposedArrivalTime, currentTime);
+	*/	
+	
+	
+	//older, scheduling by int, Integer based
+	public int scheduleArrivalInt(String airportName, int arrTime){
+		AirportTree a = getAirport(airportName);
+		return a.insertAtSoonestArrival(arrTime, arrTime);
+	}
+	//older
+	public int scheduleArrivalInt(String airportName, int arrTime, int schArrTime){
+		AirportTree a = getAirport(airportName);
+		return a.insertAtSoonestArrival(arrTime, schArrTime);
+	}
+	//older
+	public int scheduleDepartureInt(String airportName, int depTime, int schDepTime){
+		AirportTree a = getAirport(airportName);
+		return a.insertAtSoonestDeparture(depTime, schDepTime);
+	}
+	//older 
+	public int scheduleArrivalDepricated(String airportName, int arrTime, int schArrTime, Flight f) {
+		AirportTree a = getAirport(airportName);
+		return a.insertAtSoonestArrivalDepricated(arrTime, schArrTime, f);
 	}
 	
-	//See airportTree class
-	public boolean removeFlightFromArrivalQueue(Flight f){
-		AirportTree a = getAirport(f.arrivalAirport);
-		return a.freeArrivalSlot(f);
-	}
-	
-	//See airportTree class
-	public boolean removeFlightFromDepartureQueue(Flight f){
-			AirportTree a = getAirport(f.departureAirport);
-			return a.freeDepartureSlot(f);
-	}
-
+	//older
 	//See airportTree class
 	public boolean removeFlightFromArrivalQueue(String airportName, int arrivalTime){
 		AirportTree a = getAirport(airportName);
 		return a.freeArrivalSlot(arrivalTime);
 	}
 	
-	
-	
-	//See airportTree class
-	public int getSoonestArrival(Flight f, int proposedArrivalTime, int currentTime){
-		return getAirport(f.arrivalAirport).getSoonestNonPrioritySlot(f, proposedArrivalTime, false) - proposedArrivalTime;
-	}
-	//See airportTree class
-	public int getSoonestNonPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
-		return getAirport(f.departureAirport).getSoonestNonPrioritySlot(f, proposedDepartureTime, true) - proposedDepartureTime;
-	}
-	//See airportTree class
-	public int getSoonestPriorityDeparture(Flight f, int proposedDepartureTime, int currentTime){
-		return getAirport(f.departureAirport).getSoonestPriorityDepartureSlot(f, proposedDepartureTime) - proposedDepartureTime;
+	//returns soonest available slot on a first come first served basis
+	public int getSoonestArrivalSlot(Flight f, int proposedArrivalTime, int currentTime){
+		return getAirport(f.arrivalAirport).getSoonestFirstComeFirstServedSlot(f, proposedArrivalTime, false);
 	}
 	
-	public int getSoonestArrival(String airportName, int arrivalTime){
+	
+	//This method the older, int based way of managing slots
+	//Huu
+	public int getSoonestArrivalInt(String airportName, int arrivalTime){
 		AirportTree a = getAirport(airportName);
 		return a.getSoonestArrivalSlot(arrivalTime);
 	}
-	//See airportTree class
-	public int getSoonestArrival(String airportName, int arrivalTime, int minArrivalTime, int maxArrivalTime) {
+	
+	//older
+	public int getSoonestDepartureInt(String airportName, int arrivalTime){
 		AirportTree a = getAirport(airportName);
-		return a.getSoonestArrivalSlot(arrivalTime, minArrivalTime, maxArrivalTime);
+		return a.getSoonestArrivalSlot(arrivalTime);
 	}
-
+	
+	
 	public AirportTree getAirport(String airportName){
 		AirportTree a = airportList.get(airportName);
 		if(a == null){
@@ -240,29 +302,28 @@ public class Airports {
 	}	
 
 	//See airportTree class
+	//older int based
 	public void validateDepartureTraffic(){
 		for (AirportTree at: airportList.values()) {
 			at.validateDepartureTraffic();
 		}
 	}
 	//See airportTree class
+	//older int based
 	public void validateArrivalTraffic() {
 		for (AirportTree at: airportList.values()) {
 			at.validateArrivalTraffic();
 		}
 	}
 	//See airportTree class
+	//validates that all flights meet capacity constraint spacing and no repeat flight ID's in schedule
 	public void validate(){ 
 		for (AirportTree a : airportList.values()){ 
 			a.validate();
 		}
 	}
-	//See airportTree class
-	public void resetToStart(){ 
-		for (AirportTree a : airportList.values()){
-			a.resetToStart();
-		}
-	}
+
+	
 	//See airportTree class
 	public void printDelays(){ 
 		for (AirportTree a : airportList.values()){ //io.println("");

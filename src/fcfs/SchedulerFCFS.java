@@ -84,7 +84,7 @@ public class SchedulerFCFS {
 			while(!validFlight){
 				int maxDelay = 0;
 				//departure delay
-				int departureDelay = airports.getSoonestDeparture(f.departureAirport, f.departureTimeACES+delay)-(f.departureTimeACES+delay);
+				int departureDelay = airports.getSoonestDepartureInt(f.departureAirport, f.departureTimeACES+delay)-(f.departureTimeACES+delay);
 				maxDelay = java.lang.Math.max(departureDelay,maxDelay);
 				//sector delay
 				for(SectorAirport s: path){	
@@ -93,7 +93,7 @@ public class SchedulerFCFS {
 					maxDelay = java.lang.Math.max(sectorDelay,maxDelay);
 				}
 				//arrival delay
-				int arrivalDelay = airports.getSoonestArrival(f.arrivalAirport, f.arrivalTimeACES+delay)-(f.arrivalTimeACES+delay);
+				int arrivalDelay = airports.getSoonestArrivalInt(f.arrivalAirport, f.arrivalTimeACES+delay)-(f.arrivalTimeACES+delay);
 				//slow down
 				if(arrivalDelay <= (longestDuration - nominalDuration)) {
 					//this does not seem correct since it would effect sector entry times as well.
@@ -111,7 +111,7 @@ public class SchedulerFCFS {
 					//asserting that in fact none of the constraints add any additional delay
 					int shouldBeZero = 0;
 					int departureTimeFinal = f.departureTimeACES + delay; 
-					shouldBeZero = airports.scheduleDeparture(f.departureAirport, f.departureTimeACES+delay, f.departureTimeACES) - (f.departureTimeACES+delay);
+					shouldBeZero = airports.scheduleDepartureInt(f.departureAirport, f.departureTimeACES+delay, f.departureTimeACES) - (f.departureTimeACES+delay);
 					U.Assert(shouldBeZero==0, "errror in scheduling, should be 0");
 					f.departureTimeFinal = departureTimeFinal;
 					for(SectorAirport s: path){	
@@ -121,7 +121,7 @@ public class SchedulerFCFS {
 					//shouldBeZero = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeProposed+delay, f.arrivalTimeProposed)-(f.arrivalTimeProposed+delay);
 					//U.Assert(zero==0, "errror in scheduling, should be 0"); //should this be back in?
 																				 //maybe it is taken out to account for slow down
-					int amountAbsorbedSlowingDown = airports.scheduleArrival(f.arrivalAirport, f.arrivalTimeACES+delay, f.arrivalTimeACES)-(f.arrivalTimeACES+delay);
+					int amountAbsorbedSlowingDown = airports.scheduleArrivalInt(f.arrivalAirport, f.arrivalTimeACES+delay, f.arrivalTimeACES)-(f.arrivalTimeACES+delay);
 					int arrivalTimeFinal = f.arrivalTimeACES + delay + amountAbsorbedSlowingDown; //in this case should be zero 
 					f.arrivalTimeFinal = arrivalTimeFinal;
 					f.atcGroundDelay = delay;
