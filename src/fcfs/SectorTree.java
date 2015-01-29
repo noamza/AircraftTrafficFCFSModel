@@ -12,7 +12,6 @@ import java.io.BufferedWriter;
 import java.io.PrintStream;
 import java.util.*;
 
-//REMOVING FROM TREE?????? equals()
 public class SectorTree {
 	//
 	String sectorName;

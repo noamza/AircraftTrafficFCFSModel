@@ -15,8 +15,6 @@ public class U{
 	static int watchingFlight = -1;
 	static boolean verbose = false;
 	//Wed, 18 Apr 2012 00:00:00 UTC  // Month is 0 based!!??
-	//static final double simulationStart = (double)(new GregorianCalendar(2012,4-1,18).getTimeInMillis());
-	//20110103
 	static final double simulationStart = (double)(new GregorianCalendar(2011,1-1,3).getTimeInMillis());
 	
 	static final java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("yyyy:M:dd:HH:mm:ss");
@@ -24,34 +22,29 @@ public class U{
 	static final double toHours   = 60*toMinutes; //convert hours to milliseconds
 
 	//FOLDER FILE NAMES
-	static String workingDirectory = "/Users/nalmog/Desktop/Scheduler/";
-	static final String inputFolder = "input/";
-	static final String plotFolder = "plots/";
-	static final String monteCarloFolder = "monte carlo/";
-	static final String outFolder = "output/";
-	static final String ACESflightTrackData = "job_40_sector_transitTime_takeoffLanding_35h_1.csv"; //clean_job.csv
+	static String fs = System.getProperties().getProperty("file.separator");
+	static String workingDirectory = System.getProperties().getProperty("user.dir") + fs; //OR Set this to static value.
+	static final String inputFolder = "input" + fs;
+	static final String outFolder = "output" + fs;
+	static final String ACESflightTrackData = "job_268_sector_transitTime_takeoffLanding_48h_1_rtma_takeoff_eta_SAMPLE_ACES_TRACK_DATA.csv"; //clean_job.csv
 	static final String airportCapacity = "AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv";
 	
 	public static String timeToDate(int time){
-		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 		return new java.text.SimpleDateFormat("yyyy:M:dd:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 	}
 	public static String timeToDateAdjusted(int time){
 		double t = time;
 		t += simulationStart;
-		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 		return new java.text.SimpleDateFormat("yyyy:M:dd:HH:mm:ss").format(new java.util.Date((long)t));
 	}
 	
 	public static String timeToDateAdjustedShort(int time){
 		double t = time;
 		t += simulationStart;
-		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 		return new java.text.SimpleDateFormat("D:HH:mm:ss").format(new java.util.Date((long)t));
 	}
 	
 	public static String timeToString(int time){
-		//return new java.text.SimpleDateFormat("DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 		return new java.text.SimpleDateFormat("yyyy:M:DDD:HH:mm:ss:SSSS").format(new java.util.Date((long)time));
 	}
 	
@@ -71,7 +64,7 @@ public class U{
 	public static void pf(String format, Object... args){ System.out.printf(format, args);}
 	public static void epf(String format, Object... args){ System.err.printf(format, args);}
 	
-	public static void start() { System.out.println("Start! " + dateFormat.format(new Date()));}
+	public static void start() { System.out.println("START! " + dateFormat.format(new Date()));}
 	public static void end() { System.out.println("FIN! " + dateFormat.format(new Date()));}
 	public static String now() { return dateFormat.format(new Date()).toString();}
 

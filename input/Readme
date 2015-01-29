@@ -1,0 +1,20 @@
+Inputs
+
+The following inputs are utilized in different aspects of the FCFS package.
+
+One important aspect is to ensure that the ASPM capacity times are synced to the ACES track data. There can be an offset between these times which can lead to unrealistic capacity constraints at certain times of day. Some attempt was made to do this in the code, but is probably custom to our scenario.
+----
+
+job_268_sector_transitTime_takeoffLanding_48h_1_rtma_takeoff_eta_SAMPLE_ACES_TRACK_DATA.csv - this is a sample of ACES track data. Flights are run unconstrained without any of ACES air traffic control turned on. See Charlene Cayabyab for how to generate this data.
+
+AdvancedState_Hourly_Runways_AllCapacities_20110103_20110104.csv - This is actual ASPM data for airport departure and arrival rates for a given time span (specified in the file name. Column 2 is the day number, col 3 is the hour, col 4 is the 15 minute interval in the hour. Col 5 gives detail traffic rates per per hour including the arrival (AAR) and departure (ADR) rates, which are the values we use. 
+
+job_611_airline_flightid_map.csv - Sample map of ACES flight ids to actual flight call signs.
+
+taxi_u.csv - Unimpeded taxi out times based on ASPM data. See Gano Chatterji for analysis.
+
+AirportTaxi.csv - These are ACES default taxi out times. Since we added in our own Taxi times, this was used to correct the input track data to not add taxi times twice.
+
+gate_delay.csv - Statistical gate departure delay distribution for a given airport based on ASPM data. Used for monte-carlo simulation of realistic gate departure uncertainty. Col 2 is the probability there is zero delay, col 3 is lgn() of mean, lgn() of std. See Gano Chaterji for analysis.
+
+taxi_delay.csv - same as gate_delay.csv but for taxi uncertainty.

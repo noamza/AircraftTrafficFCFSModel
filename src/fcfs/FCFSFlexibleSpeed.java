@@ -2,48 +2,20 @@ package fcfs;
 
 import java.util.*;
 import java.io.*;
-/*
-enum Action {
-	schedulingComplete,
-	scheduleAtPDT,
-	scheduleAtPushback,
-	scheduleInTheAir,
-	scheduleByArrival,
-	remove,
-	undef
-}
-
-class rescheduleEvent implements Comparable{
-	int eventTime = 0;
-	int targetTime = 0;
-	Action mode = Action.undef; //1 = slot to remove, 2 = slot  to reschedule
-	Flight flight;
-
-	public rescheduleEvent(int et, int st, Action m, Flight f){ 
-		eventTime= et; targetTime = st; mode = m; flight = f;
-	}
-
-	public rescheduleEvent(int et, int st){eventTime=et; targetTime=st;}
-
-	void print(){ System.out.printf("r time: %d s time: %d\n", eventTime, targetTime);}
-
-	public int compareTo(Object o) {
-		//orders priorityqueue by least time
-		return eventTime-((rescheduleEvent)o).eventTime;
-		//order's priorityqueue by greatest first
-		//return ((rt)o).rescheduleTime - rescheduleTime;
-	}
-}
-//*/
 
 /*
+ *This is a arrival airport FCFS scheduler that allows for speed adjustment to absorb delay.
+ * 
  *Flights scheduled when they are ready to go.
  *
- * Before CFR
- * at PDT schedule Slot including NT for NF. 
- * If delay is bigger than GP, add TP take delay in air if have to. 
+ * Perturbation - an amount of time a flight is late on it's own
+ * Delay - an amount of time a flight is late because of scheduling
+ *
+ * Before CFR (before call for release)
+ * at PDT(proposed departure time) schedule Slot including NT(nominal taxitime) for NF (nominal flight time). 
+ * If delay is bigger than GP (ground perturbation), add TP (taxi perturbation) take delay in air if have to. 
  * Store delay taken on ground, and taken in air 
- * If GP is passed delay and flight can't make it by speeding up, 
+ * If GP (ground perturbation) is passed delay and flight can't make it by speeding up, 
  * Remove Slots 
  * Goto CFR
  * 
@@ -63,11 +35,6 @@ class rescheduleEvent implements Comparable{
  * 
  */	
 
-
-/*
- * this seems to have been replaced by FCFSArrival.java
- * not necessary
- */
 
 public class FCFSFlexibleSpeed {
 	
@@ -89,8 +56,8 @@ public class FCFSFlexibleSpeed {
 		arrivalAirportDelayHrs = new Hashtable<String, Double>();
 		departureAirportDelayHrs = new Hashtable<String, Double>();
 		//System.out.println("scheduleAtCallForRelease() " + dateFormat.format(date));
-		Flights flights; Airports airports;
-		flights = new Flights(); airports = new Airports();
+		Flights flights; AirportsInt airports;
+		flights = new Flights(); airports = new AirportsInt();
 		//String workingDirectory = "C:\\Users\\Noam Almog\\Desktop\\scheduler\\scheduler\\atl_data\\";
 		String workingDirectory = "/Users/nalmog/Desktop/scheduler/atl_data/";
 		flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",false);
@@ -153,7 +120,7 @@ public class FCFSFlexibleSpeed {
 				for (Flight f: flightList){
 					//the more random a flight is, the less delay.
 					//int rm = (int)(1000*60*60*350*random.nextDouble()); f.arrivalTimeProposed+=rm; f.departureTimeProposed+=rm;
-					AirportTree da = airports.airportList.get(f.departureAirport);
+					AirportTreeInt da = airports.airportList.get(f.departureAirport);
 					int gate_noise_seconds = 0, taxi_noise_seconds = 0;		
 					//Get gate and taxi perturbations
 					if(da!=null){
@@ -404,28 +371,9 @@ public class FCFSFlexibleSpeed {
 				} //END WHILE OF EVENTS
 				
 				airports.validate();
-				//U.p("mg " + maxGroundDelay); U.p("ma " + maxAirDelay);
 				flights.validate();
-				//flights.getFlightByID(18).printVariables();
 				flights.resetPerturbationAndSchedulingDependentVariables();
 				airports.resetToStart();
-				//flights.getFlightByID(18).printVariables();
-				
-				
-				/*
-				System.out.printf("%d,",groundSlots);
-				System.out.printf("%d,",airSlots);
-				System.out.printf("%d,",delayedOnGround);
-				System.out.printf("%d,",delayedInAir);
-				System.out.printf("%.1f,",maxGroundDelay);
-				System.out.printf("%.1f,",maxAirDelay);
-				System.out.printf("%.1f,",totalGroundDelay/60);
-				System.out.printf("%.1f,",totalAirDelay/60);
-				System.out.printf("%d,",groundSlots+airSlots);
-				System.out.printf("%.1f\n",(totalGroundDelay+totalAirDelay)/60);
-				*/
-				//U.p(totalMissedSlotMetric/flightList.size() + " slot \n");
-				//U.p(tp/flightList.size() + " tp \n"); tp = 0;
 				
 				out.write(groundSlots + ",");
 				out.write(airSlots + ",");

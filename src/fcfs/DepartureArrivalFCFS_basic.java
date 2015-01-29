@@ -14,7 +14,7 @@ import java.io.*;
 public class DepartureArrivalFCFS_basic implements Scheduler {
 
 	Flights flights = new Flights();
-	Airports airports = new Airports();
+	AirportsInt airports = new AirportsInt();
 	Sectors sectors = new Sectors();
 
 	/**
@@ -23,7 +23,7 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 	 * @param airports
 	 * @param sectors
 	 */
-	public DepartureArrivalFCFS_basic(Flights flights, Airports airports, Sectors sectors)
+	public DepartureArrivalFCFS_basic(Flights flights, AirportsInt airports, Sectors sectors)
 	{
 		this.flights = flights;
 		this.airports = airports;
@@ -53,10 +53,11 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 	 * 
 	 */
 	@Deprecated
+	
 	private void initialize()
 	{
 		flights = new Flights();
-		airports = new Airports();
+		airports = new AirportsInt();
 		sectors = new Sectors();
 	}
 
@@ -217,7 +218,7 @@ public class DepartureArrivalFCFS_basic implements Scheduler {
 		}
 	}
 	
-	public void printAirportTrafficCounts(Airports airports, String dir) {
+	public void printAirportTrafficCounts(AirportsInt airports, String dir) {
 		try {
 			System.out.println("Printing traffic counts to " + dir);
 			String capsFile = new File(dir, "fcfs_airport_capacities.csv").getAbsolutePath();

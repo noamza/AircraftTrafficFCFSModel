@@ -44,14 +44,14 @@ public class SchedulerExample implements Scheduler {
 			int delay = airports.scheduleArrival(f, f.arrivalTimeACES, f.departureTimeACES);
 			f.atcGroundDelay += delay; //delay distribution needs to specified. In this case on the ground.
 			//the scheduler will store a value for f.arrivalAirportAssignedDelay
-			f.departureTimeFinal += delay;//flight takes off after ground delay
+			f.departureTimeFinal = f.departureTimeACES + delay;//flight takes off at ground delay
 			//you could also add taxi out time to departure departureTimeFinal etc etc..
 			totalDelayHours += delay/U.toHours;
 		}
 		airports.validate(); //validates that all slots meet capacity constraints and no duplicate flights scheduled.
 		validateFlights(flightList); //custom validation
 		U.pf("total delay in hrs %.1f\n", totalDelayHours);
-		writeOutArrivalDepartures(flightList);
+		writeOutArrivalDepartures(flightList, "scheduleByDeparture.csv");
 		return flightList;
 	}
 	
@@ -65,15 +65,16 @@ public class SchedulerExample implements Scheduler {
 		
 		Collections.sort(flightList, new flightArrTimeIDComparator()); //schedule by order of departure
 		for(Flight f: flightList){
-			int delay = airports.scheduleArrival(f, f.arrivalTimeACES, f.departureTimeACES);
-			f.atcAirDelay += delay; // this time delay is taken in the air
-			f.departureTimeFinal = f.departureTimeACES;//this time delay is taken in the air so 
+			int TMASchedulingHorizon = (int) (40*U.toMinutes);//TMA Scheduling horizon of 40min, the amount of time before landing when arrivals are scheduled (flight is in the air)
+			int delay = airports.scheduleArrival(f, f.arrivalTimeACES, f.arrivalTimeACES - TMASchedulingHorizon); //this time flights are scheduled 40 minutes before arrival
+			f.atcAirDelay += delay; //delay is taken in the air
+			f.departureTimeFinal = f.departureTimeACES;//this time delay is taken in the air so delay does not impact departure time. 
 			totalDelayHours += delay/U.toHours;
 		}
 		airports.validate(); 
 		validateFlights(flightList); 
 		U.pf("total delay in hrs %.1f\n", totalDelayHours);
-		writeOutArrivalDepartures(flightList);
+		writeOutArrivalDepartures(flightList, "scheduleByArrival.csv");
 		return flightList;
 	}
 	
@@ -86,8 +87,8 @@ public class SchedulerExample implements Scheduler {
 	}
 	
 	//shows a demo of writing out the variables we used and are interested in from this schedule.
-	public void writeOutArrivalDepartures(ArrayList<Flight> temp){
-		String path = U.workingDirectory+U.outFolder+"example/scheduleByArrival.csv";
+	public void writeOutArrivalDepartures(ArrayList<Flight> temp, String name){
+		String path = U.workingDirectory+U.outFolder+"example/"+name;
 		Collections.sort(temp, new flightIDComparator()); 
 		//*
 		try{

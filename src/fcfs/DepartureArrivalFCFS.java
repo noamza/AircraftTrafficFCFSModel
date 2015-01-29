@@ -3,11 +3,12 @@ import java.util.*;
 import java.io.*;
 
 //@author Huu Huynh
+//NOTE:scheduleArrivalDepricated has been modified and may not run as expected with regard to scheduling flight objects.
 
 public class DepartureArrivalFCFS {
 
 	Flights flights; 
-	Airports airports;
+	AirportsInt airports;
 	Sectors sectors;
 	Centers centers;
 	CenterBoundaries centerBoundaries;
@@ -26,7 +27,7 @@ public class DepartureArrivalFCFS {
 		double MAX_SLOWDOWN = 0.10;
 		
 		flights = new Flights();
-		airports = new Airports();
+		airports = new AirportsInt();
 		sectors = new Sectors();
 		centers = new Centers();
 		centerBoundaries = new CenterBoundaries();
@@ -311,7 +312,7 @@ public class DepartureArrivalFCFS {
 		}
 	}
 	
-	public void printAirportTrafficCounts(Airports airports, String dir) {
+	public void printAirportTrafficCounts(AirportsInt airports, String dir) {
 		try {
 			System.out.println("Printing traffic counts to " + dir);
 			FileWriter capstream = new FileWriter( dir + "fcfs_airport_capacities.csv");

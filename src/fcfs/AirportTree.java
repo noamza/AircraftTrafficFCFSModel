@@ -9,13 +9,15 @@ import java.util.TreeSet;
 	
 /*
  * This inner class is used to store airport departure and arrival capacity per hour (ADR, AAR) by time of day.
- * Capacities are based on ASPM input data and are for up to 15min increments.
- * Values are stored in milliseconds.
+ * Capacities are based on ASPM input data.
+ * Capacity constraints are stored as departures/arrivals per hour (ADR, AAR). 
+ * To ensure capacity constraints, slots are spaced such that there is a 1hr/ADR (or AAR for arrivals) amount of time between each slot. For example, an airport with an ADR of 30, will separate each flight by 2 minutes (1hr/30 departures_per_hour) such that departure capacity is never exceeded.
+ * Time values are stored in milliseconds and represent the time of day the capacity constraint begins.
  */
 class CapacityByTime implements Comparable<CapacityByTime>{
 	//adr actual departure rate 
 	//aar actual arrival rate
-	int time = -1; //time of day, milliseconds
+	int time = -1; //time of day capacity constraint begins, milliseconds
 	int adr = -1; //number of aircraft allowed to depart per hour
 	int aar = -1; //number of aircraft allowed to arrive per hour
 	CapacityByTime(int t){ time = t;}
@@ -50,34 +52,35 @@ class arrivalTrafficCMPcomparator implements Comparator<TreeSet<Integer>> {
  * Capacity constraints are stored as departures/arrivals per hour (ADR, AAR). 
  * To ensure capacity constraints, slots are spaced such that there is a 1hr/ADR (or AAR for arrivals) amount of time between each slot. For example, an airport with an ADR of 30, will separate each flight by 2 minutes (1hr/30 departures_per_hour) such that departure capacity is never exceeded.
  * 
- *  NOTE: CFR stands for 'call for release'. This value was used in prioritizing scheduling for CFR fligHts over non-CFR flights in some of the scenarios of the Delay Sensitivity study. 
+ * CFR stands for 'call for release'. This value was used in prioritizing scheduling for CFR fligHts over non-CFR flights in some of the scenarios of the Delay Sensitivity study. 
+ * 
+ * NOTE: The arrival scheduling change values in Flight.arrivalTimeFinal, and departure scheduling sets values for Flight.departureTimeFinal respectively. In other words departure scheduling sets departure time, and arrival scheduling arrival. If you are using one of these, make sure the other corresponding value is set outside the class in the code that calls the scheduler. Delay handling is customized in the methods below and should really be compartmentalized so they happen elsewhere. 
  * 
  * TODO: the way that delay distribution is done should really be refactored
  */
 public class AirportTree {
 	final static int DEFAULT_ARR_DEP_RATE = 30;
-	final static int DEFAULT_ARR_RATE = 30; //arrival capacity per hour
-	final static int DEFAULT_DEP_RATE = 30; //departure capacity per hour
+	final static int DEFAULT_ARR_RATE = 30; //arrival capacity per hour for all times not specified by airportCapacities 
+	final static int DEFAULT_DEP_RATE = 30; //departure capacity per hour for all times not specified by airportCapacities 
 	
 	final static int DEFAULT_UNIMPEDED_TAXI_TIME = 5;//(minutes) value from Gano
 	String airportName;
-	PrintStream io = System.out;
-	
-
 	
 	//latest implementation, store flight objects which include delay data
 	//change name
 	TreeSet<Flight> scheduledArrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
 	TreeSet<Flight> scheduledDepartureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator());
 
+	//COMMENT OUT??
 	private boolean departureContract = true; //this boolean is for determining whether a flight has a fixed departure time, or a mutable departure time that can be changed to the modify the schedule as it is being generated to be more efficient. (used in 'jiggeling')
 	
 	private int CFRstart = 0; //time at which a CFR program is in effect, not used
 	private int CFRend   = 0; //time at which a CFR program is in effect, not used
 	
-	Airports airports;
+	Airports airports; //reference to collection holding all other airports
 	
-	TreeSet<CapacityByTime> airportCapacities = new TreeSet<CapacityByTime>(); //ASPM capacity data
+	 //ASPM capacity data. Each value on the list represents a capacity constraint and at what time it begins. This constraint applies until the time of the next CapacityByTime item in the list. For example if you want to know the arrival rate constraint for an airport and there are two CapacityByTime items (c1 and c2) in the list, the arrival rate for any time before c1.time is DEFAULT_ARR_RATE, for any time between c1 and c2 is cA.arr, and any time after c2.time is c2.arr. In other words: if (t < c1.time){ capacity = DEFAULT_ARR_RATE } else if ( c1.time <= t < c2.Time) { capacity = c1.aar } else { capacity = c2.arr }.
+	TreeSet<CapacityByTime> airportCapacities = new TreeSet<CapacityByTime>();
 	
 	//these values are derived from work done by Gano, and are used generate stochastic gate and taxi time delays used in monte carlo simulation. See Delay Sensitivity TM by Gano Chatterji, Kee Palopo and Noam Almog.
 	double gateMean = 0, gateZeroProbablity = 1, gateStd = 0, taxiMean = 0, 
@@ -90,7 +93,7 @@ public class AirportTree {
 	}
 	
 	public void setDepartureContract(boolean b){
-		departureContract = false;
+		departureContract = b; 
 	}
 	
 	//offsets capacities by set amount. Used to reconcile time discrpencies between ASPM and ACES simulation time.
@@ -108,8 +111,6 @@ public class AirportTree {
 	}
 	
 	public void resetToStart(){
-		airportArrivalTraffic = new TreeSet<Integer>();	
-		airportDepartureTraffic = new TreeSet<Integer>();
 		scheduledArrivalTrafficByFlight = new TreeSet<Flight>(new flightFinalArrTimeComparator());
 		scheduledDepartureTrafficByFlight = new TreeSet<Flight>(new flightFinalDepTimeComparator()); 
 		departureContract = true;
@@ -123,6 +124,8 @@ public class AirportTree {
 		return CFRstart <= time && time < CFRend; 
 	}
 	
+	
+
 	
 	//returning spacing based on capacity constraints at a given time
 	int getSpacing(int time, boolean departure){
@@ -609,8 +612,6 @@ public class AirportTree {
 	
 	//validates that all flights meet capacity constraint spacing and no repeat flight ID's in schedule
 	public void validate(){
-		validateDepartureTraffic(); //older int based
-		validateArrivalTraffic(); //older int based
 		validateByFlight();
 	}
 	
@@ -700,154 +701,42 @@ public class AirportTree {
 		//return 10;
 	}
 	
-	//older method for integer based queue
-	public int getSoonestDepartureSlot(int departureTime){
-		Integer before, previousSpace, currentSpace, after;
-		while(true){
-			before = airportDepartureTraffic.floor(departureTime);
-			before = before != null? before : Integer.MIN_VALUE;
-			after = airportDepartureTraffic.ceiling(departureTime);
-			after = after!=null? after : Integer.MAX_VALUE;
-			//spacing based on adr rates. i.e. 30 dep per hour means 2min space between flights.
-			currentSpace = getDepartureSpacing(departureTime);
-			previousSpace = getDepartureSpacing(before);
-			//ensures departure time will be spaced out between any two flights.
-			if( before + previousSpace <= departureTime && departureTime + currentSpace <= after){
-				//System.out.printf(" before: %d after: %d ",before, after);
-				return departureTime;
-			}
-			//first tries to depart at the space after last flight.
-			if(before + previousSpace > departureTime){
-				departureTime = before + previousSpace;
-			//otherwise at space after next flight
-			} else {
-				departureTime = after + getDepartureSpacing(after);
-			}
-		}
-	}
-	
-	////older method for integer based queue
-	//works the same as departures
-	public int getSoonestArrivalSlot(int arrivalTime){
-		Integer before, previousSpace, currentSpace, after; 
-		while(true){
-			before = airportArrivalTraffic.floor(arrivalTime);
-			before = before != null? before : Integer.MIN_VALUE;
-			after = airportArrivalTraffic.ceiling(arrivalTime);
-			after = after!=null? after : Integer.MAX_VALUE;
-			currentSpace = getArrivalSpacing(arrivalTime);
-			previousSpace = getArrivalSpacing(before);
-			if( before + previousSpace <= arrivalTime && arrivalTime + currentSpace <= after){
-				//System.out.printf(" before: %d after: %d ",before, after);
-				return arrivalTime;
-			}
-			if(before + previousSpace > arrivalTime){
-				arrivalTime = before + previousSpace; 
-			} 
-			
-			else {
-				arrivalTime = after + getArrivalSpacing(after); 
-			}
-		}
-	}
-	
-
-	
-	//older method for integer based queue
-	//schedules flight at soonest time on or later than input parameter, returns time
-	public int insertAtSoonestArrival(int arrival){
-		int soonest = getSoonestArrivalSlot(arrival);
-		airportArrivalTraffic.add(soonest);
-		return soonest;
-	}
-	
-	//older method for integer based queue
-	public int insertAtSoonestArrival(int arrival, int scheduledArrival){
-		int soonest = getSoonestArrivalSlot(arrival);
-		airportArrivalTraffic.add(soonest);
-		scheduledAirportArrivalTraffic.add(scheduledArrival);
-		return soonest;
-	}
-	
-	//older method for integer based queue
-	//returns false if this arrival time was not in list
-	public boolean freeArrivalSlot(int arrivalTimeToRemove){
-		int closest = airportArrivalTraffic.floor(arrivalTimeToRemove);
-		if(closest == arrivalTimeToRemove){
-			airportArrivalTraffic.remove(arrivalTimeToRemove);
-			return true;
-		} else {
-			throw new java.lang.Error("FAILED: flight not removed, not found in arrival queue");
-			
-		}
-	}
-	
-	
-	//older method for integer based queue
-	public int insertAtSoonestDeparture(int departure, int scheduledDeparture){
-		int soonest = getSoonestDepartureSlot(departure);
-		airportDepartureTraffic.add(soonest);
-		scheduledAirportDepartureTraffic.add(scheduledDeparture + (int)(Math.random()*1000));
-		return soonest;
-	}
-	
-	//older method for integer based queue
-		public int insertAtSoonestArrivalDepricated(int arrival, int scheduledArrival, Flight f) {
-			int soonest = getSoonestArrivalSlot(arrival);
-			airportArrivalTraffic.add(soonest);
-			scheduledAirportArrivalTraffic.add(scheduledArrival);
-			scheduledArrivalTrafficByFlight.add(f);
-			return soonest;
-		}
-	
 	
 	public void insertCapacity(CapacityByTime c){
 		airportCapacities.add(c);
 	}
 	
-	public void printDepTraffic(){
-		io.println("***Start DEP(" + airportDepartureTraffic.size() + ")");
-		for(int c: airportDepartureTraffic){
-			System.out.println(c);
-		}
-		io.println("***End deps");
-	}
+
 	
 	public void printDepTrafficByFlight(){
-		io.println("***Start DEP(" + scheduledDepartureTrafficByFlight.size() + ")");
+		U.p("***Start DEP(" + scheduledDepartureTrafficByFlight.size() + ")");
 		for(Flight f: scheduledDepartureTrafficByFlight){
 			//U.p(++i);
 			f.print();
 		}
-		io.println("***End deps");
+		U.p("***End deps");
 	}
 	public void printArrTrafficByFlight(){
-		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
+		U.p("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
 		int i = 0;
 		for(Flight f: scheduledArrivalTrafficByFlight){
 			//U.p(++i);
 			U.pp(++i + " ");f.print();
 		}
-		io.println("***End deps");
+		U.p("***End deps");
 	}
 	
 	public void printArrTrafficOrdering(){
-		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
+		U.p("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
 		int i = 0;
 		for(Flight f: scheduledArrivalTrafficByFlight){
 			//U.p(++i);
 			U.p(++i + " " +f.id);
 		}
-		io.println("***End deps");
+		U.p("***End deps");
 	}
 	
-	public void printScheduledDepTraffic(){
-		io.println("***Start ScheduledDEP(" + scheduledAirportDepartureTraffic.size() + ")");
-		for(int c: scheduledAirportDepartureTraffic){
-			System.out.println(c);
-		}
-		io.println("***End scheduled deps");
-	}
+
 	
 	public void printCapsToFile(BufferedWriter out) {
 		try {
@@ -869,222 +758,39 @@ public class AirportTree {
 	}
 	
 	public void printArrTrafficGapless(){
-		io.println("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
+		U.p("***Start ARR(" + scheduledArrivalTrafficByFlight.size() + ")");
 		for(Flight c: scheduledArrivalTrafficByFlight){
 			System.out.println(c.arrivalTimeFinal);
 		}
-		io.println("***End arrs");
+		U.p("***End arrs");
 	}
 	
 	
-	public void printArrTraffic(){
-		io.println("***Start ARR(" + airportArrivalTraffic.size() + ")");
-		for(int c: airportArrivalTraffic){
-			System.out.println(c);
-		}
-		io.println("***End arrs");
-	}
-	
-	public void printScheduledArrTraffic() {
-		io.println("***Start ScheduledARR(" + scheduledAirportArrivalTraffic.size() + ")");
-		for(int c: scheduledAirportArrivalTraffic) {
-			System.out.println(c);
-		}
-		io.println("***End scheduled arrs");
-	}
-	
-	public void printDepTrafficToFile(BufferedWriter dep, BufferedWriter schedDep) {
-		try{
-			dep.write(airportName + ",");
-			for(int c: airportDepartureTraffic) {
-				dep.write(c +",");
-			}
-			dep.write("\n");
-			
-			schedDep.write(airportName + ",");
-			for(int d: scheduledAirportDepartureTraffic) {
-				schedDep.write(d+",");
-			}
-			schedDep.write("\n");
-			
-		}catch (Exception e){
-			System.err.println("Error: " + e.getMessage());
-		}
-	}
-	
-	public void printArrTrafficToFile(BufferedWriter arr, BufferedWriter schedArr) {
-		try{
-			arr.write(airportName + ",");
-			for(int c: airportArrivalTraffic) {
-				arr.write(c +",");
-			}
-			arr.write("\n");
-			
-			schedArr.write(airportName +",");
-			for(int c: scheduledAirportArrivalTraffic) {
-				schedArr.write(c+",");
-			}
-			schedArr.write("\n");
-		}catch (Exception e){
-			System.err.println("Error: " + e.getMessage());
-		}
-	}
 	
 	public void printDelayVars(){
-		io.printf("Gate: mean: %.3f zero: %.3f std: %.3f\n", gateMean, gateZeroProbablity, gateStd);
-		io.printf("Taxi: mean: %.3f zero: %.3f std: %.3f taxi unimpeded: %.3f\n", taxiMean, taxiZeroProbablity, taxiStd, taxiUnimpeded);
+		U.pf("Gate: mean: %.3f zero: %.3f std: %.3f\n", gateMean, gateZeroProbablity, gateStd);
+		U.pf("Taxi: mean: %.3f zero: %.3f std: %.3f taxi unimpeded: %.3f\n", taxiMean, taxiZeroProbablity, taxiStd, taxiUnimpeded);
 	}
 	
 	public void printCaps(){
-		io.println("***Start caps(" + airportCapacities.size() + ")");
+		U.p("***Start caps(" + airportCapacities.size() + ")");
 		for(CapacityByTime cu: airportCapacities){
 			cu.print();
 		}
-		io.println("***End caps");
+		U.p("***End caps");
 	}
 	
 	public void print(){
-		io.println(airportName);
+		U.p(airportName);
 		printDelayVars();
 		printCaps();
-
-		io.printf("CFR start: %d end: %d",CFRstart, CFRend);
-		io.println("Dep Traffic (Integer): " + airportDepartureTraffic.size());
-		io.println("Arr Traffic (Integer): " + airportArrivalTraffic.size());
-		printArrTraffic();
-		printDepTraffic();
-		io.println("Dep Traffic (Flight): " + scheduledArrivalTrafficByFlight.size());
-		io.println("Arr Traffic (Flight): " + scheduledDepartureTrafficByFlight.size());
+		U.pf("CFR start: %d end: %d",CFRstart, CFRend);
+		U.p("Dep Traffic (Flight): " + scheduledArrivalTrafficByFlight.size());
+		U.p("Arr Traffic (Flight): " + scheduledDepartureTrafficByFlight.size());
 		printDepTrafficByFlight();
 		printArrTrafficByFlight();
-		io.println("");
+		U.p("");
 	}
-	
-	public void printToFile(BufferedWriter cap, BufferedWriter dep, BufferedWriter schedDep, BufferedWriter arr, BufferedWriter schedArr) {
-		try{
-			printCapsToFile(cap);
-			if(!airportArrivalTraffic.isEmpty() && !scheduledAirportArrivalTraffic.isEmpty()) {
-				printArrTrafficToFile(arr, schedArr);
-			}
-			if(!airportDepartureTraffic.isEmpty() && !scheduledAirportDepartureTraffic.isEmpty()) {
-				printDepTrafficToFile(dep, schedDep);
-			}
-			
-		}catch (Exception e){
-			System.err.println("Error: " + e.getMessage());
-		}
-	}
-	
-	
-	public void printMinDepartureSpacing() {
-		Integer minSpacing = Integer.MAX_VALUE;
-		Integer lastTime = Short.MIN_VALUE*10;
-		Integer timeOfMin = 0;
-
-		for(Integer currentTime: airportDepartureTraffic){
-			if((currentTime-lastTime) < minSpacing){
-				minSpacing = currentTime-lastTime;
-				timeOfMin = lastTime;//currentTime;
-			} 
-			lastTime = currentTime;
-		}
-		if(minSpacing < getDepartureSpacing(timeOfMin)){
-			System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			printCaps();
-			printDepTraffic();
-			U.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
-		}
-		if(minSpacing == getDepartureSpacing(timeOfMin))
-		System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-	}
-	
-	public void printMinArrivalSpacing() {
-		Integer minSpacing = Integer.MAX_VALUE;
-		Integer lastTime = Short.MIN_VALUE*10;
-		Integer timeOfMin = 0;
-
-		for(Integer currentTime: airportArrivalTraffic){
-			if((currentTime-lastTime) < minSpacing){
-				minSpacing = currentTime-lastTime;
-				timeOfMin = lastTime;//currentTime;
-			}
-			lastTime = currentTime;
-		}
-		if(minSpacing < getArrivalSpacing(timeOfMin)){
-			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			printCaps();
-			printArrTraffic();
-			U.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
-		}
-		if(minSpacing == getArrivalSpacing(timeOfMin))
-		System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-		
-	}
-	
-	public void printMinSpacing(){
-		printMinDepartureSpacing();
-		printMinArrivalSpacing();	
-	}
-	
-	//older method for integer based queue
-	public void validateDepartureTraffic() {
-		Integer minSpacing = Integer.MAX_VALUE;
-		Integer lastTime = Short.MIN_VALUE*10;
-		Integer timeOfMin = 0;
-
-		for(Integer currentTime: airportDepartureTraffic){				
-			//REAL VALIDATION
-			int lastTimeSpace = currentTime-lastTime;
-			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getDepartureSpacing(lastTime));
-			U.Assert(lastTimeSpace >= getDepartureSpacing(lastTime),lastTimeSpace + " DEP lastTimeSpace >= getArrivalSpacing(lastTime) " + getDepartureSpacing(lastTime));
-			
-			if((currentTime-lastTime) < minSpacing){
-				minSpacing = currentTime-lastTime;
-				timeOfMin = lastTime;//currentTime;
-			} 
-			lastTime = currentTime;
-		}
-		if(minSpacing < getDepartureSpacing(timeOfMin)){
-			System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			printCaps();
-			printDepTraffic();
-			U.Assert(minSpacing < getDepartureSpacing(timeOfMin), airportName + " min < getDepartureSpacing(time)");
-		}
-		if(minSpacing == getDepartureSpacing(timeOfMin)){
-		//System.out.println(airportName + " departure: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getDepartureSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-		}
-	}
-	
-	//older method for integer based queue
-	public void validateArrivalTraffic() {
-		Integer minSpacing = Integer.MAX_VALUE;
-		Integer lastTime = Short.MIN_VALUE*10;
-		Integer timeOfMin = 0;
-		for(Integer currentTime: airportArrivalTraffic){
-			
-			//REAL VALIDATION
-			int lastTimeSpace = currentTime-lastTime;
-			//System.out.println("lastTimeSpace= " + lastTimeSpace + " arrivalSpacing= " + getArrivalSpacing(lastTime));
-			U.Assert(lastTimeSpace >= getArrivalSpacing(lastTime),lastTimeSpace + 
-					" ARR lastTimeSpace >= getArrivalSpacing(lastTime) " + getArrivalSpacing(lastTime));
-			
-			if((currentTime-lastTime) < minSpacing){
-				minSpacing = currentTime-lastTime;
-				timeOfMin = lastTime;//currentTime;
-			}
-			lastTime = currentTime;
-		}
-		if(minSpacing < getArrivalSpacing(timeOfMin)){
-			System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-			printCaps();
-			printArrTraffic();
-			U.Assert(minSpacing < getArrivalSpacing(timeOfMin), "min < getArrivalSpacing(time)");
-		}
-		if(minSpacing == getArrivalSpacing(timeOfMin)){
-			//System.out.println(airportName + " arrival: min spacing = " + (double)minSpacing/60000 + " spacing: " + (double)getArrivalSpacing(timeOfMin)/60000 + " time: " + timeOfMin);
-		}
-	}
-	
 
 	
 	public void test1(){ //check delays<<<<<<<<

@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class Airports {
 
-	PrintStream io = System.out;
+	//PrintStream io = System.out;
 	//creates hash of AirportTrees.
 	Hashtable<String, AirportTree> airportList= new Hashtable<String, AirportTree>();
 	
@@ -101,13 +101,13 @@ public class Airports {
 					//f.actualRates.get(f.actualRates.size()-1).print();
 
 				} else {
-					io.println("not 6 " + line);
+					U.p("not 6 " + line);
 				} 
 			}
 			in.close();
 
 		}catch (Exception e){
-			io.println(subs[0]);
+			U.p(subs[0]);
 			System.err.println("airport load Error: " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -144,15 +144,17 @@ public class Airports {
 		return getAirport(f.arrivalAirport).scheduleArrival(f, proposedArrivalTime, currentTime);
 	}
 	
+	
 	//older method of scheduling with Jiggling, see coupled scheduling paper.
 	//finds first gap between slots and inserts slot, adjusting later slots, makes a more compact schedule.
 	//See airport tree
 	//see coupled sensitivity paper
+	//*
 	public void scheduleArrivalCompact(Flight flight, int proposedArrivalTime, int currentTime){
 		AirportTree a = getAirport(flight.arrivalAirport);
 		a.insertAtSoonestGapArrival(flight, proposedArrivalTime, currentTime);
 	}
-	
+	//*/
 	
 	//See airportTree class
 	//returns soonest available slot on a first come first served basis
@@ -166,20 +168,6 @@ public class Airports {
 	}
 	
 	//See airportTree class
-	//Huu
-	public boolean removeFlightFromArrivalQueue(Flight f){
-		AirportTree a = getAirport(f.arrivalAirport);
-		return a.freeArrivalSlot(f);
-	}
-	
-	//See airportTree class
-	//Huu
-	public boolean removeFlightFromDepartureQueue(Flight f){
-			AirportTree a = getAirport(f.departureAirport);
-			return a.freeDepartureSlot(f);
-	}
-	
-	//See airportTree class
 	//Empties schedule of all slots but retains loaded capacity information.
 	public void resetToStart(){ 
 		for (AirportTree a : airportList.values()){
@@ -187,83 +175,22 @@ public class Airports {
 		}
 	}
 	
-	
-	/* older methods
-	public int scheduleArrival(String airportName, int arrTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrival(arrTime);
-	}
 	//See airportTree class
-	public int scheduleDeparture(String airportName, int depTime, int schDepTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestDeparture(depTime, schDepTime);
-	}
-	//See airportTree class
-	public int scheduleArrival(String airportName, int arrTime, int schArrTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrival(arrTime, schArrTime);
-	}
-	//See airportTree class
-	public int scheduleArrival(String airportName, int arrTime, int schArrTime, Flight f) {
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrival(arrTime, schArrTime, f);
-	}
-	//See airportTree class
-	public int getSoonestDeparture(String airportName, int departureTime){
-		AirportTree a = getAirport(airportName);
-		return a.getSoonestDepartureSlot(departureTime);
+	public boolean removeFlightFromArrivalQueue(Flight f){
+		AirportTree a = getAirport(f.arrivalAirport);
+		return a.freeArrivalSlot(f);
 	}
 	
-	*/	
-	
-	
-	//older, scheduling by int, Integer based
-	public int scheduleArrivalInt(String airportName, int arrTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrival(arrTime, arrTime);
-	}
-	//older
-	public int scheduleArrivalInt(String airportName, int arrTime, int schArrTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrival(arrTime, schArrTime);
-	}
-	//older
-	public int scheduleDepartureInt(String airportName, int depTime, int schDepTime){
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestDeparture(depTime, schDepTime);
-	}
-	//older 
-	public int scheduleArrivalDepricated(String airportName, int arrTime, int schArrTime, Flight f) {
-		AirportTree a = getAirport(airportName);
-		return a.insertAtSoonestArrivalDepricated(arrTime, schArrTime, f);
-	}
-	
-	//older
 	//See airportTree class
-	public boolean removeFlightFromArrivalQueue(String airportName, int arrivalTime){
-		AirportTree a = getAirport(airportName);
-		return a.freeArrivalSlot(arrivalTime);
+	public boolean removeFlightFromDepartureQueue(Flight f){
+			AirportTree a = getAirport(f.departureAirport);
+			return a.freeDepartureSlot(f);
 	}
 	
 	//returns soonest available slot on a first come first served basis
 	public int getSoonestArrivalSlot(Flight f, int proposedArrivalTime, int currentTime){
 		return getAirport(f.arrivalAirport).getSoonestFirstComeFirstServedSlot(f, proposedArrivalTime, false);
 	}
-	
-	
-	//This method the older, int based way of managing slots
-	//Huu
-	public int getSoonestArrivalInt(String airportName, int arrivalTime){
-		AirportTree a = getAirport(airportName);
-		return a.getSoonestArrivalSlot(arrivalTime);
-	}
-	
-	//older
-	public int getSoonestDepartureInt(String airportName, int arrivalTime){
-		AirportTree a = getAirport(airportName);
-		return a.getSoonestArrivalSlot(arrivalTime);
-	}
-	
 	
 	public AirportTree getAirport(String airportName){
 		AirportTree a = airportList.get(airportName);
@@ -284,8 +211,8 @@ public class Airports {
 
 	//See airportTree class
 	public void offsetCapacities(int offset){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
-			f.offsetCapacities(offset);
+		for (AirportTree a : airportList.values()){ //io.println("");
+			a.offsetCapacities(offset);
 		}
 	}
 	
@@ -296,25 +223,12 @@ public class Airports {
 	
 	//See airportTree class
 	public void turnOffDepartureContract(){ 
-		for (AirportTree f : airportList.values()){ //io.println("");
-			f.setDepartureContract(false);
+		for (AirportTree a : airportList.values()){ //io.println("");
+			a.setDepartureContract(false);
 		}
 	}	
 
-	//See airportTree class
-	//older int based
-	public void validateDepartureTraffic(){
-		for (AirportTree at: airportList.values()) {
-			at.validateDepartureTraffic();
-		}
-	}
-	//See airportTree class
-	//older int based
-	public void validateArrivalTraffic() {
-		for (AirportTree at: airportList.values()) {
-			at.validateArrivalTraffic();
-		}
-	}
+
 	//See airportTree class
 	//validates that all flights meet capacity constraint spacing and no repeat flight ID's in schedule
 	public void validate(){ 
@@ -330,7 +244,7 @@ public class Airports {
 			U.p(a.airportName + "*");
 			a.printDelayVars();
 		}
-		io.println("TOTAL Airports: " + airportList.size());
+		U.p("TOTAL Airports: " + airportList.size());
 	}	
 	//See airportTree class
 	public void printAirports(){ 
@@ -338,26 +252,7 @@ public class Airports {
 			
 			a.print();
 		}
-		io.println("TOTAL Airports: " + airportList.size());
+		U.p("TOTAL Airports: " + airportList.size());
 	}
-	
-	
-	public void printAirportsToFile(BufferedWriter cap, BufferedWriter dep, BufferedWriter schedDep, BufferedWriter arr, BufferedWriter schedArr) {
-		for (AirportTree a : airportList.values()){
-			try{
-				a.printToFile(cap,dep,schedDep,arr, schedArr);
-			}catch (Exception e){
-				System.err.println("Error: " + e.getMessage());
-			}
-		}
-			
-	}
-	//See airportTree class
-	public void printMinSpacing(){ 
-		for (AirportTree a : airportList.values()){ //io.println("");
-			a.printMinSpacing();
-		}
-	}
-	
 
 }

@@ -108,7 +108,8 @@ public class Sectors {
 	
 
 	
-	/*
+	/* origingal sector class
+	 
 	class Sector{
 		String name;
 		int maxCapacity = -1;

@@ -14,7 +14,7 @@ import java.io.*;
 */
 public class SchedulerFCFS {
 
-	Flights flights; Sectors sectors; Airports airports;
+	Flights flights; Sectors sectors; AirportsInt airports;
 
 	public void init(){
 
@@ -27,7 +27,7 @@ public class SchedulerFCFS {
 
 		flights = new Flights();
 		sectors = new Sectors();
-		airports = new Airports();
+		airports = new AirportsInt();
 
 		String workingDirectory = "/Users/hvhuynh/Desktop/scheduler/inputs/";
 		//flights.loadFlightsFromAces(workingDirectory+"clean_job.csv",true);
@@ -139,10 +139,6 @@ public class SchedulerFCFS {
 		//sectors.printSectors();
 		String fcfsdir = "fcfs_output/";
 		printSectorTraffic(sectors, workingDirectory+fcfsdir);
-		//System.out.println("sectors max cap:");
-		//sectors.printSectorMaxCaps();
-		//airports.printMinSpacing();
-		//airports.printAirports("CYYZ");
 		printAirportTrafficCounts(airports,  workingDirectory+fcfsdir);
 		airports.validate();
 		flights.validateFCFS();
@@ -186,7 +182,7 @@ public class SchedulerFCFS {
 		}
 	}
 	
-	public void printAirportTrafficCounts(Airports airports, String dir) {
+	public void printAirportTrafficCounts(AirportsInt airports, String dir) {
 		try {
 			
 			FileWriter capstream = new FileWriter( dir + "fcfs_airport_capacities.csv");

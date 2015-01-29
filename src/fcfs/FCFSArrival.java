@@ -3,27 +3,43 @@ package fcfs;
 import java.util.*;
 import java.io.*;
 
-enum Action {
-	scheduleAtPDT, //not needed
-	scheduleAtPushback, //not needed
-	scheduleInTheAir,
-	scheduleByArrival,
+/**
+ * 
+ * @author nalmog
+ *
+ *NOTE: this class was refactored to use scheduling by Flight object instead of Integer on 1/28/15, it may not behave exactly as before and should be checked. 
+ *For the version corresponding to Delay Sensitivity paper use previous version of repository. Regardless behavior should be very close.
+ *
+ */
 
+/*
+ * used for Delay Sensitivity to Call For Release Scheduling Time, Kee Palopo, Gano Broto Chatterji, and Noam Almog, 12th AIAA Aviation Technology, Integration, and Operations (ATIO) Conference, September 2012
+ * See readme for more documentation.
+ * 
+ */
+
+//Different modes of scheduling.
+//For explanation see: Delay Sensitivity to Call For Release Scheduling Time, Kee Palopo, Gano Broto Chatterji, and Noam Almog, 12th AIAA Aviation Technology, Integration, and Operations (ATIO) Conference, September 2012
+//These tell the event queue which mode to schedule in.
+enum Action {
 	remove,
 	undef,
 
-	FCFS,
-	FCFSUncertainty,
-	ArrivalJiggle,
-	ArrivalJiggleUncertainty,
-	ArrivalJiggleNoDepartureContract,
-	ArrivalJiggleUncertaintyNoDepartureContract,
+	FCFS, //first come first served by departure order
+	FCFSUncertainty, //same but with uncertainty
+	ArrivalJiggle, //Schedules flights by order of departure, but fills in gaps in arrival queue as it goes along and 'jiggles' other flights accordingly (delays them). 
+	ArrivalJiggleUncertainty,//Same with uncertainty
+	ArrivalJiggleNoDepartureContract,//Same but allows added delay from jiggling of flights to be taken on the ground if flights haven't departed at time of scheduling.
+	ArrivalJiggleUncertaintyNoDepartureContract, //same but with uncertainty.
+	FCFSArrWithNoGateUncertainty,//only taxi uncertainty(?)
+	scheduleInTheAir,//for when flights re-scheduled after departure and need to be re-scheduled in the air.
+	scheduleByArrival,//schedules all flights in the order they arrive: least amount of delay
 
-	FCFSArrWithNoGateUncertainty,
+	removeByFlight,//same as above corresponding cases, but switched to Flight vs Int scheduling.
+	scheduleInTheAirByFlight,//same
 
-	removeByFlight,
-	scheduleInTheAirByFlight,
-
+	scheduleAtPushback, //used in FCFSFlexibleSpeed, should be refactored there
+	scheduleAtPDT, //used in FCFSFlexibleSpeed, should be refactored there
 }
 
 class rescheduleEvent implements Comparable<rescheduleEvent>{
@@ -43,6 +59,8 @@ class rescheduleEvent implements Comparable<rescheduleEvent>{
 		//return ((rt)o).rescheduleTime - rescheduleTime; //order's priorityqueue by greatest first
 	}
 }
+
+
 
 
 public class FCFSArrival {
@@ -102,7 +120,8 @@ public class FCFSArrival {
 		System.out.println("Start " + dateFormat.format(new Date()));
 		dispensedAirportDelayHrs = new Hashtable<String, Double>();
 		absorbedAirportDelayHrs = new Hashtable<String, Double>();
-		Flights flights; Airports airports; flights = new Flights(); airports = new Airports();
+		Flights flights  = new Flights(); 
+		Airports airports = new Airports(); 
 		flights.loadFlightsFromAces(workingDirectory+infolder+"clean_job.csv",false);
 		load(workingDirectory+infolder, flights, airports);
 
@@ -182,40 +201,16 @@ public class FCFSArrival {
 							U.p(departureAirport.taxiZeroProbablity + " " + c++ + " " + departureAirport.airportName);
 							f.taxiUncertainty = defaultPertMills;
 						}
-						//						f.taxi_perturbation = 0;//taxi_noise_seconds; //CHANGE BACK
 					}
-					//for null airports on first run
-					
-					//TODO:add in airport cfr randomness
 					
 				} else {
-					//U.p("error in perturbations?");
-					/* need??
-					double gateR = random.nextDouble(), taxiR = random.nextDouble();
-					double gate_noise_minutes = Math.exp(random.nextGaussian()*0);
-					gate_noise_minutes = gate_noise_minutes < 120? gate_noise_minutes: 120;
-					gate_noise_seconds = (int)(gate_noise_minutes*60000);
-					double taxi_noise_minutes = Math.exp(random.nextGaussian()*0);
-					taxi_noise_minutes = taxi_noise_minutes < 45? taxi_noise_minutes: 45;
-					taxi_noise_seconds = (int)(taxi_noise_minutes*60000);
-					f.gate_perturbation = gate_noise_seconds;
-					f.taxi_perturbation = taxi_noise_seconds;
-					//U.p(gate_noise_seconds + " else");
-					//keep?
-					f.gate_perturbation = defaultPertMills;
-					f.taxi_perturbation = defaultPertMills;
-					 */
 				}
 			}
 
 
 			for(Action mode: modes){
 				U.p("");
-				/*
-				if(counter == 1 && mode == Action.FCFS) U.p("\nLookAheadCFR,TotalCostByWeightedDelay (hours),Scenario,# flights madeSlots,Average minutes missed per flight,# flights delayedGround, " +
-				        "# flights delayedAir,MaxGroundDelay (min),MaxAirDelay (min),TotalGroundDelay (hours), " +
-						"TotalAirDelay (hours),TotalDelay (hours),avgnNumberOfJiggles, avgTotalJiggleAmountAfterLastScheduling (secs)");
-				 */
+				
 				if(counter != 0)U.p(mode + " c " + counter ); 
 
 
@@ -375,7 +370,7 @@ public class FCFSArrival {
 							case FCFS:
 							{
 								int proposedArrivalTime = f.arrivalTimeACES + f.gate_perturbation + f.taxi_unimpeded_time; 
-								int arrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, proposedArrivalTime); //Make Slot including perturbation
+								int arrivalSlot = airports.scheduleArrival(f, proposedArrivalTime, Integer.MAX_VALUE);//(f.arrivalAirport, proposedArrivalTime); //Make Slot including perturbation
 								f.arrivalFirstSlot = arrivalSlot;
 								int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime;
 								f.atcGroundDelay = delayFromFirstScheduling; 
@@ -410,7 +405,7 @@ public class FCFSArrival {
 							{ //more flights have to be scheduled twice with ground since slot arrival time estimate is bad,
 								//so more totalAirDelayl delay per pdt run.
 								int proposedArrivalTime = f.arrivalTimeACES + f.gate_perturbation + f.taxi_unimpeded_time; 
-								int arrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, proposedArrivalTime); //Make Slot
+								int arrivalSlot = airports.scheduleArrival(f, proposedArrivalTime, Integer.MAX_VALUE);//Int(f.arrivalAirport, proposedArrivalTime); //Make Slot
 								f.arrivalFirstSlot = arrivalSlot;
 								int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime;
 								//uncertainty
@@ -506,7 +501,7 @@ public class FCFSArrival {
 							case scheduleByArrival:
 							{
 								int proposedArrivalTime = f.arrivalTimeACES + f.gate_perturbation + f.taxi_unimpeded_time;
-								int arrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, proposedArrivalTime); //Make Slot
+								int arrivalSlot = airports.scheduleArrival(f, proposedArrivalTime, Integer.MAX_VALUE);//Int(f.arrivalAirport, proposedArrivalTime); //Make Slot
 								f.arrivalFirstSlot = arrivalSlot;
 								int delayFromFirstScheduling = arrivalSlot - proposedArrivalTime;
 								//int delayDelta = Math.max(delayFromFirstScheduling-f.gate_perturbation,0);
@@ -575,7 +570,7 @@ public class FCFSArrival {
 
 							case remove: // for case 1 and 2
 							{
-								airports.removeFlightFromArrivalQueue(f.arrivalAirport, event.targetTime);
+								airports.removeFlightFromArrivalQueue(f);//(f.arrivalAirport, event.targetTime);
 
 							}
 							break;
@@ -584,7 +579,7 @@ public class FCFSArrival {
 							{
 								f.rescheduled = true;
 								int targetArrival = f.wheelsOffTime + nominalDuration;
-								int finalArrivalSlot = airports.scheduleArrivalInt(f.arrivalAirport, targetArrival);// event.targetTime);
+								int finalArrivalSlot = airports.scheduleArrival(f, targetArrival, Integer.MAX_VALUE);//Int(f.arrivalAirport, targetArrival);// event.targetTime);
 								int airDelay = finalArrivalSlot - targetArrival;
 								f.atcAirDelay = airDelay;	
 								f.arrivalTimeFinal = finalArrivalSlot;
@@ -778,18 +773,7 @@ public class FCFSArrival {
 
 		totalAirDelay /= toMinutes; totalGroundDelay /= toMinutes; totalMissedSlotMetric /= toMinutes;
 
-		/*
-		if(counter == 1){
-		U.p("std ground " + standardDeviation(groundDelay.toArray(new Double[groundDelay.size()])) + " mean " + totalGroundDelay / flightList.size());
-		U.p("std air " + standardDeviation(airDelay.toArray(new Double[airDelay.size()])) + " mean " + totalAirDelay / flightList.size());
-		U.p("std slot " + standardDeviation(missedSlotMetric.toArray(new Double[missedSlotMetric.size()])) + " mean " + totalMissedSlotMetric / flightList.size());
-		U.p("std jiggle " + standardDeviation(totalJiggleAmount.toArray(new Double[totalJiggleAmount.size()])) + " mean " + totalJiggles / flightList.size());
-		}
-		 */
 
-		
-		//System.out.printf("%-35s", mode+",");
-		//System.out.printf("here"); //9
 		if(printHeader){
 			System.out.println("minAhead,"); //9
 			System.out.println("avg delay per flight,"); //9
@@ -1038,9 +1022,6 @@ public class FCFSArrival {
 		}catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-		//U.p(a + " a b " + b); 		" totalAirDelayl flightList: " + flightList.size() +
-		//U.p(name +  "\ntotalAirDelayL: " + Math.round((totalAirDelaylAirDelay+totalGroundDelay))+" hrs\nground delay: " + Math.round(totalGroundDelay)
-		//		+ " hrs \nairborne delay: " + Math.round(totalAirDelaylAirDelay) + " hrs");
 
 	}
 	
