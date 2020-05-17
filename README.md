@@ -1,8 +1,8 @@
-readme for FCFS ver 1.0
+# First come first served aircraft scheduling in the national airspace
 
 ## About
 
-FCFS is a collection of functions and data structures useful for scheduling aircraft arrivals departures in the national airspace. It also contains several classes that use these utilities to simulate different scheduling scenarios including scheduling in different orders (arrival/departure order), at different times (before/at departure), and with different uncertainties (taxi, gate) including monte-carlo simulation.The package is designed to take in ACES unconstrained flight track data as input, as well as airport departure and arrival rate capacity constraints. For monte-carlo simulation delay uncertainty distribution data can be input as well. Using the input data, Flight objects are instantiated and then scheduled into arrival queues such that capacity constraints at the airport are not exceeded. 
+FCFS is a collection of functions and data structures useful for scheduling aircraft arrivals departures in the national airspace. It also contains several classes that use these utilities to simulate different scheduling scenarios including scheduling in different orders (arrival/departure order), at different times (before/at departure), and with different uncertainties (taxi, gate) including monte-carlo simulation. The package is designed to take in unconstrained flight track data from NASA's Airspace Concept Evaluation System, ACES, (https://www.aviationsystemsdivision.arc.nasa.gov/research/modeling/aces.shtml) as input, as well as airport departure and arrival rate capacity constraints. For monte-carlo simulation delay uncertainty distribution data can be input as well. Using the input data, Flight objects are instantiated and then scheduled into arrival queues such that capacity constraints at the airport are not exceeded. 
 
 A schedule of slots is represented as a list of Flight objects departing/arriving at a given airport. Capacity constraints are represented as minimum time spacing slots in the list of departures/arrivals. The delay generated from scheduling is recorded in the Flight object. For the most part, the scheduling in this package is done on a first-come-first-served (fcfs) basis. Most of the time, a flight receives the closest slot at or after its proposed slot time, after which its schedule is not modified. Hence the name fcfs.
 
@@ -73,4 +73,5 @@ CenterBoundary.java
 Centers.java
 CenterTree.java
 
+![](https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg)
 
